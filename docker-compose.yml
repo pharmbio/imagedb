@@ -1,0 +1,21 @@
+# Use root/example as user/password credentials
+version: '3.1'
+
+volumes:
+  db-data:
+  mongo-config:
+  
+services:
+  image-mongo:
+    image: mongo
+    restart: always
+    container_name: image-mongo
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - db-data:/data/db
+      - mongo-config:/data/configdb
+
