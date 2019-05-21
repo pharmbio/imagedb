@@ -22,6 +22,8 @@ docker build -t pharmbio/imagedb-app .
 # run app with docker-compose and dev-settings
 SHARE_MIKRO=/home/anders/pharmbio/imageDB/share/mikro SHARE_IMAGEDB=/home/anders/pharmbio/imageDB/share/imagedb APPROOT=/home/anders/pharmbio/imageDB/ docker-compose up
 
+SHARE_MIKRO=/share/mikro SHARE_IMAGEDB=/share/imagedb APPROOT=/home/anders/projekt/imagedb/cli docker-compose up
+
 # log-in to container and run script
 docker exec -it imagedb-app bash
 
