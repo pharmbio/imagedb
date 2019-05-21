@@ -11,21 +11,22 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: "$PWD/../share/mikro"
+      device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro}
       o: bind
   # this is thumbnail volume
   imagedb-bind:
     driver: local
     driver_opts:
       type: none
-      device: "$PWD/../share/imagedb"
+      device: ${SHARE_IMAGEDB?You need to specify env SHARE_IMAGEDB, e.g. SHARE_IMAGEDB=/share/imagedb}
       o: bind
-  # Webroot
+
+# Webroot
   webroot-bind:
     driver: local
     driver_opts:
       type: none
-      device: "${PWD}"
+      device: ${WEBBROOT?You need to specify env APPROOT, e.g. WEBBROOT=/home/anders/projekt/imagedb/webserver}
       o: bind
 
 services:
