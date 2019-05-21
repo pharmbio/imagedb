@@ -1,0 +1,29 @@
+FROM ubuntu:18.04
+
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
+RUN apt-get update && apt-get install -y \
+        python3 \
+        python3-pip
+
+# opencv-python lib deps
+RUN apt-get install -y \
+        libsm6 \
+        libxext6 \
+        libxrender-dev
+
+# install devtools
+RUN apt-get update && apt-get install -y \
+        git \
+        vim
+
+# Install with pip before copy all files, otherwise docker needs to build
+# this layer allways after file changes in app-dir
+COPY requirements.txt /app/
+RUN pip3 install -r /app/requirements.txt
+
+COPY . /app
+
+WORKDIR /app
+CMD ["python3", "image-monitor.py"]

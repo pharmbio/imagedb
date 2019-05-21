@@ -1,8 +1,9 @@
-# imagedb
+# cli - imagedb
 
 Start database:
 ```
-docker-compose -f docker-compose-imagemongo.yml up -d
+cd ../db/
+docker-compose -f ../db/docker-compose.yml up -d
 ```
 
 Run project
