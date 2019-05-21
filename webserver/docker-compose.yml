@@ -11,27 +11,27 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: "$PWD/../imageDB/share/mikro"
+      device: "$PWD/../share/mikro"
       o: bind
   # this is thumbnail volume
   imagedb-bind:
     driver: local
     driver_opts:
       type: none
-      device: "$PWD/../imageDB/share/imagedb"
+      device: "$PWD/../share/imagedb"
       o: bind
   # Webroot
   webroot-bind:
     driver: local
     driver_opts:
       type: none
-      device: "${PWD}/webserver"
+      device: "${PWD}"
       o: bind
 
 services:
   web:
     build:
-      context: ./webserver
+      context: .
       dockerfile: Dockerfile
     container_name: imageweb
     ports:

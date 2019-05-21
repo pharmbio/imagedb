@@ -230,8 +230,8 @@ try:
                      ]
   else:
     DB_HOST = "localhost"
-    THUMBDIR = "share/imagedb/thumbs/"
-    IMAGE_ROOT_DIR = "share/mikro/IMX/MDC Polina Georgiev"
+    THUMBDIR = "../share/imagedb/thumbs/"
+    IMAGE_ROOT_DIR = "../share/mikro/IMX/MDC Polina Georgiev"
     proj_root_dirs = ["exp-TimeLapse/",
                       "exp-WIDE/"
                         ]
