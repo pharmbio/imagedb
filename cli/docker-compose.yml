@@ -1,0 +1,47 @@
+version: "3.5"
+
+networks:
+  image-db-net:
+    external:
+      name: image-db-net
+
+volumes:
+  # this is microimages r-o share
+  mikroimages-bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro}
+      o: bind
+  # this is thumbnail volume
+  imagedb-bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${SHARE_IMAGEDB?You need to specify env SHARE_IMAGEDB, e.g. SHARE_IMAGEDB=/share/imagedb}
+      o: bind
+  # approot
+  approot-bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${APPROOT?You need to specify env APPROOT, e.g. APPROOT=/home/anders/pharmbio/imageDB/}
+      o: bind
+
+services:
+  image-db-app:
+    image: pharmbio/imagedb-app
+    restart: always
+    container_name: imagedb-app
+    environment:
+      DB_USER: root
+      DB_PASS: example
+      IS_DOCKER_VERSION: "true"
+    volumes:
+      - mikroimages-bind:/share/mikro
+      - imagedb-bind:/share/imagedb
+      - approot-bind:/app
+    #external_links:
+    #  - image-mongo
+    networks:
+      - image-db-net
