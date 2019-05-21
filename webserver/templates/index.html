@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang='en'>
+    <head>
+        <meta charset='utf-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1'>
+        <title>amero-db-webui</title>
+        <link rel='stylesheet' href='/static/main.css'>
+        <script src='/static/main.js'></script>
+    </head>
+    <body>
+        <h1>Pharmbio amero-db-webui</h1>
+        <div class='search-form-box'>
+            <form id='query-form' onsubmit='return apiQuery(event)'>
+                Search:<input type='text' name='search' value='about 31.4 or so'>
+                Graph-vectromizer:<select name='val2'>
+                    <option name='opt1'>initial-offset</option>
+                    <option name='opt2'>stetson-harrison</option>
+                    <option name='opt3'>bitchain</option>
+                    <option name='opt4'>quantum deploy</option>
+                </select>
+                {% raw xsrf_form_html() %}
+                <button type='submit'>Search</button>
+          </form>
+        </div>
+        <ul id='result-list'>
+
+        </ul>
+        <div id="images" class="image-blob">
+        </div>
+        <div id="plate-tool-div">
+            <form id='plate-tool-form' onsubmit='refreshPlate(); return false;'>
+                Plate: <input id='plate-name-title' type='text' name='plate-name-title' value='PXXXXX' readonly>
+                <input id='plate-field' type='hidden' name='plate-field' value='1'>
+                Timepoint:<input id='timepoint-field' type='text' name='timepoint' value='1'>
+                Wellsample:<select id='wellsample-field' name='' onchange="refreshPlate(); return false;">
+                    <option name='1'>1</option>
+                    <option name='2'>2</option>
+                    <option name='3'>3</option>
+                    <option name='4'>4</option>
+                </select>
+                {% raw xsrf_form_html() %}
+                <button type='submit'>Update</button>
+          </form>
+        </div>
+        <div id="table-div">
+            <table>
+                <tr>
+                    <td>Hej</td>
+                    <td> cell 2</td>
+                </tr>
+            </table>
+        </div>
+    </body>
+</html>

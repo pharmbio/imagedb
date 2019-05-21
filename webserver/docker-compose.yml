@@ -1,0 +1,48 @@
+version: "3.5"
+
+networks:
+  image-db-net:
+    external:
+      name: image-db-net
+
+volumes:
+  # this is microimages r-o share
+  mikroimages-bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: "$PWD/../imageDB/share/mikro"
+      o: bind
+  # this is thumbnail volume
+  imagedb-bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: "$PWD/../imageDB/share/imagedb"
+      o: bind
+  # Webroot
+  webroot-bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: "${PWD}/webserver"
+      o: bind
+
+services:
+  web:
+    build:
+      context: ./webserver
+      dockerfile: Dockerfile
+    container_name: imageweb
+    ports:
+      - 8095:8080
+    restart: on-failure
+    volumes:
+      - webroot-bind:/app
+      - mikroimages-bind:/share/mikro
+      - imagedb-bind:/share/imagedb
+ #   external_links:
+ #     - image-mongo
+    networks:
+      - image-db-net
+

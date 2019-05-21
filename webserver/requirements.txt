@@ -1,0 +1,4 @@
+tornado==6.0.2
+pymongo==3.8.0
+numpy==1.16.3
+opencv-python==4.1.0.25

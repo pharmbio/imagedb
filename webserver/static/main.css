@@ -1,0 +1,60 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+ul li a {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    cursor: pointer;
+}
+
+.plateTable {
+    background-color: #fff;
+    border-spacing: 2px;
+}
+
+.plateTable {
+    border-spacing: 2px;
+}
+
+.plateTable tr {
+}
+
+.plateTable td {
+    background-color: #fafafa;
+    width: 50px;
+    height: 50px;
+}
+
+.plateThumbImg {
+    width: 50px;
+    height: 50px;
+}
+
+.plateImageCanvas{
+    /* Dont set canvas size with css
+    width: 50px;
+    height: 50px;
+    */
+    border: 1px solid green;
+}
+
+.imageRow {
+    display: flex;
+    flex-direction: row;
+}
+.imageContainer {
+    width: 50px;
+    height: 50px;
+    position: relative;
+    background: #cccccc;
+    /*padding-bottom: 12.5%;*/
+    border: 1px solid rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+
+.image-blob {
+    padding-left: 10px;
+}

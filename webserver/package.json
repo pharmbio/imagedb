@@ -1,0 +1,30 @@
+{
+  "author": {
+    "name": "Anders Larsson"
+  },
+  "bugs": {
+    "url": "https://github.com/Anders/BildViewer/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "Anders bild viewer.",
+  "devDependencies": {
+    "terser": "^3.17.0"
+  },
+  "dependencies": {},
+  "homepage": "http://anders.org/",
+  "keywords": [
+    "anders"
+  ],
+  "license": "GPL-3.0-only",
+  "main": "src/main.js",
+  "name": "anders-bild-viewer",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anders/BildViewer.git"
+  },
+  "scripts": {
+    "minify": "terser static/main.js -o static/main.min.js -c -m --comments '/Version/'"
+  },
+  "version": "0.1.0"
+}
