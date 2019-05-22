@@ -11,8 +11,9 @@ import tornado.web
 from handlers.query_handler import QueryHandler
 from handlers.image_handler import (ImageListHandler,
                                     ImageHandler,
+                                    ImageViewerHandler,
                                     ImageMergeHandler,
-                                    ImageMergeHandlerGetURL)
+                                    ThumbImageMergeHandler)
 
 SETTINGS = {
     'debug': True,
@@ -23,26 +24,32 @@ SETTINGS = {
     # static path is defined in handler below
 }
 
-class MainHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
+class DefaultTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
     """
-    This is the main handler of the application, which serves the templates.
+    This is the main handler of the application, which serves the index.html template
     """
     def get(self):
         """Renders the index file as a template without arguments.
         """
+        logging.debug(self.request.path)
+
+        # self.render(self.request.path.strip('/'))
         self.render('index.html')
 
-ROUTES = [(r'/', MainHandler),
+
+ROUTES = [
           (r'/images/(.*)', tornado.web.StaticFileHandler, {'path': '/share/mikro/IMX/MDC Polina Georgiev/'}),
           (r'/thumbs/(.*)', tornado.web.StaticFileHandler, {'path': '/share/imagedb/thumbs/share/mikro/IMX/MDC Polina Georgiev/'}),
           (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), 'static')}),
           (r'/api/query', QueryHandler),
           (r'/api/list/(?P<plate>[^\/]+)', ImageListHandler),
           (r'/api/image/(?P<image>[^\/]+)', ImageHandler),
-          (r'/api/image-merge/(.+)', ImageMergeHandler),
-          (r'/api/image-merge-url', ImageMergeHandlerGetURL)
+          (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)', ImageMergeHandler),
+          (r'/api/image-merge-thumb/(.+)', ThumbImageMergeHandler),
+          (r'/image-viewer/(.*)', ImageViewerHandler),
+          (r'/index.html', DefaultTemplateHandler),
+          (r'/.*', DefaultTemplateHandler),
          ]
-
 
 if __name__ == '__main__':
 

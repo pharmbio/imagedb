@@ -38,6 +38,7 @@ ul li a {
     height: 50px;
     */
     border: 1px solid green;
+    cursor: pointer;
 }
 
 .imageRow {

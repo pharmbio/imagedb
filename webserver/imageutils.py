@@ -4,19 +4,36 @@ import logging
 import cv2 as cv2
 import numpy as np
 import os
+import settings as imgdb_settings
 
-from fileutils import create_merged_filepath
+from fileutils import create_merged_filepath, create_pngconverted_filepath
 
-def get_thumb_path(channels):
 
-    IMGAGES_ROOT_FOLDER = "share/mikro/IMX/MDC Polina Georgiev/"
-    thumb_path = os.path.join(IMGAGES_ROOT_FOLDER, channels.get('1'))
+def tif2png(channels, outdir, overwrite_existing=False):
 
-    # TODO check if file exists already
+    logging.debug(channels)
 
-    return thumb_path
+    IMAGES_ROOT_FOLDER = imgdb_settings.IMAGES_ROOT_FOLDER
+    tiff_path = os.path.join(IMAGES_ROOT_FOLDER, channels.get('1').strip('/'))
 
-def merge_channels(channels, outdir):
+    png_path = create_pngconverted_filepath(outdir, tiff_path)
+
+    logging.debug('merged_file=' + str(png_path))
+
+
+    # Check if file exists already
+    if not os.path.isfile(png_path) or overwrite_existing:
+
+        img = cv2.imread(tiff_path)
+
+        # Save the merged image
+        if not os.path.exists(os.path.dirname(png_path)):
+            os.makedirs(os.path.dirname(png_path))
+        cv2.imwrite(png_path, img)
+
+    return png_path
+
+def merge_channels(channels, outdir, overwrite_existing=False):
 
     logging.debug(channels)
 
@@ -24,36 +41,41 @@ def merge_channels(channels, outdir):
       logging.info("key" + str(k))
       logging.info("value" + str(v))
 
-    logging.info("1 = " + channels.get('1'))
-    IMGAGES_ROOT_FOLDER = "/share/mikro/IMX/MDC Polina Georgiev/"
-    ch_1_path = os.path.join(IMGAGES_ROOT_FOLDER, channels.get('1'))
-    ch_2_path = os.path.join(IMGAGES_ROOT_FOLDER, channels.get('2'))
-    ch_3_path = os.path.join(IMGAGES_ROOT_FOLDER, channels.get('3'))
+    # TODO change this to more generalized merge than three channels
+    IMAGES_ROOT_FOLDER = imgdb_settings.IMAGES_ROOT_FOLDER
+    ch_1_path = os.path.join(IMAGES_ROOT_FOLDER, channels.get('1').strip('/'))
+    ch_2_path = os.path.join(IMAGES_ROOT_FOLDER, channels.get('2').strip('/'))
+    ch_3_path = os.path.join(IMAGES_ROOT_FOLDER, channels.get('3').strip('/'))
 
-    merged_file = create_merged_filepath(outdir, ch_1_path, ch_2_path, ch_3_path)
+    merged_file = create_merged_filepath(outdir, channels.get('1'), channels.get('2'), channels.get('3'))
 
-    # TODO check if file exists already
+    logging.debug('merged_file=' + str(merged_file))
 
-    r = cv2.imread(ch_1_path, 0)
-    g = cv2.imread(ch_2_path, 0)
-    b = cv2.imread(ch_3_path, 0)
-    if r is None or g is None or b is None:
-        raise Exception('image read returned NONE')
+    # Check if file exists already
+    if not os.path.isfile(merged_file) or overwrite_existing:
 
-    # Create a blank image that has three channels
-    # and the same number of pixels as your original input
-    merged_img = np.zeros((r.shape[0], r.shape[1], 3))
+        logging.debug('ch_1_path=' + str(ch_1_path))
 
-    # Add the channels to the needed image one by one
-    # opencv uses bgr format instead of rgb
-    merged_img[:, :, 0] = b
-    merged_img[:, :, 1] = g
-    merged_img[:, :, 2] = r
+        r = cv2.imread(ch_1_path, 0)
+        g = cv2.imread(ch_2_path, 0)
+        b = cv2.imread(ch_3_path, 0)
+        if r is None or g is None or b is None:
+            raise Exception('image read returned NONE')
 
-    # Save the merged image
-    if not os.path.exists(os.path.dirname(merged_file)):
-        os.makedirs(os.path.dirname(merged_file))
-    cv2.imwrite(merged_file, merged_img)
+        # Create a blank image that has three channels
+        # and the same number of pixels as your original input
+        merged_img = np.zeros((r.shape[0], r.shape[1], 3))
+
+        # Add the channels to the needed image one by one
+        # opencv uses bgr format instead of rgb
+        merged_img[:, :, 0] = b
+        merged_img[:, :, 1] = g
+        merged_img[:, :, 2] = r
+
+        # Save the merged image
+        if not os.path.exists(os.path.dirname(merged_file)):
+            os.makedirs(os.path.dirname(merged_file))
+        cv2.imwrite(merged_file, merged_img)
 
     return merged_file
 

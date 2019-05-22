@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang='en'>
+    <head>
+        <meta charset='utf-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1'>
+        <title>viewer-amero-db-webui</title>
+        <link rel='stylesheet' href='/static/main.css'>
+        <!--<script src='/static/main.js'></script>-->
+
+        <script src="/static/openseadragon/openseadragon.min.js"></script>
+
+
+    </head>
+    <body>
+
+        <div id="openseadragon1" style="width: 1200px; height: 1200px;"></div>
+
+        Image-url: {{ image_url }}
+
+    </body>
+    <script>
+      var viewer = OpenSeadragon({
+            id: "openseadragon1",
+            prefixUrl: "/static/openseadragon/images/",
+            animationTime: 0.5, // default 1.2
+            zoomPerSecond: 1, // default: 1
+            zoomPerScroll: 1.7, // default: 1.2
+            minZoomImageRatio: 0.9, // default: 0.8
+            maxZoomPixelRatio: 10,  // deault: 2
+            tileSources: {
+              type: 'image',
+              url:  '{{ image_url }}',
+              buildPyramid: false
+            }
+      });
+    </script>
+
+
+</html>

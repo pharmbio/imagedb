@@ -26,7 +26,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ${WEBBROOT?You need to specify env APPROOT, e.g. WEBBROOT=/home/anders/projekt/imagedb/webserver}
+      device: ${WEBROOT?You need to specify env WEBROOT, e.g. WEBROOT=/home/anders/projekt/imagedb/webserver}
       o: bind
 
 services:

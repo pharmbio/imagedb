@@ -8,7 +8,7 @@
         <script src='/static/main.js'></script>
     </head>
     <body>
-        <h1>Pharmbio amero-db-webui</h1>
+        <h1>Pharmbio amero-db-webui hej</h1>
         <div class='search-form-box'>
             <form id='query-form' onsubmit='return apiQuery(event)'>
                 Search:<input type='text' name='search' value='about 31.4 or so'>
@@ -31,8 +31,15 @@
             <form id='plate-tool-form' onsubmit='refreshPlate(); return false;'>
                 Plate: <input id='plate-name-title' type='text' name='plate-name-title' value='PXXXXX' readonly>
                 <input id='plate-field' type='hidden' name='plate-field' value='1'>
-                Timepoint:<input id='timepoint-field' type='text' name='timepoint' value='1'>
-                Wellsample:<select id='wellsample-field' name='' onchange="refreshPlate(); return false;">
+                <!--Timepoint:<input id='timepoint-field' type='text' name='timepoint' value='1'>-->
+                Timepoint:<select id='timepoint-select' name='' onchange="refreshPlate(); return false;">
+                    <option name='1'>1</option>
+                    <option name='2'>2</option>
+                    <option name='3'>3</option>
+                    <option name='4'>4</option>
+                </select>
+
+                Wellsample:<select id='wellsample-select' name='' onchange="refreshPlate(); return false;">
                     <option name='1'>1</option>
                     <option name='2'>2</option>
                     <option name='3'>3</option>

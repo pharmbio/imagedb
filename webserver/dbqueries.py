@@ -43,21 +43,17 @@ def list_plate(plate):
                                    ("metadata.channel", 1)])
     resultlist = list(result)
 
-    logging.debug(json.dumps(resultlist, indent=2))
+    #logging.debug(json.dumps(resultlist, indent=2))
 
     # When returning to web rewrite path
     for image in resultlist:
-        logging.debug(image)
         for key, value in image.items():
             if key == "path":
-                logging.debug("found path" + value)
                 new_value = str(value).replace("share/mikro/IMX/MDC Polina Georgiev/", "")
                 image.update( {'path': new_value})
-                logging.debug("image" + str(image))
 
     platesdict = {}
     for image in resultlist:
-        logging.debug(json.dumps(image, indent=2))
         platesdict.setdefault(image['plate'], {}) \
             .setdefault(image['timepoint'], {}) \
             .setdefault(image['metadata']['well'], {}) \
@@ -69,7 +65,7 @@ def list_plate(plate):
 
 
 
-    logging.debug(json.dumps(platesdict, indent=2))
+    #logging.debug(json.dumps(platesdict, indent=2))
 
     return {'plates': platesdict}
 
@@ -79,36 +75,22 @@ def list_plates(DB_HOSTNAME="image-mongo"):
 
     img_collection = get_default_collection()
 
-
-    distinct_sort_query =  [
-
-            {"$group": {"_id": {"plate": "$plate",
-                                "project":"$project",
-                                "well": "$metadata.well",
-                                "timepoint": "$metadata.timepoint"
-                                }
-                        }
-            },
-            {"$sort": {"_id.timepoint": 1}}
-        ]
-
-
-    distinct_sort_query2 =  [
+    # Selects distinct and sort
+    result = img_collection.aggregate(
+        [
 
             {"$group": {"_id": {"plate": "$plate",
-                                "project":"$project",
-                                "well": "$metadata.well"
+                                "project": "$project"
                                 }
                         }
-            },
+             },
             {"$sort": {"_id.timepoint": 1}}
         ]
+    )
 
 
-
-    result = img_collection.aggregate(distinct_sort_query2)
     resultlist = list(result)
 
-    logging.debug(json.dumps(resultlist, indent=2))
+    #logging.debug(json.dumps(resultlist, indent=2))
 
     return resultlist
