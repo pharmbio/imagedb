@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>Pharmb.io imagedb</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="/static/theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Custom styles for this template -->
+  <link href="/static/theme/css/simple-sidebar.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+  <div class="d-flex" id="wrapper">
+
+    <!-- Sidebar -->
+    <div class="bg-light border-right" id="sidebar-wrapper">
+      <div class="sidebar-heading">Projects/Plates</div>
+
+      <div class="list-group list-group-flush">
+		  <ul>
+            <li>ACN92</li>
+              <ul>
+                <li><a href="#" class="">P0023</a></li>
+                <li><a href="#" class="">P0023</a></li>
+              </ul>
+            <li>EXP28</li>
+				<ul>
+			      <li>Gadgets</li>
+				  <li>Accessories</li>
+				</ul>
+         </ul>
+
+      </div>
+    </div>
+    <!-- /#sidebar-wrapper -->
+
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+
+      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+		<form id='query-form' onsubmit='return apiQuery(event)'>
+          <div class="input-group">
+
+                <input type="text" class="form-control input-sm" maxlength="" placeholder="Search" />
+                <button type="submit" class="btn btn-info btn-sm ml-2">Search</button>
+
+                {% raw xsrf_form_html() %}
+
+           </div>
+           {% raw xsrf_form_html() %}
+        </form>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+            <li class="nav-item active">
+              <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Link</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Dropdown
+              </a>
+              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                <a class="dropdown-item" href="#">Action</a>
+                <a class="dropdown-item" href="#">Another action</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#">Something else here</a>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <div id="plate-tool-div" class="container-fluid mt-2 mb-2">
+		  <form id='plate-tool-form' onsubmit='refreshPlate(); return false;'>
+		    <div class="input-group">
+			  <div class="input-group-prepend">
+				<label class="input-group-text" for="timepoint-select">Timepoint</label>
+			  </div>
+			  <select class="custom-select" data-width="100px" id="timepoint-select" onchange="refreshPlate(); return false;">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+			  </select>
+			  <div class="input-group-prepend ml-2">
+				<label class="input-group-text" for="wellsample-select">Wellsample</label>
+			  </div>
+			  <select class="custom-select" id="wellsample-select" onchange="refreshPlate(); return false;">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+			  </select>
+			  <div class="input-group-prepend ml-2">
+				<label class="input-group-text" for="channel-select">Channel</label>
+			  </div>
+			  <select class="custom-select" id="channel-select" onchange="refreshPlate(); return false;">
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+			  </select>
+
+		    </div>
+          </form>
+      </div>
+
+      <div id="table-div" class="container-fluid">
+        <table>
+           <tr>
+              <td>Hej</td>
+              <td> cell 2</td>
+           </tr>
+        </table>
+      </div>
+
+      </div>
+    </div>
+    <!-- /#page-content-wrapper -->
+
+  </div>
+  <!-- /#wrapper -->
+
+  <!-- Bootstrap core JavaScript -->
+  <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
+  <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Menu Toggle Script -->
+  <script>
+    $("#menu-toggle").click(function(e) {
+      e.preventDefault();
+      $("#wrapper").toggleClass("toggled");
+    });
+  </script>
+
+</body>
+
+</html>
