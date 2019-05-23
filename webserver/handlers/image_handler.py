@@ -43,17 +43,20 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
         logging.debug("ch2:" + ch2)
         logging.debug("ch3:" + ch3)
 
-        if ch2 == 'undefined':
-          channels= {'1':ch1}
-        else:
-          channels= {'1':ch1,
-                     '2':ch2,
-                     '3':ch3}
+        channels= {'1':ch1}
 
-        ## rewrite paths to thumbs
-        #for (key, value) in channels.items():
-        #    new_value = "/share/imagedb/thumbs/" + str(value).strip(".tif") + ".png"
-        #    channels.update({key: new_value})
+        if not ch2 == 'undefined':
+            channels.update({'2': ch2})
+
+        if not ch3 == 'undefined':
+            channels.update({'3': ch3})
+
+
+        # rewrite paths to full images
+        IMAGES_ROOT_FOLDER = imgdb_settings.IMAGES_ROOT_FOLDER
+        for (key, value) in channels.items():
+            new_value = IMAGES_ROOT_FOLDER + str(value)
+            channels.update({key: new_value})
 
         logging.debug(channels)
 

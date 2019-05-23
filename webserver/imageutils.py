@@ -2,19 +2,21 @@
 import hashlib
 import logging
 import cv2 as cv2
+from PIL import Image
 import numpy as np
 import os
 import settings as imgdb_settings
 
 from fileutils import create_merged_filepath, create_pngconverted_filepath
 
-
 def tif2png(channels, outdir, overwrite_existing=False):
+    return tif2png_opencv(channels, outdir, overwrite_existing )
+
+def tif2png_opencv(channels, outdir, overwrite_existing=False):
 
     logging.debug(channels)
 
-    IMAGES_ROOT_FOLDER = imgdb_settings.IMAGES_ROOT_FOLDER
-    tiff_path = os.path.join(IMAGES_ROOT_FOLDER, channels.get('1').strip('/'))
+    tiff_path = channels.get('1')
 
     png_path = create_pngconverted_filepath(outdir, tiff_path)
 
@@ -33,33 +35,57 @@ def tif2png(channels, outdir, overwrite_existing=False):
 
     return png_path
 
+def tif2png_pillow(channels, outdir, overwrite_existing=False):
+
+    logging.debug(channels)
+
+    tiff_path = channels.get('1')
+
+    png_path = create_pngconverted_filepath(outdir, tiff_path)
+
+    logging.debug('merged_file=' + str(png_path))
+
+
+    # Check if file exists already
+    if not os.path.isfile(png_path) or overwrite_existing:
+
+        img = Image.open(tiff_path)
+
+        # Save the merged image
+        if not os.path.exists(os.path.dirname(png_path)):
+            os.makedirs(os.path.dirname(png_path))
+        img.save(png_path)
+
+    return png_path
+
+
 def merge_channels(channels, outdir, overwrite_existing=False):
 
     logging.debug(channels)
 
     for k, v in channels.items():
-      logging.info("key" + str(k))
-      logging.info("value" + str(v))
+      logging.debug("key" + str(k))
+      logging.debug("value" + str(v))
 
     # TODO change this to more generalized merge than three channels
-    IMAGES_ROOT_FOLDER = imgdb_settings.IMAGES_ROOT_FOLDER
-    ch_1_path = os.path.join(IMAGES_ROOT_FOLDER, channels.get('1').strip('/'))
-    ch_2_path = os.path.join(IMAGES_ROOT_FOLDER, channels.get('2').strip('/'))
-    ch_3_path = os.path.join(IMAGES_ROOT_FOLDER, channels.get('3').strip('/'))
+    paths = [channels.get('1')]
+    if len(channels) > 1:
+        paths.append(channels.get('2'))
+    if len(channels) > 2:
+        paths.append(channels.get('3'))
 
-    merged_file = create_merged_filepath(outdir, channels.get('1'), channels.get('2'), channels.get('3'))
+    merged_file = create_merged_filepath(outdir, paths)
 
     logging.debug('merged_file=' + str(merged_file))
 
     # Check if file exists already
     if not os.path.isfile(merged_file) or overwrite_existing:
 
-        logging.debug('ch_1_path=' + str(ch_1_path))
+        logging.debug("list len =" + str(len(paths)))
 
-        r = cv2.imread(ch_1_path, 0)
-        g = cv2.imread(ch_2_path, 0)
-        b = cv2.imread(ch_3_path, 0)
-        if r is None or g is None or b is None:
+        # Read images, raise exceptions manually since opencv is silent if file doesn't exist
+        r = cv2.imread(paths[0], 0)
+        if r is None:
             raise Exception('image read returned NONE')
 
         # Create a blank image that has three channels
@@ -68,9 +94,21 @@ def merge_channels(channels, outdir, overwrite_existing=False):
 
         # Add the channels to the needed image one by one
         # opencv uses bgr format instead of rgb
-        merged_img[:, :, 0] = b
-        merged_img[:, :, 1] = g
         merged_img[:, :, 2] = r
+
+        if len(paths) > 1:
+            g = cv2.imread(paths[1], 0)
+            if g is None:
+                raise Exception('image read returned NONE')
+
+            merged_img[:, :, 1] = g
+
+        if len(channels) > 2:
+            b = cv2.imread(paths[2], 0)
+            if b is None:
+                raise Exception('image read returned NONE')
+
+            merged_img[:, :, 0] = b
 
         # Save the merged image
         if not os.path.exists(os.path.dirname(merged_file)):

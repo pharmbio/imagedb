@@ -33,8 +33,8 @@ class DefaultTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstr
         """
         logging.debug(self.request.path)
 
-        # self.render(self.request.path.strip('/'))
-        self.render('index.html')
+        self.render(self.request.path.strip('/'))
+        #self.render('index.html')
 
 
 ROUTES = [
@@ -47,8 +47,9 @@ ROUTES = [
           (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)', ImageMergeHandler),
           (r'/api/image-merge-thumb/(.+)', ThumbImageMergeHandler),
           (r'/image-viewer/(.*)', ImageViewerHandler),
+          (r'/bstest.html', DefaultTemplateHandler),
           (r'/index.html', DefaultTemplateHandler),
-          (r'/.*', DefaultTemplateHandler),
+          (r'/', DefaultTemplateHandler),
          ]
 
 if __name__ == '__main__':

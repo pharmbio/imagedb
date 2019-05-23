@@ -35,15 +35,16 @@
                 Timepoint:<select id='timepoint-select' name='' onchange="refreshPlate(); return false;">
                     <option name='1'>1</option>
                     <option name='2'>2</option>
-                    <option name='3'>3</option>
-                    <option name='4'>4</option>
                 </select>
 
                 Wellsample:<select id='wellsample-select' name='' onchange="refreshPlate(); return false;">
                     <option name='1'>1</option>
                     <option name='2'>2</option>
-                    <option name='3'>3</option>
-                    <option name='4'>4</option>
+                </select>
+
+                Channel:<select id='channel-select' name='' onchange="refreshPlate(); return false;">
+                    <option name='1'>1</option>
+                    <option name='2'>2</option>
                 </select>
                 {% raw xsrf_form_html() %}
                 <button type='submit'>Update</button>

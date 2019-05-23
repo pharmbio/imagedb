@@ -104,9 +104,6 @@ function updateTimepointSelect(plateObj){
   elemSelect.options.length = 0;
 
   let nCount = countTimepoints(plateObj);
-
-  console.log(nCount)
-
   for(let n = 0; n < nCount; n++){
     elemSelect.options[n] = new Option( n + 1 );
   }
@@ -119,12 +116,50 @@ function updateWellsampleSelect(plateObj){
   elemSelect.options.length = 0;
 
   let nCount = countWellsamples(plateObj);
-
-  console.log(nCount)
-
   for(let n = 0; n < nCount; n++){
     elemSelect.options[n] = new Option( n + 1 );
   }
+}
+
+function updateChannelSelect(plateObj){
+
+  elemSelect =  document.getElementById('channel-select');
+  // reset
+  elemSelect.options.length = 0;
+
+  let nCount = countChannels(plateObj);
+
+  //if(nCount > 1){
+  elemSelect.options[0] = new Option( "Merge channels 1-3" );
+
+  for(let n = 0; n < nCount; n++){
+    elemSelect.options[n + 1] = new Option( n + 1 );
+  }
+}
+
+function countChannels(plateObj){
+
+  // Count number of keys for the first well of first Timepoint in plate object
+  nCount = 0;
+  looplabel:
+  Object.keys(plateObj).every(timepoint => {
+    console.log('timepoint:' + timepoint);
+    Object.keys(plateObj[timepoint]).every(well => {
+      console.log('well:' + well);
+      Object.keys(plateObj[timepoint][well]).every(wellsample => {
+        // The wellsample object contains a dict of channels
+        nCount = Object.keys(plateObj[timepoint][well][wellsample]).length;
+        return nCount;
+      })
+    })
+  })
+
+  return nCount;
+}
+
+function getSelectedChannelIndex(){
+  let elem =document.getElementById('channel-select');
+  return elem.options[elem.selectedIndex].value;
 }
 
 function getSelectedTimepointIndex(){
@@ -146,11 +181,9 @@ function countWellsamples(plateObj){
     console.log('timepoint:' + timepoint);
     Object.keys(plateObj[timepoint]).every(well => {
       console.log('well:' + well);
-      Object.keys(plateObj[timepoint][well]).every(wellsample => {
-        console.log('wellsample:' + wellsample);
-        nCount = Object.keys(plateObj[timepoint][well][wellsample]).length;
-        return nCount;
-      })
+      // The well object contains a dict of wellsamples
+      nCount = Object.keys(plateObj[timepoint][well]).length;
+      return nCount;
     })
   })
 
@@ -186,6 +219,7 @@ function loadPlate(plate_name) {
       // TODO add project also?
       updateTimepointSelect(window.loaded_plate)
       updateWellsampleSelect(window.loaded_plate)
+      updateChannelSelect(window.loaded_plate)
 
       refreshPlate();
 
