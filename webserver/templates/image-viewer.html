@@ -23,138 +23,274 @@
   <link rel='stylesheet' href='/static/main.css'>
   <script src='/static/main.js'></script>
 
+  <!-- Bootstrap core CSS -->
+  <link href="/static/theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Custom styles for current bootstrap template -->
+  <link href="/static/theme/css/simple-sidebar.css" rel="stylesheet">
+
+  <!-- range-slider Plugin CSS file with desired skin-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/css/ion.rangeSlider.min.css"/>
+
+  <!-- this imagedb -->
+  <link rel='stylesheet' href='/static/main.css'>
+
+  <!-- json-viewer -->
+  <link rel="stylesheet" href="/static/json-viewer/json-viewer.css">
+
+  <!-- jquery-bonzai -->
+  <link rel="stylesheet" href="/static/jquery-bonzai/jquery.bonsai.css">
+
+  <!-- fancy tree view plugin -->
+  <link href="//cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/skin-win8/ui.fancytree.min.css" rel="stylesheet">
+
+  <!-- Custom inline css override -->
   <style type="text/css">
-    html, body {
-        height: 100%;
-        width: 100%;
-        margin: 0px;
-        background-color: lightgray;
+
+
+    /* Jquery-bonzai override */
+    .bonsai > li {
+      font-size:15px;
+      margin: 3px;
     }
 
-</style>
+    #sidebar-wrapper {
+       width: 220px;
+    }
+
+    /* Overrides color on range-slider */
+    .irs--flat .irs-from,
+    .irs--flat .irs-to,
+    .irs--flat .irs-single {
+      background-color:#17a2b8;
+    }
+    .irs--flat .irs-bar{
+      background-color:#17a2b8;
+    }
+    .irs--flat .irs-from:before,
+    .irs--flat .irs-to:before,
+    .irs--flat .irs-single:before {
+      border-top-color:#17a2b8;
+    }
+    .irs--flat .irs-handle>i:first-child {
+      background-color:#17a2b8
+    }
+    /* -- end range-slider */
+  </style>
+
+  <!-- This is for openseadragon -->
+  <style type="text/css">
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0px;
+      background-color: lightgray;
+    }
+
+    </style>
+
+</head>
+
 
 </head>
 
 <body>
 
-  <div class="d-flex" id="wrapper">
+<div class="d-flex" id="wrapper">
 
-    <!-- Sidebar -->
-    <!--
-    <div class="bg-light border-right" id="sidebar-wrapper">
-      <div class="sidebar-heading">Image View</div>
-
-
-
-      <div class="list-group list-group-flush">
-		  <ul id='wellsample-list'>
-
-          </ul>
-      </div>
-    </div>
-    -->
-    <!-- /#sidebar-wrapper -->
-
-    <!-- Page Content -->
-    <div id="page-content-wrapper">
-
+  <!-- Page Content -->
+  <div id="page-content-wrapper">
 
     <!-- Navbar -->
-      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
 
-        Image Viewer
+    <!-- Toolbar -->
+    <div id="plate-tool-div" class="container mt-2 mb-2">
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
-            <li class="nav-item active">
-              <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Link</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Dropdown
-              </a>
-              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item" href="#">Action</a>
-                <a class="dropdown-item" href="#">Another action</a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="#">Something else here</a>
-              </div>
-            </li>
-          </ul>
+      <!-- Toolbar form -->
+      <form id='plate-tool-form' onsubmit='redrawPlate(); return false;'>
+
+        <div class="input-group">
+
+          <!-- Plate label -->
+          <label class="input-group-text">Plate: P557789</label>
+
+          <!-- Well selector -->
+          <div class="input-group-prepend ml-2">
+            <label class="input-group-text" for="well-select">Well</label>
+          </div>
+          <select class="custom-select" data-width="100px" id="well-select" onchange="redrawPlate(); return false;">
+          </select>
+
+          <!-- Timepoint selector -->
+          <div class="input-group-prepend ml-2">
+            <label class="input-group-text" for="timepoint-select">Timepoint</label>
+          </div>
+          <select class="custom-select" data-width="100px" id="timepoint-select" onchange="redrawPlate(); return false;">
+          </select>
+
+          <!-- Timepoint slider -->
+          <div id="slider" class="ml-2" style="width:100px;height:20px;hidden:true;">
+            <input type="text" id="timepoint-slider" name="" value="" style="width:0px;" />
+          </div>
+
+          <!-- Timepoint animation -->
+          <div class="form-group form-check" style="margin-bottom: 0px;">
+            <div class="col-md-4">
+              <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" onchange="toggleAnimation(); return false;">
+              <label class="form-check-label" style="margin-top:0.8rem;" for="animate-cbx">Animate</label>
+            </div>
+          </div>
+
+          <!-- Animation speed selector -->
+          <div class="input-group-prepend ml-2">
+            <label class="input-group-text" for="animation-speed-select">Anim. speed</label>
+          </div>
+          <select class="custom-select" id="animation-speed-select" onchange="updateAnimationSpeed(); return false;">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option selected value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+          </select>
+
+          <!-- Wellsample selector -->
+          <div class="input-group-prepend ml-2">
+            <label class="input-group-text" for="wellsample-select">Wellsample</label>
+          </div>
+          <select class="custom-select" id="wellsample-select" onchange="redrawPlate(); return false;">
+          </select>
+
+          <!-- Channel selector -->
+          <div class="input-group-prepend ml-2">
+            <label class="input-group-text" for="channel-select">Channel</label>
+          </div>
+          <select class="custom-select" id="channel-select" onchange="redrawPlate(); return false;">
+          </select>
+
         </div>
-      </nav>
 
-     <!-- Toolbar -->
-     <!--
-      <div id="plate-tool-div" class="container-fluid mt-2 mb-2">
-		  <form id='plate-tool-form' onsubmit='redrawPlate(); return false;'>
-		    <div class="input-group">
-			  <div class="input-group-prepend">
-				<label class="input-group-text" for="timepoint-select">Timepoint</label>
-			  </div>
-			  <select class="custom-select" data-width="100px" id="timepoint-select" onchange="redrawPlate(); return false;">
-
-			  </select>
-			  <div class="input-group-prepend ml-2">
-				<label class="input-group-text" for="wellsample-select">Wellsample</label>
-			  </div>
-			  <select class="custom-select" id="wellsample-select" onchange="redrawPlate(); return false;">
-
-			  </select>
-			  <div class="input-group-prepend ml-2">
-				<label class="input-group-text" for="channel-select">Channel</label>
-			  </div>Toolbar
-			  <select class="custom-select" id="channel-select" onchange="redrawPlate(); return false;">
-
-			  </select>
-
-		    </div>
-          </form>
-      </div>
-      -->
-
+      </form>
     </div>
-    <!-- /#page-content-wrapper -->
+    <!-- end Toolbar -->
+
+      <!-- Navbar menues -->
+      <div class="collapse navbar-collapse" id="navbarSupportedContent" >
+        <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Help
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+              <a class="dropdown-item" href="#">Not implemented yet...</a>
+              <a class="dropdown-item" href="#">Another thing...</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="#">Something else here</a>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="https://pharmb.io">Pharmb.io <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/pharmbio/imagedb">Github</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
 
 
 
   </div>
-  <!-- /#wrapper -->
+  <!-- /#page-content-wrapper -->
 
 
-        <!-- Main div -->
-        <div id="viewer-div" class="flex-grow-1" style="background-color: lightgray; width:100%;height:100%;">
+</div>
+<!-- /#wrapper -->
 
-         </div>
+<!-- Main div -->
+<div id="viewer-div" class="flex-grow-1" style="background-color: lightgray; width:100%;height:100%;">
+
+</div>
+
+<!-- Bootstrap core JavaScript -->
+<script src="/static/theme/vendor/jquery/jquery.min.js"></script>
+<script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<!-- fancy tree view plugin -->
+<script src="//cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/jquery.fancytree-all-deps.min.js"></script>
+
+<!-- openseadragon image-viewer -->
+<script src="/static/openseadragon/openseadragon.min.js"></script>
+
+<!-- json-viewer -->
+<script src="/static/json-viewer/json-viewer.js"></script>
+
+<!-- jquery-bonzai -->
+<script src="/static/jquery-bonzai/jquery.bonsai.js"></script>
+
+<!-- range-slider jquery plugin-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/js/ion.rangeSlider.min.js"></script>
+
+<!-- this imagedb -->
+<script src='/static/main.js'></script>
 
 
-  <!-- Bootstrap core JavaScript -->
-  <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
-  <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- Body inline script -->
+<script>
 
-  <script>
+  // jQuery init methods
+  $(document).ready(function(){
 
-      var viewer = OpenSeadragon({
-            id: "viewer-div",
-            prefixUrl: "/static/openseadragon/images/",
-            animationTime: 0.5, // default 1.2
-            zoomPerSecond: 1, // default: 1
-            zoomPerScroll: 1.7, // default: 1.2
-            minZoomImageRatio: 0.9, // default: 0.8
-            maxZoomPixelRatio: 10,  // deault: 2
-            homeFillsViewer    : true,
-            tileSources: {
-              type: 'image',
-              url:  '{{ image_url }}',
-              buildPyramid: false
-            }
-      });
+    // Create disabled slider to be updated later
+    $("#timepoint-slider").ionRangeSlider({
+      //skin: "modern",
+      type: "single",
+      min: 1,
+      max: 1,
+      from: 1,
+      disable: true,
+      onChange: function (data) {
+        elem = document.getElementById('timepoint-select');
+        let newVal = data.from - 1;
+        // Check first to avoid recursion
+        if(elem.selectedIndex != newVal){
+          elem.selectedIndex = data.from - 1;
+          elem.onchange();
+        }
+      }
+    });
 
+    // Submit empty search to load all plates into start page
+    // $("#query-form").submit();
+  });
 
-  </script>
+</script>
+
+<!-- Init openseadragon -->
+<script>
+
+  var viewer = OpenSeadragon({
+    id: "viewer-div",
+    prefixUrl: "/static/openseadragon/images/",
+    animationTime: 0.5, // default 1.2
+    zoomPerSecond: 1, // default: 1
+    zoomPerScroll: 1.7, // default: 1.2
+    minZoomImageRatio: 0.9, // default: 0.8
+    maxZoomPixelRatio: 10,  // deault: 2
+    homeFillsViewer    : true,
+    tileSources: {
+      type: 'image',
+      url:  '{{ image_url }}',
+      buildPyramid: false
+    }
+  });
+
+</script>
 
 </body>
 

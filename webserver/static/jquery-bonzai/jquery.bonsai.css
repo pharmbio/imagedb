@@ -1,0 +1,38 @@
+@charset "UTF-8";
+
+.bonsai,
+.bonsai > li {
+  margin: 0px;
+  list-style: none;
+  overflow: hidden;
+  padding: 0;
+}
+
+.bonsai > li {
+  position: relative;
+  padding-left: 1.3em; /* padding for the thumb */
+}
+
+li .thumb {
+  margin: -1px 0 0 -1em; /* negative margin into the padding of the li */
+  position: absolute;
+  cursor: pointer;
+}
+
+li.has-children > .thumb:after {
+  content: '▸';
+}
+
+li.has-children.expanded > .thumb:after {
+  content: '▾';
+}
+
+li.collapsed > ol.bonsai {
+  height: 0;
+  overflow: hidden;
+}
+
+.bonsai .all,
+.bonsai .none {
+  cursor: pointer;
+}

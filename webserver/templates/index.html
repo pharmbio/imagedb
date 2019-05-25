@@ -13,25 +13,41 @@
   <!-- Bootstrap core CSS -->
   <link href="/static/theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
-  <!-- Custom styles for this template -->
+  <!-- Custom styles for current bootstrap template -->
   <link href="/static/theme/css/simple-sidebar.css" rel="stylesheet">
 
-  <!-- openseadragon image-viewer -->
-  <script src="/static/openseadragon/openseadragon.min.js"></script>
-
-  <!--range-slider Plugin CSS file with desired skin-->
+  <!-- range-slider Plugin CSS file with desired skin-->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/css/ion.rangeSlider.min.css"/>
 
-  <!-- imagedb scripts and css -->
+  <!-- this imagedb -->
   <link rel='stylesheet' href='/static/main.css'>
-  <script src='/static/main.js'></script>
 
+  <!-- json-viewer -->
+  <link rel="stylesheet" href="/static/json-viewer/json-viewer.css">
+
+  <!-- jquery-bonzai -->
+  <link rel="stylesheet" href="/static/jquery-bonzai/jquery.bonsai.css">
+
+  <!-- fancy tree view plugin -->
+  <link href="//cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/skin-win8/ui.fancytree.min.css" rel="stylesheet">
+
+  <!-- Custom inline css override -->
   <style type="text/css">
-    ul li{
-      font-size:14px;
+
+
+    /* Jquery-bonzai override */
+    .bonsai > li {
+      font-size:15px;
+      margin: 3px;
     }
 
+    #sidebar-wrapper {
+      width: 220px;
+    }
+
+
     /* This is just for making left sidebar scrollable */
+    /*
     #sidebar-wrapper {
       z-index: 1000;
       position: fixed;
@@ -53,10 +69,11 @@
       left: 230px;
       margin-right: 230px;
     }
+    */
     /* end -This is just for making left sidebar scrollable */
 
 
-    /* Overrides color on slider*/
+    /* Overrides color on range-slider */
     .irs--flat .irs-from,
     .irs--flat .irs-to,
     .irs--flat .irs-single {
@@ -73,6 +90,7 @@
     .irs--flat .irs-handle>i:first-child {
       background-color:#17a2b8
     }
+    /* -- end range-slider */
 
   </style>
 
@@ -83,13 +101,12 @@
 <div class="d-flex" id="wrapper">
 
   <!-- Sidebar -->
-  <div class="bg-light border-right" id="sidebar-wrapper">
+  <div class="bg-light border-right" id="sidebar-wrapper";>
     <div class="sidebar-heading">Projects/Plates</div>
 
-    <div class="list-group list-group-flush">
-      <ul id='result-list' >
-
-      </ul>
+    <div class="sidebar-heading">
+      <!-- <div class="list-group list-group-flush">-->
+      <ul id='result-list' ></ul>
     </div>
   </div>
   <!-- /#sidebar-wrapper -->
@@ -98,12 +115,11 @@
   <!-- Page Content -->
   <div id="page-content-wrapper">
 
-
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
 
       <!-- Search form -->
-      <form id='query-form' onsubmit='return apiQuery(event)'>
+      <form id='query-form' onsubmit='return apiSearch(event)'>
         <div class="input-group">
 
           <input type="text" class="form-control input-sm" maxlength="" placeholder="Search" />
@@ -117,22 +133,22 @@
       <!-- Navbar menues -->
       <div class="collapse navbar-collapse" id="navbarSupportedContent" >
         <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
-          <li class="nav-item active">
-            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Link</a>
-          </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Dropdown
+              Help
             </a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-              <a class="dropdown-item" href="#">Action</a>
-              <a class="dropdown-item" href="#">Another action</a>
+              <a class="dropdown-item" href="#">Not implemented yet...</a>
+              <a class="dropdown-item" href="#">Another thing...</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="#">Something else here</a>
             </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="https://pharmb.io">Pharmb.io <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/pharmbio/imagedb">Github</a>
           </li>
         </ul>
       </div>
@@ -144,7 +160,7 @@
       <!-- Toolbar form -->
       <form id='plate-tool-form' onsubmit='redrawPlate(); return false;'>
 
-        <div class="input-group">
+        <div class="input-group align-bottom">
 
           <!-- Timepoint selector -->
           <div class="input-group-prepend">
@@ -157,6 +173,30 @@
           <div id="slider" class="ml-2" style="width:100px;height:20px;hidden:true;">
             <input type="text" id="timepoint-slider" name="" value="" style="width:0px;" />
           </div>
+
+          <!-- Timepoint animation -->
+          <div class="form-group form-check" style="margin-bottom: 0px;">
+            <div class="col-md-4">
+              <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" onchange="toggleAnimation(); return false;">
+              <label class="form-check-label" style="margin-top:0.8rem;" for="animate-cbx">Animate</label>
+            </div>
+          </div>
+
+          <!-- Animation speed selector -->
+          <div class="input-group-prepend ml-2">
+            <label class="input-group-text" for="animation-speed-select">Anim. speed</label>
+          </div>
+          <select class="custom-select" id="animation-speed-select" onchange="updateAnimationSpeed(); return false;">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option selected value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+          </select>
 
           <!-- Wellsample selector -->
           <div class="input-group-prepend ml-2">
@@ -176,10 +216,26 @@
 
       </form>
     </div>
+    <!-- end Toolbar -->
 
-    <!-- Main div -->
-    <div id="table-div" class="container-fluid flex-fill" style="height: 1000px; width: 100%">
+    <!-- Table div -->
+    <div id="table-div" class="container-fluid flex-fill">
 
+    </div>
+
+    <!-- Meta data div -->
+    <div id="meta-div" class="container-fluid flex-fill mt-2">
+
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <label class="input-group-text" for="add-field-button">Plate metadata</label>
+        </div>
+        <button type="button" id="add-field-button" class="btn btn-info btn-sm ml-2" data-toggle="modal" data-target="#add-datafield">Add field</button>
+        <!--<button type="button" class="btn btn-primary" data-toggle="modal">Button label</button>-->
+        <button type="button" id="delete-field-button" class="btn btn-info btn-sm ml-2" data-toggle="modal" data-target="#delete-datafield">Delete field</button>
+      </div>
+
+      <div id="meta-div-json"></div>
     </div>
 
   </div>
@@ -189,20 +245,99 @@
 </div>
 <!-- /#wrapper -->
 
+<!-- Modal dialogs -->
+
+<!-- Modal dialog "Add database field ...." -->
+<div class="modal fade" id="add-datafield" tabindex="-1" role="dialog" aria-labelledby="add-datafieldLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="add-datafieldLabel">Add database field to this plate</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group">
+            <label for="add-field-name" class="col-form-label">Field to add:</label>
+            <input type="text" class="form-control" id="add-field-name">
+          </div>
+          <div class="form-group">
+            <label for="add-field-text" class="col-form-label">Field data:</label>
+            <textarea class="form-control" rows="10" style="height:100%;" id="add-field-text"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary">Add field to plate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal dialog "Delete database field ...." -->
+<div class="modal" id="delete-datafield" tabindex="-1" role="dialog" aria-labelledby="delete-datafieldLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="delete-datafieldLabel">Delete database field from this plate</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group">
+            <label for="delete-field-name" class="col-form-label">Field to delete:</label>
+            <select class="custom-select" id="delete-field-name" onchange="return false;">
+              <option value="Select...">Select...</option>
+              <option value="Reagents">Reagents</option>
+              <option value="Another field">Another field</option>
+            </select>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary">Delete field from plate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- end Modal dialogs -->
+
 
 <!-- Bootstrap core JavaScript -->
 <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
 <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-<!-- tree view plugin -->
-<link href="//cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/skin-win8/ui.fancytree.min.css" rel="stylesheet">
+<!-- fancy tree view plugin -->
 <script src="//cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/jquery.fancytree-all-deps.min.js"></script>
 
+<!-- openseadragon image-viewer -->
+<script src="/static/openseadragon/openseadragon.min.js"></script>
 
-<!--Plugin JavaScript file-->
+<!-- json-viewer -->
+<script src="/static/json-viewer/json-viewer.js"></script>
+
+<!-- jquery-bonzai -->
+<script src="/static/jquery-bonzai/jquery.bonsai.js"></script>
+
+<!-- range-slider jquery plugin-->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/js/ion.rangeSlider.min.js"></script>
 
+<!-- this imagedb -->
+<script src='/static/main.js'></script>
+
+
+<!-- Body inline script -->
 <script>
+  // Create an empty table to start with - just because it looks good!
+  let table = createEmptyTable(8, 12);
+  let container = document.getElementById('table-div');
+  container.appendChild(table);
 
   // jQuery init methods
   $(document).ready(function(){
@@ -217,8 +352,12 @@
       disable: true,
       onChange: function (data) {
         elem = document.getElementById('timepoint-select');
-        elem.selectedIndex = data.from - 1;
-        elem.onchange();
+        let newVal = data.from - 1;
+        // Check first to avoid recursion
+        if(elem.selectedIndex != newVal){
+          elem.selectedIndex = data.from - 1;
+          elem.onchange();
+        }
       }
     });
 

@@ -3,29 +3,86 @@
  */
 
 var loaded_plate = null;
+var animation = null;
 
-function removeChildren(domObject) {
-  while (domObject.firstChild) {
-    domObject.removeChild(domObject.firstChild);
-  }
-}
+function apiSearch(event) {
+  event.preventDefault();
 
-function getWellName(row, col) {
-  var rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"];
-  return rows[row] + col.toString().padStart(2, 0)
-}
+  fetch('/api/query', {
+    method: 'POST',
+    body: new FormData(document.getElementById('query-form'))
+  })
+        .then(response => response.json())
+        .then(response => {
+          console.log(response)
+          console.log(response.results)
+          let list = document.getElementById('result-list');
+          removeChildren(list);
+          let last_proj = "";
+          let plate_list = null;
+          response.results.forEach(result => {
 
-function createMergeThumbImgURLFromChannels(channels) {
-  let url = "/api/image-merge-thumb/" + encodeURIComponent(JSON.stringify(channels));
-  return url;
-}
+            // Create a list with all projects
+            let proj = result._id.project;
+            let plate = result._id.plate;
 
-function createMergeImgURLFromChannels(channels) {
-  let url = "/api/image-merge/ch1/" + channels[1] + "/ch2/" + channels[2] + "/ch3/" + channels[3];
-  return url;
+            // create a new sublist for each project
+            if (last_proj != proj) {
+              let proj_item = document.createElement('li');
+              proj_item.innerHTML = "<span style='cursor: pointer;''>" + proj + "</span>";
+              list.appendChild(proj_item);
+              plate_list = document.createElement('ul');
+              proj_item.appendChild(plate_list);
+            }
+
+            let plate_item = document.createElement('li');
+            let link = document.createElement('a');
+            link.className = "text-info";
+            link.href = "";
+            let linktext = plate;
+            let content = document.createTextNode(linktext);
+            link.appendChild(content);
+            plate_item.appendChild(link);
+
+            plate_item.onclick = function (e) {
+              e.preventDefault();
+              loadPlate(plate)
+            };
+
+            plate_list.appendChild(plate_item);
+            last_proj = proj;
+          })
+
+          // Turn list into a clickable tree-view with projects collapsed
+          $('#result-list').bonsai({
+            expandAll: false, // expand all items
+            expand: null, // optional function to expand an item
+            collapse: null, // optional function to collapse an item
+            addExpandAll: false, // add a link to expand all items
+            addSelectAll: false, // add a link to select all checkboxes
+            selectAllExclude: null, // a filter selector or function for selectAll
+            createInputs: false,
+            checkboxes: false, // run qubit(this.options) on the root node (requires jquery.qubit)
+            handleDuplicateCheckboxes: false //update any other checkboxes that have the same value
+          });
+
+          // Tweak to get clickable project-names instead of only the little arrow
+          // the project names are enclosed in <span></span>
+          // https://github.com/aexmachina/jquery-bonsai/issues/23
+          $('#result-list').on('click', 'span', function() {
+            $(this).closest('li').find('> .thumb').click();
+          });
+
+        })
+        .catch(error => console.error('Error:', error));
 }
 
 function loadPlate(plate_name) {
+
+  // stop any current animation
+  stopAnimation();
+  document.getElementById("animate-cbx").checked = false;
+
 
   fetch('/api/list/' + plate_name)
         .then(response => response.json())
@@ -36,11 +93,12 @@ function loadPlate(plate_name) {
 
           // TODO set title when plate object contains that also!
           //document.getElementById('plate-name-title').value = window.loaded_plate.plate;
-          // TODO add project also?
+          // TODO add label with project also?
           updateTimepointSelect(window.loaded_plate);
           updateTimepointSlider(window.loaded_plate);
           updateWellsampleSelect(window.loaded_plate);
           updateChannelSelect(window.loaded_plate);
+          updateMetaData(window.loaded_plate);
 
           drawNewPlate();
 
@@ -67,38 +125,75 @@ function redrawPlate(clearFirst=false) {
   drawPlate(plateObj, timepoint, wellsample, clearFirst);
 }
 
+function createEmptyTable(rows, cols){
+  let table = document.createElement('table');
+    table.id = 'plateTable';
+    table.className = 'plateTable';
+
+    // First add header row
+    let headerRow = document.createElement('tr');
+    for (let col = 1; col <= cols; col++) {
+      // If first col then add empty cell before (to match column headers)
+      if(col == 1){
+        let empty_cell = document.createElement('td');
+        empty_cell.innerHTML = "";
+        empty_cell.className = 'headerCell';
+        headerRow.appendChild(empty_cell);
+      }
+      let row = 0;
+      let well_name = getWellName(row, col);
+      let header_cell = document.createElement('td');
+      header_cell.innerHTML = well_name.substring(1);
+      header_cell.className = 'headerCell';
+      headerRow.appendChild(header_cell);
+    }
+    table.appendChild(headerRow);
+
+    // Now add rows and columns
+    for (let row = 0; row < rows; row++) {
+      let rowElement = document.createElement('tr');
+      for (let col = 1; col <= cols; col++) {
+
+        let well_name = getWellName(row, col);
+
+        // Add column header before first column cell
+        if(col == 1){
+          let header_cell = document.createElement('td');
+          header_cell.innerHTML = well_name.charAt(0);
+          header_cell.className = 'headerCell';
+          rowElement.appendChild(header_cell);
+        }
+
+        let well_cell = document.createElement('td');
+        well_cell.id = well_name;
+        well_cell.className = 'wellCell';
+        rowElement.appendChild(well_cell);
+      }
+      table.appendChild(rowElement);
+    }
+
+    return table;
+}
+
 function drawPlate(plateObj, timepoint, wellsample, clearFirst) {
 
   console.log(plateObj);
 
   let container = document.getElementById('table-div');
 
+  // If for example a new plate have been selected
+  // all old well_images should be removed since plate layout might change
   if(clearFirst){
     removeChildren(container);
   }
 
   // first create a new plate consisting of empty well-div's
   // TODO fix for other plate sizes
-  let rows = 8;
-  let cols = 12;
   if (document.getElementById('plateTable') == null) {
-
-    let table = document.createElement('table');
-    table.id = 'plateTable';
-    table.className = 'plateTable';
+    let rows = 8;
+    let cols = 12;
+    let table = createEmptyTable(rows, cols);
     container.appendChild(table);
-
-    for (let row = 0; row < rows; row++) {
-      let rowElement = document.createElement('tr');
-      for (let col = 1; col <= cols; col++) {
-        let well_name = getWellName(row, col);
-        let well_cell = document.createElement('td');
-        well_cell.id = well_name;
-        rowElement.appendChild(well_cell);
-      }
-      table.appendChild(rowElement);
-
-    }
   }
 
   console.log(container);
@@ -114,6 +209,8 @@ function drawPlate(plateObj, timepoint, wellsample, clearFirst) {
     let well_cell = document.getElementById(well);
 
     // Try to get existing canvas - if it doesn't exist create it
+    // this way we are only drawing images on top of existing images
+    // and animation becomes smooth
     let wellCanvas = document.getElementById('wellCanvas' + well);
     if (wellCanvas == null) {
 
@@ -155,7 +252,6 @@ function openViewer(imageURL) {
 }
 
 function openViewerInMainDiv(imageURL) {
-
   let container = document.getElementById('table-div');
   removeChildren(container);
 
@@ -179,22 +275,36 @@ function openViewerInMainDiv(imageURL) {
 
 function getSelectedTimepointIndex() {
   let elem = document.getElementById('timepoint-select');
-  return elem.options[elem.selectedIndex].value;
+  return parseInt(elem.options[elem.selectedIndex].value);
+}
+
+function setSelectedTimepointIndex(index) {
+  let elem = document.getElementById('timepoint-select');
+  // TODO Can not update this due to recursion from slider onChange method
+  elem.selectedIndex = index - 1;
+  //elem.options[elem.selectedIndex].value = index;
+  updateTimepointSliderPos();
+  console.log("set ix=" + index);
+  redrawPlate();
 }
 
 function getSelectedChannelIndex() {
   let elem = document.getElementById('channel-select');
-  return elem.options[elem.selectedIndex].value;
+  return parseInt(elem.options[elem.selectedIndex].value);
 }
 
 function getSelectedWellsampleIndex() {
   let elem = document.getElementById('wellsample-select');
-  return elem.options[elem.selectedIndex].value;
+  return parseInt(elem.options[elem.selectedIndex].value);
+}
+
+function getSelectedAnimationSpeed() {
+  let elem = document.getElementById('animation-speed-select');
+  return parseInt(elem.options[elem.selectedIndex].value);
 }
 
 
 function updateTimepointSelect(plateObj) {
-
   elemSelect = document.getElementById('timepoint-select');
 
   // reset
@@ -207,9 +317,30 @@ function updateTimepointSelect(plateObj) {
   }
 }
 
+function updateTimepointSliderPos() {
+  // Get slider function
+  let slider = $("#timepoint-slider").data("ionRangeSlider");
+
+  nSelected = getSelectedTimepointIndex();
+
+  // update
+  slider.update({
+    from: nSelected
+  });
+}
+
+function updateTimepointSliderPos() {
+  nSelected = getSelectedTimepointIndex();
+
+  // update
+  let slider = $("#timepoint-slider").data("ionRangeSlider");
+  slider.update({
+    from: nSelected
+  });
+}
+
 
 function updateTimepointSlider(plateObj) {
-
   let nCount = countTimepoints(plateObj);
 
   // disable if single timepoint
@@ -222,18 +353,61 @@ function updateTimepointSlider(plateObj) {
   // Get slider function
   let slider = $("#timepoint-slider").data("ionRangeSlider");
 
+  nSelected = getSelectedTimepointIndex();
+
   // update
   slider.update({
+    from: nSelected,
     min: 1,
     max: nCount,
     disable: disable
   });
-
 }
 
+function toggleAnimation(){
+  if(document.getElementById("animate-cbx").checked){
+    // Check that animation is not ongoing already
+    if(animation == null) {
+      startAnimation();
+    }
+  }
+  else{
+    stopAnimation();
+  }
+}
+
+function stopAnimation(){
+  if(animation){
+    clearInterval(animation);
+    animation = null;
+  }
+}
+
+function startAnimation(){
+  let speed = getSelectedAnimationSpeed();
+  let delay = 1000 - (speed * 100);
+  let nTimepoints = countTimepoints(window.loaded_plate);
+
+  animation = setInterval(function() {
+    let current = getSelectedTimepointIndex();
+    let next = current + 1;
+    if(next > nTimepoints){
+      next = 1;
+    }
+    setSelectedTimepointIndex(next);
+
+  }, delay);
+}
+
+function updateAnimationSpeed() {
+  // Only update if running
+  if(animation){
+    stopAnimation();
+    startAnimation();
+  }
+}
 
 function updateWellsampleSelect(plateObj) {
-
   elemSelect = document.getElementById('wellsample-select');
 
   // reset
@@ -246,8 +420,23 @@ function updateWellsampleSelect(plateObj) {
   }
 }
 
-function updateChannelSelect(plateObj) {
+function updateMetaData(plateObj) {
+  // Clear first
+  document.getElementById('meta-div-json').innerHTML = "";
 
+  let jsonViewer = new JSONViewer("");
+  document.querySelector("#meta-div-json").appendChild(jsonViewer.getContainer());
+  jsonViewer.showJSON(plateObj, null, 2);
+}
+
+function updateMetaData_old(plateObj) {
+  metaDiv = document.getElementById('meta-div');
+  let prettyJSON = JSON.stringify(plateObj, null, 2); // spacing level = 2
+  console.log(prettyJSON);
+  metaDiv.innerHTML = "Plate meta:<br>" + prettyJSON;
+}
+
+function updateChannelSelect(plateObj) {
   elemSelect = document.getElementById('channel-select');
 
   // reset
@@ -256,7 +445,15 @@ function updateChannelSelect(plateObj) {
   let nCount = countChannels(plateObj);
 
   // First add default (Merge channels options)
-  elemSelect.options[0] = new Option("Merge channels 1-3");
+  if(nCount == 1) {
+    elemSelect.options[0] = new Option("1", 1);
+  }
+  else if(nCount == 2) {
+    elemSelect.options[0] = new Option("1-2");
+  }
+  else if(nCount >= 3){
+    elemSelect.options[0] = new Option("1-3");
+  }
 
   // add as many options as channels
   for (let n = 0; n < nCount; n++) {
@@ -265,7 +462,6 @@ function updateChannelSelect(plateObj) {
 }
 
 function countTimepoints(plateObj) {
-
   // A plate-object is nothing but a dict of timepoints
   let timepoints = plateObj;
   // Count number of keys in timepoint object
@@ -273,7 +469,6 @@ function countTimepoints(plateObj) {
 }
 
 function countChannels(plateObj) {
-
   // Count number of keys for the first wellsample of first well of first Timepoint in plate object
   nCount = 0;
   looplabel:
@@ -293,7 +488,6 @@ function countChannels(plateObj) {
 }
 
 function countWellsamples(plateObj) {
-
   // Count number of keys for the first well of first Timepoint in plate object
   nCount = 0;
   looplabel:
@@ -310,71 +504,24 @@ function countWellsamples(plateObj) {
   return nCount;
 }
 
-
-function apiQuery(event) {
-  event.preventDefault();
-
-  fetch('/api/query', {
-    method: 'POST',
-    body: new FormData(document.getElementById('query-form'))
-  })
-        .then(response => response.json())
-        .then(response => {
-          console.log(response)
-          console.log(response.results)
-          let list = document.getElementById('result-list');
-          removeChildren(list);
-          let last_proj = "";
-          let plate_list = null;
-          response.results.forEach(result => {
-            /*
-                       <ul id='result-list'>
-                        <li>ACN92</li>
-                          <ul>
-                            <li><a href="#" class="">P0023</a></li>
-                            <li><a href="#" class="">P0023</a></li>
-                          </ul>
-                        <li>EXP28</li>
-                           <ul>
-                             <li>Gadgets</li>
-                             <li>Accessories</li>
-                           </ul>
-                       </ul>
-            */
-            let proj = result._id.project;
-            let plate = result._id.plate;
-
-            // create a new sublist for each project
-            if (last_proj != proj) {
-              let proj_item = document.createElement('li');
-              proj_item.innerHTML = proj;
-              list.appendChild(proj_item);
-              plate_list = document.createElement('ul');
-              proj_item.appendChild(plate_list);
-            }
-
-            let plate_item = document.createElement('li');
-            let link = document.createElement('a');
-            link.href = "";
-            let linktext = plate;
-            let content = document.createTextNode(linktext);
-            link.appendChild(content);
-            plate_item.appendChild(link);
-
-            plate_item.onclick = function (e) {
-              e.preventDefault();
-              loadPlate(plate)
-            };
-
-            plate_list.appendChild(plate_item);
-            last_proj = proj;
-          })
-          console.log("Before tree-call")
-
-          jQuery('#result-list').fancytree();
-
-
-          ;
-        })
-        .catch(error => console.error('Error:', error));
+function removeChildren(domObject) {
+  while (domObject.firstChild) {
+    domObject.removeChild(domObject.firstChild);
+  }
 }
+
+function getWellName(row, col) {
+  var rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"];
+  return rows[row] + col.toString().padStart(2, 0)
+}
+
+function createMergeThumbImgURLFromChannels(channels) {
+  let url = "/api/image-merge-thumb/" + encodeURIComponent(JSON.stringify(channels));
+  return url;
+}
+
+function createMergeImgURLFromChannels(channels) {
+  let url = "/api/image-merge/ch1/" + channels[1] + "/ch2/" + channels[2] + "/ch3/" + channels[3];
+  return url;
+}
+
