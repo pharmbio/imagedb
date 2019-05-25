@@ -5,31 +5,11 @@ This file has the ImageHandler, it gets request for images and returns images.
 
 import logging
 import json
-import os
-import urllib
 
 import tornado.web
-from tornado.httpclient import HTTPResponse
-from tornado.httputil import HTTPHeaders
 from imageutils import (merge_channels, tif2png)
 import settings as imgdb_settings
 
-
-from dbqueries import list_plate
-
-
-class ImageListHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
-    """
-    The image list handler returns lists of image names
-    """
-    def get(self, plate):
-        """Handles GET requests.
-        """
-        logging.info("plate: " + str(plate))
-
-        result = list_plate(plate)
-
-        self.finish({'data':result})
 
 class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
     """
@@ -137,17 +117,3 @@ class ImageViewerHandler(tornado.web.RequestHandler): #pylint: disable=abstract-
         self.render('image-viewer.html',
                      image_url=image_url)
 
-
-class ImageHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
-    """
-    The image handler returns actual images
-    """
-    def get(self, image):
-        """Handles GET requests.
-        """
-        import random
-        images = ['red.png', 'blue.png', 'green.png']
-
-        selected_image = images[random.randint(0, len(images)-1)]
-
-        self.write(open(selected_image, 'rb').read())

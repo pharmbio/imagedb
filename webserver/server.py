@@ -8,12 +8,10 @@ import logging
 import tornado
 import tornado.web
 
-from handlers.query_handler import QueryHandler
-from handlers.image_handler import (ImageListHandler,
-                                    ImageHandler,
-                                    ImageViewerHandler,
-                                    ImageMergeHandler,
-                                    ThumbImageMergeHandler)
+from handlers.query_handler import QueryHandler, ListImagesQueryHandler
+from handlers.image_handlers import (ImageViewerHandler,
+                                     ImageMergeHandler,
+                                     ThumbImageMergeHandler)
 
 SETTINGS = {
     'debug': True,
@@ -50,8 +48,7 @@ ROUTES = [
           (r'/thumbs/(.*)', tornado.web.StaticFileHandler, {'path': '/share/imagedb/thumbs/share/mikro/IMX/MDC Polina Georgiev/'}),
           (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), 'static')}),
           (r'/api/query', QueryHandler),
-          (r'/api/list/(?P<plate>[^\/]+)', ImageListHandler),
-          (r'/api/image/(?P<image>[^\/]+)', ImageHandler),
+          (r'/api/list/(?P<plate>[^\/]+)', ListImagesQueryHandler),
           (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)', ImageMergeHandler),
           (r'/api/image-merge-thumb/(.+)', ThumbImageMergeHandler),
           (r'/image-viewer/(.*)', ImageViewerHandler),

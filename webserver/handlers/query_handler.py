@@ -10,7 +10,7 @@ import logging
 
 import tornado.web
 
-from dbqueries import list_plates
+from dbqueries import list_plates, list_plate
 
 
 def make_totally_real_query(data):
@@ -56,3 +56,17 @@ class QueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
         results = list_projects(form_data)
         logging.debug(results)
         self.finish({'results':results})
+
+
+class ListImagesQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
+    """
+    The image list handler returns lists of image names
+    """
+    def get(self, plate):
+        """Handles GET requests.
+        """
+        logging.info("plate: " + str(plate))
+
+        result = list_plate(plate)
+
+        self.finish({'data':result})
