@@ -1,62 +1,233 @@
-<!doctype html>
-<html lang='en'>
-    <head>
-        <meta charset='utf-8'>
-        <meta name='viewport' content='width=device-width, initial-scale=1'>
-        <title>amero-db-webui</title>
-        <link rel='stylesheet' href='/static/main.css'>
-        <script src='/static/main.js'></script>
-    </head>
-    <body>
-        <h1>Pharmbio amero-db-webui hej</h1>
-        <div class='search-form-box'>
-            <form id='query-form' onsubmit='return apiQuery(event)'>
-                Search:<input type='text' name='search' value='about 31.4 or so'>
-                Graph-vectromizer:<select name='val2'>
-                    <option name='opt1'>initial-offset</option>
-                    <option name='opt2'>stetson-harrison</option>
-                    <option name='opt3'>bitchain</option>
-                    <option name='opt4'>quantum deploy</option>
-                </select>
-                {% raw xsrf_form_html() %}
-                <button type='submit'>Search</button>
-          </form>
-        </div>
-        <ul id='result-list'>
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>Pharmb.io imagedb (AMERO)</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="/static/theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Custom styles for this template -->
+  <link href="/static/theme/css/simple-sidebar.css" rel="stylesheet">
+
+  <!-- openseadragon image-viewer -->
+  <script src="/static/openseadragon/openseadragon.min.js"></script>
+
+  <!--range-slider Plugin CSS file with desired skin-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/css/ion.rangeSlider.min.css"/>
+
+  <!-- imagedb scripts and css -->
+  <link rel='stylesheet' href='/static/main.css'>
+  <script src='/static/main.js'></script>
+
+  <style type="text/css">
+    ul li{
+      font-size:14px;
+    }
+
+    /* This is just for making left sidebar scrollable */
+    #sidebar-wrapper {
+      z-index: 1000;
+      position: fixed;
+      left: 190px;
+      top: 0px;
+      bottom: 0px;
+      margin-left: -190px;
+      overflow-y: auto;
+      overflow-: hidden;
+      background: #222222;
+      -webkit-transition: all 0.5s ease;
+      -moz-transition: all 0.5s ease;
+      -o-transition: all 0.5s ease;
+      transition: all 0.5s ease;
+    }
+    #page-content-wrapper {
+      width: 85%;
+      position: fixed;
+      left: 230px;
+      margin-right: 230px;
+    }
+    /* end -This is just for making left sidebar scrollable */
+
+
+    /* Overrides color on slider*/
+    .irs--flat .irs-from,
+    .irs--flat .irs-to,
+    .irs--flat .irs-single {
+      background-color:#17a2b8;
+    }
+    .irs--flat .irs-bar{
+      background-color:#17a2b8;
+    }
+    .irs--flat .irs-from:before,
+    .irs--flat .irs-to:before,
+    .irs--flat .irs-single:before {
+      border-top-color:#17a2b8;
+    }
+    .irs--flat .irs-handle>i:first-child {
+      background-color:#17a2b8
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="d-flex" id="wrapper">
+
+  <!-- Sidebar -->
+  <div class="bg-light border-right" id="sidebar-wrapper">
+    <div class="sidebar-heading">Projects/Plates</div>
+
+    <div class="list-group list-group-flush">
+      <ul id='result-list' >
+
+      </ul>
+    </div>
+  </div>
+  <!-- /#sidebar-wrapper -->
+
+
+  <!-- Page Content -->
+  <div id="page-content-wrapper">
+
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+
+      <!-- Search form -->
+      <form id='query-form' onsubmit='return apiQuery(event)'>
+        <div class="input-group">
+
+          <input type="text" class="form-control input-sm" maxlength="" placeholder="Search" />
+          <button type="submit" class="btn btn-info btn-sm ml-2">Search</button>
+
+          {% raw xsrf_form_html() %}
+
+        </div>
+      </form>
+
+      <!-- Navbar menues -->
+      <div class="collapse navbar-collapse" id="navbarSupportedContent" >
+        <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Link</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Dropdown
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+              <a class="dropdown-item" href="#">Action</a>
+              <a class="dropdown-item" href="#">Another action</a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="#">Something else here</a>
+            </div>
+          </li>
         </ul>
-        <div id="images" class="image-blob">
-        </div>
-        <div id="plate-tool-div">
-            <form id='plate-tool-form' onsubmit='refreshPlate(); return false;'>
-                Plate: <input id='plate-name-title' type='text' name='plate-name-title' value='PXXXXX' readonly>
-                <input id='plate-field' type='hidden' name='plate-field' value='1'>
-                <!--Timepoint:<input id='timepoint-field' type='text' name='timepoint' value='1'>-->
-                Timepoint:<select id='timepoint-select' name='' onchange="refreshPlate(); return false;">
-                    <option name='1'>1</option>
-                    <option name='2'>2</option>
-                </select>
+      </div>
+    </nav>
 
-                Wellsample:<select id='wellsample-select' name='' onchange="refreshPlate(); return false;">
-                    <option name='1'>1</option>
-                    <option name='2'>2</option>
-                </select>
+    <!-- Toolbar -->
+    <div id="plate-tool-div" class="container-fluid mt-2 mb-2">
 
-                Channel:<select id='channel-select' name='' onchange="refreshPlate(); return false;">
-                    <option name='1'>1</option>
-                    <option name='2'>2</option>
-                </select>
-                {% raw xsrf_form_html() %}
-                <button type='submit'>Update</button>
-          </form>
+      <!-- Toolbar form -->
+      <form id='plate-tool-form' onsubmit='redrawPlate(); return false;'>
+
+        <div class="input-group">
+
+          <!-- Timepoint selector -->
+          <div class="input-group-prepend">
+            <label class="input-group-text" for="timepoint-select">Timepoint</label>
+          </div>
+          <select class="custom-select" data-width="100px" id="timepoint-select" onchange="redrawPlate(); return false;">
+          </select>
+
+          <!-- Timepoint slider -->
+          <div id="slider" class="ml-2" style="width:100px;height:20px;hidden:true;">
+            <input type="text" id="timepoint-slider" name="" value="" style="width:0px;" />
+          </div>
+
+          <!-- Wellsample selector -->
+          <div class="input-group-prepend ml-2">
+            <label class="input-group-text" for="wellsample-select">Wellsample</label>
+          </div>
+          <select class="custom-select" id="wellsample-select" onchange="redrawPlate(); return false;">
+          </select>
+
+          <!-- Channel selector -->
+          <div class="input-group-prepend ml-2">
+            <label class="input-group-text" for="channel-select">Channel</label>
+          </div>
+          <select class="custom-select" id="channel-select" onchange="redrawPlate(); return false;">
+          </select>
+
         </div>
-        <div id="table-div">
-            <table>
-                <tr>
-                    <td>Hej</td>
-                    <td> cell 2</td>
-                </tr>
-            </table>
-        </div>
-    </body>
+
+      </form>
+    </div>
+
+    <!-- Main div -->
+    <div id="table-div" class="container-fluid flex-fill" style="height: 1000px; width: 100%">
+
+    </div>
+
+  </div>
+</div>
+<!-- /#page-content-wrapper -->
+
+</div>
+<!-- /#wrapper -->
+
+
+<!-- Bootstrap core JavaScript -->
+<script src="/static/theme/vendor/jquery/jquery.min.js"></script>
+<script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<!-- tree view plugin -->
+<link href="//cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/skin-win8/ui.fancytree.min.css" rel="stylesheet">
+<script src="//cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/jquery.fancytree-all-deps.min.js"></script>
+
+
+<!--Plugin JavaScript file-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/js/ion.rangeSlider.min.js"></script>
+
+<script>
+
+  // jQuery init methods
+  $(document).ready(function(){
+
+    // Create disabled slider to be updated later
+    $("#timepoint-slider").ionRangeSlider({
+      //skin: "modern",
+      type: "single",
+      min: 1,
+      max: 1,
+      from: 1,
+      disable: true,
+      onChange: function (data) {
+        elem = document.getElementById('timepoint-select');
+        elem.selectedIndex = data.from - 1;
+        elem.onchange();
+      }
+    });
+
+    // Submit empty search to load all plates into start page
+    $("#query-form").submit();
+  });
+
+</script>
+
+</body>
+
 </html>

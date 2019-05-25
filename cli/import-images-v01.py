@@ -225,7 +225,13 @@ try:
     DB_HOST = "image-mongo"
     THUMBDIR = "/share/imagedb/thumbs/"
     IMAGE_ROOT_DIR = "/share/mikro/IMX/MDC Polina Georgiev"
-    proj_root_dirs = [ "exp-TimeLapse/",
+    proj_root_dirs = [ "Aish/",
+                       "exp-CombTox/",
+                       "PolinaG-ACHN",
+                       "PolinaG-KO",
+                       "PolinaG-MCF7",
+                       "PolinaG-U2OS",
+                       "exp-TimeLapse/",
                        "exp-WIDE/"
                      ]
   else:

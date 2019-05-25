@@ -84,12 +84,12 @@
       </nav>
 
       <div id="plate-tool-div" class="container-fluid mt-2 mb-2">
-		  <form id='plate-tool-form' onsubmit='refreshPlate(); return false;'>
+		  <form id='plate-tool-form' onsubmit='redrawPlate(); return false;'>
 		    <div class="input-group">
 			  <div class="input-group-prepend">
 				<label class="input-group-text" for="timepoint-select">Timepoint</label>
 			  </div>
-			  <select class="custom-select" data-width="100px" id="timepoint-select" onchange="refreshPlate(); return false;">
+			  <select class="custom-select" data-width="100px" id="timepoint-select" onchange="redrawPlate(); return false;">
 				<option value="1">1</option>
 				<option value="2">2</option>
 				<option value="3">3</option>
@@ -97,7 +97,7 @@
 			  <div class="input-group-prepend ml-2">
 				<label class="input-group-text" for="wellsample-select">Wellsample</label>
 			  </div>
-			  <select class="custom-select" id="wellsample-select" onchange="refreshPlate(); return false;">
+			  <select class="custom-select" id="wellsample-select" onchange="redrawPlate(); return false;">
 				<option value="1">1</option>
 				<option value="2">2</option>
 				<option value="3">3</option>
@@ -105,7 +105,7 @@
 			  <div class="input-group-prepend ml-2">
 				<label class="input-group-text" for="channel-select">Channel</label>
 			  </div>
-			  <select class="custom-select" id="channel-select" onchange="refreshPlate(); return false;">
+			  <select class="custom-select" id="channel-select" onchange="redrawPlate(); return false;">
 				<option value="1">1</option>
 				<option value="2">2</option>
 				<option value="3">3</option>

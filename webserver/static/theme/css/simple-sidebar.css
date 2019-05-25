@@ -14,6 +14,7 @@ body {
   -moz-transition: margin .25s ease-out;
   -o-transition: margin .25s ease-out;
   transition: margin .25s ease-out;
+  overflow-y: auto;
 }
 
 #sidebar-wrapper .sidebar-heading {

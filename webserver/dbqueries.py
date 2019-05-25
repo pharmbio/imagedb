@@ -84,7 +84,11 @@ def list_plates(DB_HOSTNAME="image-mongo"):
                                 }
                         }
              },
-            {"$sort": {"_id.timepoint": 1}}
+            {"$sort": {"_id.project": 1,
+                       "_id.plate":1
+                       }
+            }
+
         ]
     )
 

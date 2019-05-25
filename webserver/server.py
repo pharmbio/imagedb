@@ -26,7 +26,7 @@ SETTINGS = {
 
 class DefaultTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
     """
-    This is the main handler of the application, which serves the index.html template
+    This is the main handler of the application
     """
     def get(self):
         """Renders the index file as a template without arguments.
@@ -35,6 +35,14 @@ class DefaultTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstr
 
         self.render(self.request.path.strip('/'))
         #self.render('index.html')
+
+class IndexTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
+    """
+    This is the main handler of the application, which serves the index.html template
+    """
+    def get(self):
+
+        self.render('index.html')
 
 
 ROUTES = [
@@ -49,7 +57,8 @@ ROUTES = [
           (r'/image-viewer/(.*)', ImageViewerHandler),
           (r'/bstest.html', DefaultTemplateHandler),
           (r'/index.html', DefaultTemplateHandler),
-          (r'/', DefaultTemplateHandler),
+          (r'/old-index.html', DefaultTemplateHandler),
+          (r'/', IndexTemplateHandler),
          ]
 
 if __name__ == '__main__':
