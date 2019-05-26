@@ -100,7 +100,7 @@ function loadPlate(plate_name) {
           updateChannelSelect(window.loaded_plate);
           updateMetaData(window.loaded_plate);
 
-          drawNewPlate();
+          plateLoaded();
 
         })
         .catch(error => {
@@ -108,9 +108,35 @@ function loadPlate(plate_name) {
         })
 }
 
-function drawNewPlate(){
-  redrawPlate(true);
+function plateLoaded(){
+
+  if(document.getElementById('table-div')){
+    redrawPlate(true);
+  }
+  if(document.getElementById('viewer-div')){
+    redrawImageViewer(true);
+  }
+
 }
+
+function redrawImageViewer(clearFirst=false) {
+
+  console.log("inside redrawImageViewer()");
+
+  // get plate to draw
+  let plateObj = window.loaded_plate;
+
+  // get timepoint to draw
+  let timepoint = getSelectedTimepointIndex();
+
+  // get wellsample to draw
+  let wellsample = getSelectedWellsampleIndex();
+
+  // drawPlate(plateObj, timepoint, wellsample, clearFirst);
+
+
+}
+
 
 function redrawPlate(clearFirst=false) {
   // get plate to draw
@@ -180,6 +206,8 @@ function drawPlate(plateObj, timepoint, wellsample, clearFirst) {
   console.log(plateObj);
 
   let container = document.getElementById('table-div');
+
+  if(container)
 
   // If for example a new plate have been selected
   // all old well_images should be removed since plate layout might change
@@ -375,6 +403,23 @@ function toggleAnimation(){
     stopAnimation();
   }
 }
+
+function updateShowScalebar(){
+
+  // Default 0 pixPerMeter which means scalebar will be hidden
+  let pixPerMeter = 0;
+  if(document.getElementById("scalebar-cbx").checked){
+
+    // TODO get actual pix per meter for current image
+    pixPerMeter = 100000;
+  }
+
+  let scalebarOptions = {};
+  scalebarOptions["pixelsPerMeter"] = pixPerMeter;
+  viewer.scalebar(scalebarOptions);
+}
+
+
 
 function stopAnimation(){
   if(animation){
