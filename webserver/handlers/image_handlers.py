@@ -56,14 +56,19 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
     """
     The image handler returns actual images
     """
-    def get(self, json_string):
+    def get(self, ch1, ch2, ch3):
         """Handles GET requests.
         """
 
         logging.debug("Hello")
 
+        channels = {'1': ch1}
 
-        channels = json.loads(json_string)
+        if not ch2 == 'undefined':
+            channels.update({'2': ch2})
+
+        if not ch3 == 'undefined':
+            channels.update({'3': ch3})
 
         # rewrite paths to thumbs
         for (key, value) in channels.items():

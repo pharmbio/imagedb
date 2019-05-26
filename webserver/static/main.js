@@ -5,7 +5,7 @@
 var loaded_plate = null;
 var animation = null;
 
-function apiSearch(event) {
+function apiQuery(event) {
   event.preventDefault();
 
   fetch('/api/query', {
@@ -516,7 +516,7 @@ function getWellName(row, col) {
 }
 
 function createMergeThumbImgURLFromChannels(channels) {
-  let url = "/api/image-merge-thumb/" + encodeURIComponent(JSON.stringify(channels));
+  let url = "/api/image-merge-thumb/ch1/" + channels[1] + "/ch2/" + channels[2] + "/ch3/" + channels[3];
   return url;
 }
 

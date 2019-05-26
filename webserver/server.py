@@ -50,7 +50,7 @@ ROUTES = [
           (r'/api/query', QueryHandler),
           (r'/api/list/(?P<plate>[^\/]+)', ListImagesQueryHandler),
           (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)', ImageMergeHandler),
-          (r'/api/image-merge-thumb/(.+)', ThumbImageMergeHandler),
+          (r'/api/image-merge-thumb/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)', ThumbImageMergeHandler),
           (r'/image-viewer/(.*)', ImageViewerHandler),
           (r'/bstest.html', DefaultTemplateHandler),
           (r'/index.html', DefaultTemplateHandler),

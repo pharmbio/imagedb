@@ -76,7 +76,11 @@
       background-color:#17a2b8
     }
     /* -- end range-slider */
+
+
   </style>
+
+
 
   <!-- This is for openseadragon -->
   <style type="text/css">
@@ -85,7 +89,7 @@
       height: 100%;
       width: 100%;
       margin: 0px;
-      background-color: lightgray;
+      background-color: black;
     }
 
     </style>
@@ -213,7 +217,7 @@
 <!-- /#wrapper -->
 
 <!-- Main div -->
-<div id="viewer-div" class="flex-grow-1" style="background-color: lightgray; width:100%;height:100%;">
+<div id="viewer-div" class="flex-grow-1" style="background-color: black; width:100%;height:100%;">
 
 </div>
 
@@ -226,6 +230,9 @@
 
 <!-- openseadragon image-viewer -->
 <script src="/static/openseadragon/openseadragon.min.js"></script>
+
+<!-- openseadragon scalebar -->
+<script src="/static/openseadragon-scalebar/openseadragon-scalebar.js"></script>
 
 <!-- json-viewer -->
 <script src="/static/json-viewer/json-viewer.js"></script>
@@ -274,21 +281,42 @@
 <!-- Init openseadragon -->
 <script>
 
-  var viewer = OpenSeadragon({
+  const viewer = OpenSeadragon({
     id: "viewer-div",
     prefixUrl: "/static/openseadragon/images/",
-    animationTime: 0.5, // default 1.2
+    animationTime: 0.8, // default 1.2
     zoomPerSecond: 1, // default: 1
     zoomPerScroll: 1.7, // default: 1.2
-    minZoomImageRatio: 0.9, // default: 0.8
+    minZoomImageRatio: 0.65, // default: 0.8
     maxZoomPixelRatio: 10,  // deault: 2
-    homeFillsViewer    : true,
+    homeFillsViewer: true,
+    showNavigator: true,  // deault: 2
     tileSources: {
       type: 'image',
       url:  '{{ image_url }}',
       buildPyramid: false
     }
   });
+
+/*
+
+  Scale
+
+  viewer.scalebar({
+      type: OpenSeadragon.ScalebarType.MICROSCOPY,
+      pixelsPerMeter: 100000,
+      minWidth: "75px",
+      location: OpenSeadragon.ScalebarLocation.BOTTOM_LEFT,
+      xOffset: 5,
+      yOffset: 10,
+      stayInsideImage: true,
+      color: "rgb(150, 150, 150)",
+      fontColor: "rgb(100, 100, 100)",
+      backgroundColor: "rgba(255, 255, 255, 0.5)",
+      fontSize: "small",
+      barThickness: 2
+  });
+ */
 
 </script>
 
