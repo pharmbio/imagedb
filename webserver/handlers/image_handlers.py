@@ -15,7 +15,7 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
     """
     The image handler returns actual images
     """
-    def get(self, ch1, ch2, ch3):
+    async def get(self, ch1, ch2, ch3):
         """Handles GET requests.
         """
 
@@ -42,12 +42,13 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
 
         img_path = None
         if len(channels) == 1:
-            img_path = tif2png(channels, "/share/imagedb/image-cache")
+            img_path = tif2png(channels, imgdb_settings.IMAGES_CACHE_FOLDER)
         else:
-            img_path = merge_channels(channels, "/share/imagedb/image-cache")
+            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER)
 
         logging.debug(img_path)
 
+        self.set_header("Content-type", "image/png")
         self.write(open(img_path, 'rb').read())
 
         #self.write({'results': 'nothing here says anders again'})
@@ -56,9 +57,10 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
     """
     The image handler returns actual images
     """
-    def get(self, ch1, ch2, ch3):
+    async def get(self, ch1, ch2, ch3):
         """Handles GET requests.
         """
+
 
         logging.debug("Hello")
 
@@ -72,7 +74,7 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
 
         # rewrite paths to thumbs
         for (key, value) in channels.items():
-            new_value = "/share/imagedb/thumbs/" + str(value).strip(".tif") + ".png"
+            new_value = imgdb_settings.IMAGES_THUMB_FOLDER + "/" + str(value).strip(".tif") + ".png"
             channels.update({key: new_value})
 
         logging.debug(channels)
@@ -81,11 +83,11 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
         if len(channels) == 1:
             img_path = channels['1']
         else:
-            img_path = merge_channels(channels, "/share/imagedb/image-cache/")
-
+            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER)
 
         logging.debug(img_path)
 
+        self.set_header("Content-type", "image/png")
         self.write(open(img_path, 'rb').read())
 
         #self.write({'results': 'nothing here says anders again'})
@@ -115,10 +117,21 @@ class ImageMergeHandlerGetURL(tornado.web.RequestHandler): #pylint: disable=abst
 
 class ImageViewerHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
 
-    def get(self, image_url):
+    def get(self, plate, timepoint, well, wellsample, channel, imageurl):
 
-        logging.debug(self.request.query)
+        logging.debug('plate' + str(plate))
+        logging.debug('timepoint' + str(timepoint))
+        logging.debug('well' + str(well))
+        logging.debug('wellsample' + str(wellsample))
+        logging.debug('channel' + str(channel))
+        logging.debug(self.request.body_arguments)
 
         self.render('image-viewer.html',
-                     image_url=image_url)
+                     image_url=imageurl,
+                     plate=plate,
+                     timepoint=timepoint,
+                     well=well,
+                     wellsample=wellsample,
+                     channel=channel)
+
 

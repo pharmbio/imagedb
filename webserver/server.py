@@ -12,6 +12,7 @@ from handlers.query_handler import QueryHandler, ListImagesQueryHandler
 from handlers.image_handlers import (ImageViewerHandler,
                                      ImageMergeHandler,
                                      ThumbImageMergeHandler)
+import settings as imgdb_settings
 
 SETTINGS = {
     'debug': True,
@@ -44,14 +45,14 @@ class IndexTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
 
 
 ROUTES = [
-          (r'/images/(.*)', tornado.web.StaticFileHandler, {'path': '/share/mikro/IMX/MDC Polina Georgiev/'}),
-          (r'/thumbs/(.*)', tornado.web.StaticFileHandler, {'path': '/share/imagedb/thumbs/share/mikro/IMX/MDC Polina Georgiev/'}),
+          #(r'/images/(.*)', tornado.web.StaticFileHandler, {'path': imgdb_settings.IMAGES_ROOT_FOLDER}),
+          #(r'/thumbs/(.*)', tornado.web.StaticFileHandler, {'path': '/share/imagedb/thumbs/share/mikro/IMX/MDC Polina Georgiev/'}),
           (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), 'static')}),
           (r'/api/query', QueryHandler),
           (r'/api/list/(?P<plate>[^\/]+)', ListImagesQueryHandler),
-          (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)', ImageMergeHandler),
-          (r'/api/image-merge-thumb/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)', ThumbImageMergeHandler),
-          (r'/image-viewer/(.*)', ImageViewerHandler),
+          (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ImageMergeHandler),
+          (r'/api/image-merge-thumb/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ThumbImageMergeHandler),
+          (r'/image-viewer/(?P<plate>[^\/]+)/(?P<timepoint>[^\/]+)/(?P<well>[^\/]+)/(?P<wellsample>[^\/]+)/(?P<channel>[^\/]+)/(?P<imageurl>.+)', ImageViewerHandler),
           (r'/bstest.html', DefaultTemplateHandler),
           (r'/index.html', DefaultTemplateHandler),
           (r'/old-index.html', DefaultTemplateHandler),

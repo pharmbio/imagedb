@@ -26,4 +26,3 @@ RUN pip3 install -r /app/requirements.txt
 COPY . /app
 
 WORKDIR /app
-CMD ["python3", "image-monitor.py"]

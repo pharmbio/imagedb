@@ -37,7 +37,7 @@
 
     /* Jquery-bonzai override */
     .bonsai > li {
-      font-size:15px;
+      font-size:14px;
       margin: 3px;
     }
 
@@ -92,6 +92,13 @@
     }
     /* -- end range-slider */
 
+    /*
+      This changes bootstrap base font and all relatives
+     */
+    html {
+      font-size: 14px;
+    }
+
   </style>
 
 </head>
@@ -104,9 +111,24 @@
   <div class="bg-light border-right" id="sidebar-wrapper";>
     <div class="sidebar-heading">Projects/Plates</div>
 
-    <div class="sidebar-heading">
+    <div class="sidebar-heading" >
       <!-- <div class="list-group list-group-flush">-->
-      <ul id='result-list' ></ul>
+      <ul id='result-list'></ul>
+
+      <div id="left-sidebar-spinner" class="d-flex justify-content-center">
+         <div class="spinner-border text-info" role="status">
+           <span class="sr-only">Loading plates...</span>
+         </div>
+      </div>
+
+      <!--
+      <div class="d-flex justify-content-center">
+          <div class="text-info">
+           Loading plates
+         </div>
+      </div>
+      -->
+
     </div>
   </div>
   <!-- /#sidebar-wrapper -->
@@ -119,7 +141,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
 
       <!-- Search form -->
-      <form id='query-form' onsubmit='return apiQuery(event)'>
+      <form id='query-form' onsubmit='apiQuery(event);return false;'>
         <div class="input-group">
 
           <input type="text" class="form-control input-sm" maxlength="" placeholder="Search" />
@@ -133,6 +155,7 @@
       <!-- Navbar menues -->
       <div class="collapse navbar-collapse" id="navbarSupportedContent" >
         <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+          <!--
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               Help
@@ -144,13 +167,19 @@
               <a class="dropdown-item" href="#">Something else here</a>
             </div>
           </li>
+          -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Github
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown2">
+              <a class="dropdown-item" href="https://github.com/pharmbio/imagedb">Imagedb repo</a>
+              <a class="dropdown-item" href="https://github.com/pharmbio/imagedb/issues">Issues</a>
+            </div>
+          </li>
           <li class="nav-item">
             <a class="nav-link" href="https://pharmb.io">Pharmb.io <span class="sr-only">(current)</span></a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="https://github.com/pharmbio/imagedb">Github</a>
-          </li>
-        </ul>
       </div>
     </nav>
 
@@ -162,11 +191,16 @@
 
         <div class="input-group align-bottom">
 
+          <!-- Plate label -->
+          <label id="plate-name-label" class="input-group-text" style="width: 180px;overflow: hidden;text-overflow: ellipsis; white-space: nowrap;">
+            Plate:
+          </label>
+
           <!-- Timepoint selector -->
-          <div class="input-group-prepend">
+          <div class="input-group-prepend ml-2">
             <label class="input-group-text" for="timepoint-select">Timepoint</label>
           </div>
-          <select class="custom-select" data-width="100px" id="timepoint-select" onchange="redrawPlate(); return false;">
+          <select class="custom-select" style="width: 60px;" id="timepoint-select" onchange="redrawPlate(); return false;">
           </select>
 
           <!-- Timepoint slider -->
@@ -177,7 +211,7 @@
           <!-- Timepoint animation -->
           <div class="form-group form-check" style="margin-bottom: 0px;">
             <div class="col-md-4">
-              <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" onchange="toggleAnimation(); return false;">
+              <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" disabled onchange="toggleAnimation(); return false;">
               <label class="form-check-label" style="margin-top:0.8rem;" for="animate-cbx">Animate</label>
             </div>
           </div>
@@ -186,7 +220,7 @@
           <div class="input-group-prepend ml-2">
             <label class="input-group-text" for="animation-speed-select">Anim. speed</label>
           </div>
-          <select class="custom-select" id="animation-speed-select" onchange="updateAnimationSpeed(); return false;">
+          <select class="custom-select" id="animation-speed-select" style="width: 50px;" onchange="updateAnimationSpeed(); return false;">
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -200,16 +234,16 @@
 
           <!-- Wellsample selector -->
           <div class="input-group-prepend ml-2">
-            <label class="input-group-text" for="wellsample-select">Wellsample</label>
+            <label class="input-group-text" for="wellsample-select">Site</label>
           </div>
-          <select class="custom-select" id="wellsample-select" onchange="redrawPlate(); return false;">
+          <select class="custom-select" id="wellsample-select" style="width: 50px;" onchange="redrawPlate(); return false;">
           </select>
 
           <!-- Channel selector -->
           <div class="input-group-prepend ml-2">
             <label class="input-group-text" for="channel-select">Channel</label>
           </div>
-          <select class="custom-select" id="channel-select" onchange="redrawPlate(); return false;">
+          <select class="custom-select" id="channel-select" style="width: 75px;" onchange="redrawPlate(); return false;">
           </select>
 
         </div>
@@ -220,6 +254,7 @@
 
     <!-- Table div -->
     <div id="table-div" class="container-fluid flex-fill">
+
 
     </div>
 

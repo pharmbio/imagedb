@@ -2,19 +2,15 @@
 import pymongo as pymongo
 import logging
 import json
+import settings as imgdb_settings
 
-DB_USER = "root"
-DB_PASS = "example"
-DB_PORT = 27017
-
-def get_default_collection(DB_HOSTNAME="image-mongo"):
-    dbclient = pymongo.MongoClient("mongodb://%s:%s@%s:%s/" % (DB_USER, DB_PASS, DB_HOSTNAME, DB_PORT))
-    dbclient = pymongo.MongoClient(username=DB_USER,
-                                   password=DB_PASS,
+def get_default_collection():
+    dbclient = pymongo.MongoClient(username=imgdb_settings.DB_USER,
+                                   password=imgdb_settings.DB_PASS,
                                    # connectTimeoutMS=500,
                                    serverSelectionTimeoutMS=1000,
-                                   host=DB_HOSTNAME,
-                                   port=DB_PORT
+                                   host=imgdb_settings.DB_HOSTNAME,
+                                   port=imgdb_settings.DB_PORT
                                    )
 
     img_db = dbclient["pharmbio_db"]
@@ -43,31 +39,27 @@ def list_plate(plate):
                                    ("metadata.channel", 1)])
     resultlist = list(result)
 
-    #logging.debug(json.dumps(resultlist, indent=2))
-
-    # When returning to web rewrite path
+    # Before returning (to web) delete the for user hidden "root part" IMAGES_ROOT_FOLDER part, e.g. /share/mikro/IMX.....
     for image in resultlist:
         for key, value in image.items():
             if key == "path":
-                new_value = str(value).replace("share/mikro/IMX/MDC Polina Georgiev/", "")
+                new_value = str(value).replace( imgdb_settings.IMAGES_ROOT_FOLDER , "")
                 image.update( {'path': new_value})
 
-    platesdict = {}
+    plates_dict = {}
     for image in resultlist:
-        platesdict.setdefault(image['plate'], {}) \
+        plates_dict.setdefault(image['plate'], {}) \
             .setdefault(image['timepoint'], {}) \
             .setdefault(image['metadata']['well'], {}) \
             .setdefault(image['metadata']['wellsample'], {}) \
             .setdefault(image['metadata']['channel'], image['path'])
 
-# .setdefault({'channel_index': image['metadata']['channel'],
-#             'path':image['path']})
 
+    #plateObj = {'plate_name:', plate,
+    #            'timepoints:', platesdict['plate']
+    #            }
 
-
-    #logging.debug(json.dumps(platesdict, indent=2))
-
-    return {'plates': platesdict}
+    return {'plates': plates_dict}
 
 def list_plates(DB_HOSTNAME="image-mongo"):
 

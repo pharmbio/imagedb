@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 
 from filenames.filenames import parse_path_and_file
 from image_tools import makeThumb
+import settings as imgdb_settings
 
 #
 # Adopted from: https://github.com/HASTE-project/haste-image-analysis-container2/tree/master/haste/image_analysis_container2/filenames
@@ -79,11 +80,11 @@ def image_name_sort_fn(filename):
     return metadata['path']
 
 
-def make_thumb_path(image, THUMBDIR, IMAGE_ROOT_DIR):
-    subpath = str(image).replace(IMAGE_ROOT_DIR, "")
+def make_thumb_path(image, thumbdir, image_root_dir):
+    subpath = str(image).replace(image_root_dir, "")
     # Need to strip / otherwise can not join as subpath
     subpath = subpath.strip("/")
-    thumb_path = os.path.join(THUMBDIR, subpath)
+    thumb_path = os.path.join(thumbdir, subpath)
     return thumb_path
 
 def add_plate_to_db(images, latest_filedate_to_test):
@@ -92,11 +93,11 @@ def add_plate_to_db(images, latest_filedate_to_test):
     current_latest_imagefile = 0
 
     # Connect db
-    dbclient = pymongo.MongoClient( username=DB_USER,
-                                    password=DB_PASS,
+    dbclient = pymongo.MongoClient( username=imgdb_settings.DB_USER,
+                                    password=imgdb_settings.DB_PASS,
                                     # connectTimeoutMS=500,
                                     serverSelectionTimeoutMS=1000,
-                                    host=DB_HOST
+                                    host=imgdb_settings.DB_HOSTNAME
                                     )
     img_db = dbclient["pharmbio_db"]
     img_collection = img_db["pharmbio_microimages"]
@@ -138,7 +139,9 @@ def add_plate_to_db(images, latest_filedate_to_test):
                     insert_result = img_collection.insert_one(document)
 
                     # create thumb image
-                    thumb_path = make_thumb_path(image, THUMBDIR, IMAGE_ROOT_DIR)
+                    thumb_path = make_thumb_path(image,
+                                                 imgdb_settings.IMAGES_THUMB_FOLDER,
+                                                 imgdb_settings.IMAGES_ROOT_FOLDER)
                     logging.debug(thumb_path)
                     makeThumb(image, thumb_path, False)
 
@@ -172,21 +175,27 @@ def import_plate_images_and_meta(plate_date_dir, latest_import_filedate):
 
     return current_latest_imported_file
 
-def polling_loop(poll_dirs_margin_days, latest_file_poll_margin_db_insert_sek, sleep_time, proj_root_dirs):
+def polling_loop(poll_dirs_margin_days, latest_file_poll_margin_db_insert_sek, sleep_time, proj_root_dirs, exhaustive_initial_poll):
+
+    logging.info("Inside polling loop")
+
+    is_initial_poll = True
+    latest_filedate_last_poll = 0
+
+    logging.info("exhaustive_initial_poll=" + str(exhaustive_initial_poll))
 
     while(True):
 
         start_time = time.time()
         logging.info("Staring new poll")
-
-        latest_filedate_last_poll = 0
+        logging.info("latest_filedate_last_poll=" + str(datetime.fromtimestamp(latest_filedate_last_poll)))
 
         plate_filter = ""
 
         current_poll_latest_filedate = 0
         for proj_root_dir in proj_root_dirs:
             # Get all subdirs (these are the top plate dir)
-            image_dir = os.path.join(IMAGE_ROOT_DIR, proj_root_dir)
+            image_dir = os.path.join(imgdb_settings.IMAGES_ROOT_FOLDER, proj_root_dir)
             plate_dirs = get_subdirs(image_dir)
             logging.debug("plate_dirs" + str(plate_dirs))
 
@@ -206,10 +215,11 @@ def polling_loop(poll_dirs_margin_days, latest_file_poll_margin_db_insert_sek, s
 
                     date_delta = datetime.today() - dir_date
 
-                    logging.info("delta" + str(date_delta))
+                    logging.debug("delta" + str(date_delta))
 
                     # poll images in directories more recent than today + poll_dirs_date_margin_days
-                    if date_delta <= timedelta(days=poll_dirs_margin_days):
+                    if date_delta <= timedelta(days=poll_dirs_margin_days) or \
+                            (exhaustive_initial_poll and is_initial_poll):
 
                         # set file date to test inserting into db to last poll latest file minus margin
                         latest_filedate_last_poll_with_margin = latest_filedate_last_poll - latest_file_poll_margin_db_insert_sek;
@@ -223,13 +233,15 @@ def polling_loop(poll_dirs_margin_days, latest_file_poll_margin_db_insert_sek, s
                         current_poll_latest_filedate = max(current_poll_latest_filedate,
                                                            current_dir_latest_filedate)
 
-                        logging.info("Done second time")
-
                         # only update with latest file when everything is checked once
 
+        # Set latest file mod for all monitored dirs
+        latest_filedate_last_poll = max(latest_filedate_last_poll, current_poll_latest_filedate)
 
         elapsed_time = time.time() - start_time
         logging.info("Time spent polling: " + str(elapsed_time))
+
+        is_initial_poll = False
 
         # Sleep until next polling action
         logging.info("Going to sleep for: " + str(sleep_time) + "sek" )
@@ -242,7 +254,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_poll_margin_db_insert_sek, s
 #  Main entry for script
 #
 try:
-
+    exhaustive_initial_poll = imgdb_settings.EXHAUSTIVE_INITIAL_POLL
     poll_dirs_margin_days = 3
     poll_sleep_time = 300 # 5 min
     latest_file_poll_margin_db_insert_sek = 7200 # 2 hour (always try insert images within this time from latest_filedate_last_poll)
@@ -262,18 +274,7 @@ try:
 
     # read password from environment
     # DB_USER = os.environ['DB_USER']
-    DB_USER = "root"
-    DB_PASS = "example"
-
-    is_docker_version = False
-    if "IS_DOCKER_VERSION" in os.environ and os.environ['IS_DOCKER_VERSION'].lower() == 'true':
-        is_docker_version = True
-
-    if is_docker_version:
-        DB_HOST = "image-mongo"
-        THUMBDIR = "/share/imagedb/thumbs/"
-        IMAGE_ROOT_DIR = "/share/mikro/IMX/MDC_pharmbio"
-        proj_root_dirs = [ "Aish/",
+    proj_root_dirs = [ "Aish/",
                            "exp-CombTox/",
                            "PolinaG-ACHN",
                            "PolinaG-KO",
@@ -282,24 +283,15 @@ try:
                            "exp-TimeLapse/",
                            "exp-WIDE/"
                            ]
-    else:
-        DB_HOST = "localhost"
-        THUMBDIR = "../share/imagedb/thumbs/"
-        IMAGE_ROOT_DIR = "../share/mikro/IMX/MDC_pharmbio"
-        proj_root_dirs = ["exp-TimeLapse/",
-                          "exp-WIDE/"
-                          ]
 
     polling_loop(poll_dirs_margin_days,
                  latest_file_poll_margin_db_insert_sek,
                  poll_sleep_time,
-                 proj_root_dirs)
+                 proj_root_dirs,
+                 exhaustive_initial_poll)
 
 
 
 except Exception as e:
     print(traceback.format_exc())
     logging.info("Exception out of script")
-
-
-

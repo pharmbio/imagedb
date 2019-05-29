@@ -81,19 +81,20 @@
 
 
 
-  <!-- This is for openseadragon -->
+  <!-- This is mainly for openseadragon -->
   <style type="text/css">
-
     html, body {
       height: 100%;
       width: 100%;
       margin: 0px;
       background-color: black;
-      /* TODO this overflow hidden is not a
-      perfect solution, better would be fo manage
-      body size and div size play with openseadragon and fill viewport
-       */
-      /*overflow: hidden;*/
+    }
+
+    /*
+     This changes bootstrap base font and all relatives
+    */
+    html {
+      font-size: 14px;
     }
 
     </style>
@@ -122,20 +123,22 @@
         <div class="input-group">
 
           <!-- Plate label -->
-          <label class="input-group-text">Plate: Pxxxxxx</label>
+          <label id="plate-name-label" class="input-group-text" style="width: 170px;overflow: hidden;text-overflow: ellipsis; white-space: nowrap;">
+            Plate:
+          </label>
 
           <!-- Well selector -->
           <div class="input-group-prepend ml-2">
             <label class="input-group-text" for="well-select">Well</label>
           </div>
-          <select class="custom-select" data-width="100px" id="well-select" onchange="redrawImageViewer(); return false;">
+          <select class="custom-select" style="width: 75px;" id="well-select" onchange="redrawImageViewer(); return false;">
           </select>
 
           <!-- Timepoint selector -->
           <div class="input-group-prepend ml-2">
             <label class="input-group-text" for="timepoint-select">Timepoint</label>
           </div>
-          <select class="custom-select" data-width="100px" id="timepoint-select" onchange="redrawImageViewer(); return false;">
+          <select class="custom-select" style="width: 60px;" id="timepoint-select" onchange="redrawImageViewer(); return false;">
           </select>
 
           <!-- Timepoint slider -->
@@ -146,7 +149,7 @@
           <!-- Timepoint animation -->
           <div class="form-group form-check" style="margin-bottom: 0px;">
             <div class="col-md-4">
-              <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" onchange="toggleAnimation(); return false;">
+              <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" disabled onchange="toggleAnimation(); return false;">
               <label class="form-check-label" style="margin-top:0.8rem;" for="animate-cbx">Animate</label>
             </div>
           </div>
@@ -155,7 +158,7 @@
           <div class="input-group-prepend ml-2">
             <label class="input-group-text" for="animation-speed-select">Anim. speed</label>
           </div>
-          <select class="custom-select" id="animation-speed-select" onchange="updateAnimationSpeed(); return false;">
+          <select class="custom-select" style="width: 50px;" id="animation-speed-select" onchange="updateAnimationSpeed(); return false;">
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -169,20 +172,20 @@
 
           <!-- Wellsample selector -->
           <div class="input-group-prepend ml-2">
-            <label class="input-group-text" for="wellsample-select">Wellsample</label>
+            <label class="input-group-text" for="wellsample-select">Site</label>
           </div>
-          <select class="custom-select" id="wellsample-select" onchange="redrawImageViewer(); return false;">
+          <select class="custom-select" style="width: 50px;" id="wellsample-select" onchange="redrawImageViewer(); return false;">
           </select>
 
           <!-- Channel selector -->
           <div class="input-group-prepend ml-2 ">
             <label class="input-group-text" for="channel-select">Channel</label>
           </div>
-          <select class="custom-select" id="channel-select" onchange="redrawImageViewer(); return false;">
+          <select class="custom-select"  style="width: 75px;"id="channel-select" onchange="redrawImageViewer(); return false;">
           </select>
 
            <!-- Scalebar -->
-          <div class="form-group form-check" style="margin-bottom: 0px;">
+          <div class="form-group form-check" style="margin-bottom: 0px;margin-left: 5px">
               <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="scalebar-cbx" onchange="updateShowScalebar(); return false;">
               <label class="form-check-label" style="margin-top:0.8rem;" for="scalebar-cbx">Scalebar</label>
             </div>
@@ -371,7 +374,6 @@
 
 <!-- Init openseadragon -->
 <script>
-
   const viewer = OpenSeadragon({
     id: "viewer-div",
     prefixUrl: "/static/openseadragon/images/",
@@ -382,12 +384,55 @@
     maxZoomPixelRatio: 10,  // deault: 2
     homeFillsViewer: true,
     showNavigator: true,  // deault: 2
+
     tileSources: {
+      opacity: 1,
+      preload: true,
       type: 'image',
-      url:  '{{ image_url }}',
-      buildPyramid: false
+      url: '{{ image_url }}',
+      buildPyramid: false,
+      success: function (event) {
+
+        console.log("image-loaded");
+        console.log(viewer.world.getItemCount());
+
+      }
     }
   });
+
+/*
+  const viewer = OpenSeadragon({
+    id: "viewer-div",
+    prefixUrl: "/static/openseadragon/images/",
+    animationTime: 0.8, // default 1.2
+    zoomPerSecond: 1, // default: 1
+    zoomPerScroll: 1.7, // default: 1.2
+    minZoomImageRatio: 0.65, // default: 0.8
+    maxZoomPixelRatio: 10,  // deault: 2
+    homeFillsViewer: true,
+    showNavigator: true,  // deault: 2
+   // preserveViewport: true,
+    sequenceMode: true,
+    preload: true,
+    tileSources: [
+          {
+              type: 'image',
+              url:  '{{ image_url }}',
+              buildPyramid: false
+          },
+          {
+              type: 'image',
+              url:  '{{ image_url }}',
+              buildPyramid: false
+          },
+          {
+              type: 'image',
+              url:  '{{ image_url }}',
+              buildPyramid: false
+          },
+    ]
+  });
+ */
 
   viewer.scalebar({
       type: OpenSeadragon.ScalebarType.MICROSCOPY,
@@ -406,8 +451,12 @@
 
   updateShowScalebar();
 
-  let plate = 'P009086'
-  loadPlate(plate);
+  let plate = '{{ plate }}';
+  let timepoint = '{{ timepoint }}';
+  let well = '{{ well }}';
+  let wellsample = '{{ wellsample }}';
+  let channel = '{{ channel }}';
+  loadPlateFromViewer(plate, timepoint, well, wellsample, channel);
 
 
 </script>

@@ -13,6 +13,7 @@ import pymongo
 
 from filenames.filenames import parse_path_and_file
 from image_tools import makeThumb
+import settings as imgdb_settings
 
 #
 # Adopted from: https://github.com/HASTE-project/haste-image-analysis-container2/tree/master/haste/image_analysis_container2/filenames
@@ -224,7 +225,7 @@ try:
   if is_docker_version:
     DB_HOST = "image-mongo"
     THUMBDIR = "/share/imagedb/thumbs/"
-    IMAGE_ROOT_DIR = "/share/mikro/IMX/MDC Polina Georgiev"
+    IMAGE_ROOT_DIR = imgdb_settings.IMAGES_ROOT_FOLDER,
     proj_root_dirs = [ "Aish/",
                        "exp-CombTox/",
                        "PolinaG-ACHN",
@@ -237,7 +238,7 @@ try:
   else:
     DB_HOST = "localhost"
     THUMBDIR = "../share/imagedb/thumbs/"
-    IMAGE_ROOT_DIR = "../share/mikro/IMX/MDC Polina Georgiev"
+    IMAGE_ROOT_DIR = "../" + imgdb_settings.IMAGES_ROOT_FOLDER
     proj_root_dirs = ["exp-TimeLapse/",
                       "exp-WIDE/"
                         ]

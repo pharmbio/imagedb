@@ -14,10 +14,14 @@ Run project
 source venv/bin/activate
 
 # sync requirements file with venv
+source venv/bin/activate
 pip freeze > requirements.txt
 
 # build container
-docker build -t pharmbio/imagedb-app .
+docker build -t pharmbio/imagedb-cli .
+
+# push container
+docker push pharmbio/imagedb-cli
 
 # run app with docker-compose and dev-settings
 SHARE_MIKRO=/home/anders/pharmbio/imageDB/share/mikro SHARE_IMAGEDB=/home/anders/pharmbio/imageDB/share/imagedb APPROOT=/home/anders/pharmbio/imageDB/ docker-compose up

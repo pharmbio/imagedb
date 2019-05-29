@@ -29,14 +29,16 @@ volumes:
       o: bind
 
 services:
-  image-db-app:
-    image: pharmbio/imagedb-app
+  image-db-cli:
+    image: pharmbio/imagedb-cli
     restart: always
-    container_name: imagedb-app
+    container_name: imagedb-cli
+    command: python3 image-monitor.py
     environment:
+      EXHAUSTIVE_INITIAL_POLL: "false"
       DB_USER: root
       DB_PASS: example
-      IS_DOCKER_VERSION: "true"
+      DB_PORT: "27017"
     volumes:
       - mikroimages-bind:/share/mikro
       - imagedb-bind:/share/imagedb

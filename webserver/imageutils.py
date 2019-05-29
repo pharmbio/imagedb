@@ -59,7 +59,7 @@ def tif2png_pillow(channels, outdir, overwrite_existing=False):
     return png_path
 
 
-def merge_channels(channels, outdir, overwrite_existing=False):
+async def merge_channels(channels, outdir, overwrite_existing=False):
 
     logging.debug(channels)
 
@@ -79,14 +79,14 @@ def merge_channels(channels, outdir, overwrite_existing=False):
     logging.debug('merged_file=' + str(merged_file))
 
     # Check if file exists already
-    if not os.path.isfile(merged_file) or overwrite_existing:
+    if overwrite_existing or not os.path.isfile(merged_file):
 
         logging.debug("list len =" + str(len(paths)))
 
         # Read images, raise exceptions manually since opencv is silent if file doesn't exist
         r = cv2.imread(paths[0], 0)
         if r is None:
-            raise Exception('image read returned NONE')
+            raise Exception('image read returned NONE, path: ' + str(paths[0]))
 
         # Create a blank image that has three channels
         # and the same number of pixels as your original input
@@ -99,14 +99,14 @@ def merge_channels(channels, outdir, overwrite_existing=False):
         if len(paths) > 1:
             g = cv2.imread(paths[1], 0)
             if g is None:
-                raise Exception('image read returned NONE')
+                raise Exception('image read returned NONE, path: ' + str(paths[1]))
 
             merged_img[:, :, 1] = g
 
         if len(channels) > 2:
             b = cv2.imread(paths[2], 0)
             if b is None:
-                raise Exception('image read returned NONE')
+                raise Exception('image read returned NONE, path: ' + str(paths[2]))
 
             merged_img[:, :, 0] = b
 
