@@ -25,18 +25,24 @@ def list_plate(plate):
 
     find_plate = plate
 
-    result = img_collection.find({"plate": find_plate},
-                                 # this is what to return
-                                 {"plate": 1,
-                                  "timepoint": 1,
-                                  "path": 1,
-                                  "metadata.well": 1,
-                                  "metadata.wellsample": 1,
-                                  "metadata.channel": 1,
-                                  "_id": 0}) \
-                            .sort([("metadata.well", 1),
-                                   ("metadata.wellsample", 1),
-                                   ("metadata.channel", 1)])
+    query = {"plate": find_plate}
+
+    return_fields = {"plate": 1,
+                     "timepoint": 1,
+                     "path": 1,
+                     "metadata.well": 1,
+                     "metadata.wellsample": 1,
+                     "metadata.channel": 1,
+                     "_id": 0}
+
+    sorting = ([("metadata.well", 1),
+                ("metadata.wellsample", 1),
+                ("metadata.channel", 1)])
+
+    logging.info("query" + str(query))
+
+    result = img_collection.find(query, return_fields).sort(sorting)
+
     resultlist = list(result)
 
     # Before returning (to web) delete the for user hidden "root part" IMAGES_ROOT_FOLDER part, e.g. /share/mikro/IMX.....
@@ -79,7 +85,7 @@ def list_plates(DB_HOSTNAME="image-mongo"):
             {"$sort": {"_id.project": 1,
                        "_id.plate":1
                        }
-            }
+             }
 
         ]
     )

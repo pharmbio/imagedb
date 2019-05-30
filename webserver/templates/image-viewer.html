@@ -10,6 +10,8 @@
 
   <title>Image-Viewer</title>
 
+  <link rel="shortcut icon" href="/static/pharmbio_logo_square_64x64.png" type="image/x-icon">
+
   <!-- Bootstrap core CSS -->
   <link href="/static/theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
@@ -138,7 +140,7 @@
           <div class="input-group-prepend ml-2">
             <label class="input-group-text" for="timepoint-select">Timepoint</label>
           </div>
-          <select class="custom-select" style="width: 60px;" id="timepoint-select" onchange="redrawImageViewer(); return false;">
+          <select class="custom-select" style="width: 60px;" id="timepoint-select" onchange="return redrawImageViewer(false);">
           </select>
 
           <!-- Timepoint slider -->
@@ -163,9 +165,9 @@
             <option value="2">2</option>
             <option value="3">3</option>
             <option value="4">4</option>
-            <option selected value="5">5</option>
+            <option value="5">5</option>
             <option value="6">6</option>
-            <option value="7">7</option>
+            <option selected value="7">7</option>
             <option value="8">8</option>
             <option value="9">9</option>
           </select>

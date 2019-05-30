@@ -61,7 +61,7 @@ def tif2png_pillow(channels, outdir, overwrite_existing=False):
 
 async def merge_channels(channels, outdir, overwrite_existing=False):
 
-    logging.debug(channels)
+    logging.info("Inside async merge")
 
     for k, v in channels.items():
       logging.debug("key" + str(k))

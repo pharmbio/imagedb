@@ -19,6 +19,8 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
         """Handles GET requests.
         """
 
+        logging.info("Inside async")
+
         logging.debug("ch1:" + ch1)
         logging.debug("ch2:" + ch2)
         logging.debug("ch3:" + ch3)
@@ -60,9 +62,6 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
     async def get(self, ch1, ch2, ch3):
         """Handles GET requests.
         """
-
-
-        logging.debug("Hello")
 
         channels = {'1': ch1}
 
