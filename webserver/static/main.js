@@ -134,7 +134,8 @@ function loadPlateFromViewer(plate_name, timepoint, well, wellsample, channel){
           setWellsampleSelection(wellsample);
           setChannelSelection(channel);
 
-          loadTimepointImagesIntoViewer(-1);
+          loadTimepointImagesIntoViewer(timepoint);
+          // redrawImageViewer(true);
 
         })
         .catch(error => {
@@ -196,6 +197,8 @@ function redrawPlateAndViewer(clearFirst = false) {
 
 function redrawImageViewer(clearFirst = true) {
 
+  console.log("inside redrawImageViewer, clear first=", clearFirst);
+
   if (clearFirst) {
     viewer.world.removeAll();
   }
@@ -226,8 +229,9 @@ function redrawImageViewer(clearFirst = true) {
   let tpCount = countTimepoints(getLoadedPlate());
   for (let n = 0; n <= tpCount; n++) {
     let imgItem = viewer.world.getItemAt(n);
+    console.log("n=" + n, imgItem);
     if (imgItem) {
-      if (n === timepoint) {
+      if (n === timepoint - 1) {
         imgItem.setOpacity(1);
       } else {
         imgItem.setOpacity(0);
@@ -274,7 +278,6 @@ function loadTimepointImagesIntoViewer(skipIndex){
   // get what to redraw
   let wellsample = getSelectedWellsampleIndex();
   let well_name = getSelectedWell();
-
   let tpCount = countTimepoints(getLoadedPlate());
 
   // First odd ones
@@ -290,12 +293,13 @@ function loadTimepointImagesIntoViewer(skipIndex){
     let imgURL = createMergeImgURLFromChannels(channels);
 
     if(timepoint !== skipIndex) {
-      addImageToViewer(timepoint, imgURL, 0);
+      addImageToViewer(timepoint - 1, imgURL, 0);
     }
   }
 }
 
 function addImageToViewer(index, imgURL, opacity){
+  console.log('index', index);
   viewer.addSimpleImage({
     opacity: opacity,
     preload: true,
@@ -305,7 +309,7 @@ function addImageToViewer(index, imgURL, opacity){
     sequenceMode: true,
     success: function(event) {
       console.log("image-loaded: n=" + index);
-      console.log("sourceURL=" + event.item.source.getTileUrl());
+      console.log("source", event.item.source);
     }
   });
 }
@@ -811,7 +815,7 @@ function createMergeImgURLFromChannels(channels) {
   let val = getSelectedChannelValue();
 
   let url = null;
-  if(val === '1' || val === '1-2' || val === '1-3') {
+  if(val === '1-2' || val === '1-3') {
     url = "/api/image-merge/ch1/" + channels[1] + "/ch2/" + channels[2] + "/ch3/" + channels[3] + "/channels.png"
   }else{
     let selectedChannel = parseInt(val);
