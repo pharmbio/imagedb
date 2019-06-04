@@ -309,7 +309,11 @@ function addImageToViewer(index, imgURL, opacity){
     sequenceMode: true,
     success: function(event) {
       console.log("image-loaded: n=" + index);
+      console.log("item", event.item);
       console.log("source", event.item.source);
+      if(event.item.opacity === 1){
+        redrawImageViewer(false);
+      }
     }
   });
 }
