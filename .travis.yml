@@ -14,7 +14,7 @@ script:
   - docker build -t pharmbio/imagedb-web:$tag .
 
   # Test container
-    docker run pharmbio/imagedb-web:$tag python3 --version
+  - docker run pharmbio/imagedb-web:$tag python3 --version
 
 after_success:
   # Login and push image
