@@ -5,3 +5,18 @@ db.getCollection('pharmbio_microimages').createIndex( { project: 1 } )
 
 # Example queries
 db.getCollection('pharmbio_microimages').find({'path': "/share/mikro/IMX/MDC Polina Georgiev/exp-TimeLapse/A549-20X-DB-HD-BpA-pilot1/2019-03-27/84/TimePoint_1/A549-20X-DB-HD-BpA-pilot1_B02_s3C503B086-E8C0-4929-AEA7-840709A55CG3.tif"})
+
+
+# In Python:
+from pymongo import IndexModel, ASCENDING, DESCENDING
+
+index1 = IndexModel([("path", ASCENDING)])
+index2 = IndexModel([("plate", ASCENDING)])
+index3 = IndexModel([("project", ASCENDING)])
+
+imgdb.test.create_indexes([index1, index2, index3])
+
+img_collection.create_indexes([index1, index2, index3])
+
+img_collection.find({ 'path':{'$regex':'^\/share\/mikro\/IMX\/MDC Polina' })
+find({'files':{'$regex':'^File'}})
