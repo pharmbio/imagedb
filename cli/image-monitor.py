@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import logging
+import argparse
 import os
 import re
 import time
@@ -175,7 +176,7 @@ def import_plate_images_and_meta(plate_date_dir, latest_import_filedate):
 
     return current_latest_imported_file
 
-def polling_loop(poll_dirs_margin_days, latest_file_poll_margin_db_insert_sek, sleep_time, proj_root_dirs, exhaustive_initial_poll):
+def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, proj_root_dirs, exhaustive_initial_poll, continuous_polling):
 
     logging.info("Inside polling loop")
 
@@ -184,7 +185,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_poll_margin_db_insert_sek, s
 
     logging.info("exhaustive_initial_poll=" + str(exhaustive_initial_poll))
 
-    while(True):
+    while True:
 
         start_time = time.time()
         logging.info("Staring new poll")
@@ -249,16 +250,14 @@ def polling_loop(poll_dirs_margin_days, latest_file_poll_margin_db_insert_sek, s
 
         # TODO could skip sleeping if images were inserted... but difficult then with 2 hour margin (all files would be tried again)
 
+        if continuous_polling != True:
+          break
+
 
 #
 #  Main entry for script
 #
 try:
-    exhaustive_initial_poll = imgdb_settings.EXHAUSTIVE_INITIAL_POLL
-    poll_dirs_margin_days = 3
-    poll_sleep_time = 300 # 5 min
-    latest_file_poll_margin_db_insert_sek = 7200 # 2 hour (always try insert images within this time from latest_filedate_last_poll)
-
     #
     # Configure logging
     #
@@ -268,29 +267,31 @@ try:
 
     rootLogger = logging.getLogger()
 
-    #
-    # Set some constants, should be moved to a "config.py" or "settings.py"
-    #
+    parser = argparse.ArgumentParser(description='Description of your program')
+    
+    parser.add_argument('-prd', '--proj-root-dirs', help='Description for xxx argument',
+                        default=imgdb_settings.PROJ_ROOT_DIRS)
+    parser.add_argument('-cp', '--continuous-polling', help='Description for xxx argument',
+                        default=imgdb_settings.CONTINUOUS_POLLING)
+    parser.add_argument('-pi', '--poll-interval', help='Description for xxx argument',
+                        default=imgdb_settings.POLL_INTERVAL)
+    parser.add_argument('-pdmd', '--poll-dirs-margin-days', help='Description for xxx argument',
+                        default=imgdb_settings.POLL_DIRS_MARGIN_DAYS)
+    parser.add_argument('-eip', '--exhaustive-initial-poll', help='Description for xxx argument',
+                        default=imgdb_settings.EXHAUSTIVE_INITIAL_POLL)
+    parser.add_argument('-lfcm', '--latest-file-change-margin', help='Description for xxx argument',
+                        default=imgdb_settings.LATEST_FILE_CHANGE_MARGIN)
 
-    # read password from environment
-    # DB_USER = os.environ['DB_USER']
-    proj_root_dirs = [ "Aish/",
-                           "exp-CombTox/",
-                           "PolinaG-ACHN",
-                           "PolinaG-KO",
-                           "PolinaG-MCF7",
-                           "PolinaG-U2OS",
-                           "exp-TimeLapse/",
-                           "exp-WIDE/"
-                           ]
+    args = parser.parse_args()
 
-    polling_loop(poll_dirs_margin_days,
-                 latest_file_poll_margin_db_insert_sek,
-                 poll_sleep_time,
-                 proj_root_dirs,
-                 exhaustive_initial_poll)
+    print(args)
 
-
+    polling_loop(args.poll_dirs_margin_days,
+                 args.latest_file_change_margin,
+                 args.poll_interval,
+                 args.proj_root_dirs,
+                 args.exhaustive_initial_poll,
+                 args.continuous_polling)
 
 except Exception as e:
     print(traceback.format_exc())
