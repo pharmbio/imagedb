@@ -100,6 +100,10 @@ def add_plate_to_db(images, latest_filedate_to_test):
                                     serverSelectionTimeoutMS=1000,
                                     host=imgdb_settings.DB_HOSTNAME
                                     )
+    conn = psycopg2.connect(host=imgdb_settings.DB_HOSTNAME,
+                                 database=imgdb_settings.DB_NAME,
+                                 user="postgres", password="postgres")
+
     img_db = dbclient["pharmbio_db"]
     img_collection = img_db["pharmbio_microimages"]
 
