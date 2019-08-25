@@ -6,21 +6,23 @@ networks:
     name: image-db-net
 
 volumes:
-  db-data:
-  mongo-config:
+  db-data-pg:
 
 services:
-  image-mongo:
-    image: mongo
+
+  db:
+    image: postgres:11.5
     restart: always
-    container_name: image-mongo
-    ports:
-      - 27017:27017
+    container_name: image-pg
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      POSTGRES_USER: imagedb
+      POSTGRES_PASSWORD: example
     volumes:
-      - db-data:/data/db
-      - mongo-config:/data/configdb
-    networks:
-      - image-db-net
+      - db-data-pg:/var/lib/postgresql/data
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
