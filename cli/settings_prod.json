@@ -1,0 +1,24 @@
+{
+  "IMAGES_ROOT_FOLDER": "/share/mikro/IMX/MDC_pharmbio/",
+  "IMAGES_CACHE_FOLDER": "/share/imagedb/image-cache",
+  "IMAGES_THUMB_FOLDER": "/share/imagedb/thumbs/",
+  "DB_USER": "root",
+  "DB_PASS": "example",
+  "DB_PORT": "27017",
+  "DB_HOSTNAME": "image-pg",
+  "DB_NAME": "postgres",
+  "EXHAUSTIVE_INITIAL_POLL": "true",
+  "POLL_DIRS_MARGIN_DAYS": "3",
+  "POLL_INTERVAL": "300",
+  "LATEST_FILE_CHANGE_MARGIN": "7200",
+  "PROJ_ROOT_DIRS": [ "Aish/",
+                      "exp-CombTox/",
+                      "PolinaG-ACHN",
+                      "PolinaG-KO",
+                      "PolinaG-MCF7",
+                      "PolinaG-U2OS",
+                      "exp-TimeLapse/",
+                      "exp-WIDE/"
+                     ],
+  "CONTINUOUS_POLLING": "true"
+}

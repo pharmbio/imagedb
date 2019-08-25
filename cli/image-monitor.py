@@ -156,6 +156,74 @@ def add_plate_to_db(images, latest_filedate_to_test):
 
     return current_latest_imagefile
 
+def add_plate_to_db_mongo(images, latest_filedate_to_test):
+    logging.info("start add_plate_metadata to db")
+
+    current_latest_imagefile = 0
+
+    # Connect db
+    dbclient = pymongo.MongoClient( username=imgdb_settings.DB_USER,
+                                    password=imgdb_settings.DB_PASS,
+                                    # connectTimeoutMS=500,
+                                    serverSelectionTimeoutMS=1000,
+                                    host=imgdb_settings.DB_HOSTNAME
+                                    )
+    img_db = dbclient["pharmbio_db"]
+    img_collection = img_db["pharmbio_microimages"]
+
+    # sort images (just to get thumb after image)
+    images.sort(key=image_name_sort_fn)
+
+    # Loop all Images
+    for idx, image in enumerate(images):
+
+        img_meta = parse_path_and_file(image)
+
+        logging.debug(img_meta)
+
+        # get last modified date of this image-file
+        image_modtime = os.path.getmtime(image)
+
+        # Keep track of latest processed file
+        current_latest_imagefile = max(current_latest_imagefile, image_modtime)
+
+        # Only check newer files if image is in db already
+        if image_modtime > latest_filedate_to_test:
+
+            # Skip thumbnails
+            if not img_meta['is_thumbnail']:
+
+                # Check if doc already exists in db
+                result = img_collection.find({'path': img_meta['path']})
+                # Insert image if not in db (no result)
+                if result.count() == 0:
+
+                    # create document to be inserted
+                    document = { 'project': img_meta['project'],
+                                 'plate': img_meta['plate'],
+                                 'timepoint': img_meta['timepoint'],
+                                 'path': img_meta['path'],
+                                 'metadata': img_meta }
+
+                    insert_result = img_collection.insert_one(document)
+
+                    # create thumb image
+                    thumb_path = make_thumb_path(image,
+                                                 imgdb_settings.IMAGES_THUMB_FOLDER,
+                                                 imgdb_settings.IMAGES_ROOT_FOLDER)
+                    logging.debug(thumb_path)
+                    makeThumb(image, thumb_path, False)
+
+                else:
+                    logging.debug("doc exists already")
+
+            if idx % 100 == 0:
+                logging.info("images processed:" + str(idx))
+        else:
+            logging.debug("file is to old for being inserted into database, image_modtime < latest_filedate_to_test")
+
+    return current_latest_imagefile
+
 def plateExists(name):
     return False
 
@@ -268,7 +336,7 @@ try:
     rootLogger = logging.getLogger()
 
     parser = argparse.ArgumentParser(description='Description of your program')
-    
+
     parser.add_argument('-prd', '--proj-root-dirs', help='Description for xxx argument',
                         default=imgdb_settings.PROJ_ROOT_DIRS)
     parser.add_argument('-cp', '--continuous-polling', help='Description for xxx argument',

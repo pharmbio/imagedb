@@ -36,9 +36,9 @@ services:
     command: python3 image-monitor.py
     environment:
       EXHAUSTIVE_INITIAL_POLL: "false"
-      DB_USER: root
+      DB_USER: postgres
       DB_PASS: example
-      DB_PORT: "27017"
+      DB_PORT: "5432"
     volumes:
       - mikroimages-bind:/share/mikro
       - imagedb-bind:/share/imagedb
