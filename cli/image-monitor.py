@@ -8,6 +8,8 @@ import time
 import traceback
 import glob
 import pymongo
+import psycopg2
+import json
 from datetime import datetime, timedelta
 
 from filenames.filenames import parse_path_and_file
@@ -89,6 +91,95 @@ def make_thumb_path(image, thumbdir, image_root_dir):
     return thumb_path
 
 def add_plate_to_db(images, latest_filedate_to_test):
+    logging.info("start add_plate_metadata to db")
+
+    current_latest_imagefile = 0
+
+    # Connect db
+    #dbclient = pymongo.MongoClient( username=imgdb_settings.DB_USER,
+    #                                password=imgdb_settings.DB_PASS,
+    #                                # connectTimeoutMS=500,
+    #                                serverSelectionTimeoutMS=1000,
+    #                                host=imgdb_settings.DB_HOSTNAME
+    #                                )
+    conn = psycopg2.connect(host=imgdb_settings.DB_HOSTNAME,
+                                 database=imgdb_settings.DB_NAME,
+                                 user=imgdb_settings.DB_USER, password=imgdb_settings.DB_PASS)
+
+    # sort images (just to get thumb after image)
+    images.sort(key=image_name_sort_fn)
+
+    # Loop all Images
+    for idx, image in enumerate(images):
+
+        img_meta = parse_path_and_file(image)
+
+        logging.debug(img_meta)
+
+        # get last modified date of this image-file
+        image_modtime = os.path.getmtime(image)
+
+        # Keep track of latest processed file
+        current_latest_imagefile = max(current_latest_imagefile, image_modtime)
+
+        # Only check newer files if image is in db already
+        if image_modtime > latest_filedate_to_test:
+
+            # Skip thumbnails
+            if not img_meta['is_thumbnail']:
+
+                # Check if image already exists in db
+                select_cursor = conn.cursor()
+
+                select_path_query = "SELECT * FROM images WHERE path = %s"
+                select_cursor.execute(select_path_query, (img_meta['path'],))
+
+                # Insert image if not in db (no result)
+                if select_cursor.rowcount == 0:
+
+                    insert_query = "INSERT INTO images(project, plate, timepoint, well, site, channel, path, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
+                    insert_cursor = conn.cursor()
+                    insert_cursor.execute(insert_query, (img_meta['project'],
+                                                         img_meta['plate'],
+                                                         img_meta['timepoint'],
+                                                         img_meta['well'],
+                                                         img_meta['wellsample'],
+                                                         img_meta['channel'],
+                                                         img_meta['path'],
+                                                         json.dumps(img_meta)
+                                                         ))
+
+                    conn.commit();
+
+                    #  document = { 'project': img_meta['project'],
+                    #               'plate': img_meta['plate'],
+                    #               'timepoint': img_meta['timepoint'],
+                    #               'path': img_meta['path'],
+                    #               'metadata': img_meta }
+
+                    #  insert_result = img_collection.insert_one(document)
+
+                    # create thumb image
+                    thumb_path = make_thumb_path(image,
+                                                 imgdb_settings.IMAGES_THUMB_FOLDER,
+                                                 imgdb_settings.IMAGES_ROOT_FOLDER)
+                    logging.debug(thumb_path)
+
+                    # Only create thumb if not exists already
+                    if not os.path.exists(thumb_path):
+                      makeThumb(image, thumb_path, False)
+
+                else:
+                    logging.debug("doc exists already")
+
+            if idx % 100 == 0:
+                logging.info("images processed:" + str(idx))
+        else:
+            logging.debug("file is to old for being inserted into database, image_modtime < latest_filedate_to_test")
+
+    return current_latest_imagefile
+
+def add_plate_to_db_mongo(images, latest_filedate_to_test):
     logging.info("start add_plate_metadata to db")
 
     current_latest_imagefile = 0
@@ -217,13 +308,17 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                     date_delta = datetime.today() - dir_date
 
                     logging.debug("delta" + str(date_delta))
+                    logging.debug(str(is_initial_poll))
+                    logging.debug(str(exhaustive_initial_poll))
 
                     # poll images in directories more recent than today + poll_dirs_date_margin_days
                     if date_delta <= timedelta(days=poll_dirs_margin_days) or \
                             (exhaustive_initial_poll and is_initial_poll):
 
+                        logging.debug("Image folder is more recent")
+
                         # set file date to test inserting into db to last poll latest file minus margin
-                        latest_filedate_last_poll_with_margin = latest_filedate_last_poll - latest_file_poll_margin_db_insert_sek;
+                        latest_filedate_last_poll_with_margin = latest_filedate_last_poll - latest_file_change_margin;
 
                         # try to import files more recent than latest_filedate last poll minus margin
                         # returns max of latest filedate in dir and the latest file to check
@@ -263,12 +358,12 @@ try:
     #
     logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                         datefmt='%H:%M:%S',
-                        level=logging.INFO)
+                        level=logging.DEBUG)
 
     rootLogger = logging.getLogger()
 
     parser = argparse.ArgumentParser(description='Description of your program')
-    
+
     parser.add_argument('-prd', '--proj-root-dirs', help='Description for xxx argument',
                         default=imgdb_settings.PROJ_ROOT_DIRS)
     parser.add_argument('-cp', '--continuous-polling', help='Description for xxx argument',
@@ -284,7 +379,7 @@ try:
 
     args = parser.parse_args()
 
-    print(args)
+    logging.debug(args)
 
     polling_loop(args.poll_dirs_margin_days,
                  args.latest_file_change_margin,

@@ -4,9 +4,9 @@ networks:
   image-db-net:
     external:
       name: image-db-net
-  traefik:
-    external:
-      name: traefik_web
+ # traefik:
+ #   external:
+ #     name: traefik_web
 
 volumes:
   # this is microimages r-o share
@@ -50,11 +50,9 @@ services:
       - traefik.port=8080
     networks:
       - image-db-net
-      - traefik
+    #  - traefik
     volumes:
       - webroot-bind:/app
       - mikroimages-bind:/share/mikro
       - imagedb-bind:/share/imagedb
- #   external_links:
- #     - image-mongo
 
