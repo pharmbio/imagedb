@@ -35,7 +35,6 @@ services:
     container_name: imagedb-cli
     command: python3 image-monitor.py
     environment:
-      EXHAUSTIVE_INITIAL_POLL: "false"
       DB_USER: postgres
       DB_PASS: example
       DB_PORT: "5432"

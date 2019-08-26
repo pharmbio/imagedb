@@ -10,6 +10,10 @@ RUN apt-get install -y \
         libxext6 \
         libxrender-dev
 
+# install postgres devtools
+RUN apt-get update && apt-get install -y \
+        libpq-dev
+
 COPY requirements.txt /app/
 RUN pip3 install -r /app/requirements.txt
 

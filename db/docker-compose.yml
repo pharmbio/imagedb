@@ -10,19 +10,22 @@ volumes:
 
 services:
 
-  db:
+  imagedb:
     image: postgres:11.5
     restart: always
-    container_name: image-pg
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
     volumes:
       - db-data-pg:/var/lib/postgresql/data
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    networks:
+      - image-db-net
 
   adminer:
     image: adminer
     restart: always
     ports:
       - 8080:8080
+    networks:
+      - image-db-net

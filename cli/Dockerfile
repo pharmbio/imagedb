@@ -18,6 +18,10 @@ RUN apt-get update && apt-get install -y \
         git \
         vim
 
+# install postgres devtools
+RUN apt-get update && apt-get install -y \
+        libpq-dev
+
 # Install with pip before copy all files, otherwise docker needs to build
 # this layer allways after file changes in app-dir
 COPY requirements.txt /app/

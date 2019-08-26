@@ -55,8 +55,8 @@ function drawPlatesListSidebar(queryResults){
   queryResults.forEach(result => {
 
     // Create a list with all projects
-    let proj = result._id.project;
-    let plate = result._id.plate;
+    let proj = result.project;
+    let plate = result.plate;
 
     // create a new sublist for each project
     if (last_proj !== proj) {

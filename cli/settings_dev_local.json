@@ -1,0 +1,17 @@
+{
+  "IMAGES_ROOT_FOLDER": "/share/mikro/IMX/MDC_pharmbio/",
+  "IMAGES_CACHE_FOLDER": "/share/imagedb/image-cache",
+  "IMAGES_THUMB_FOLDER": "/share/imagedb/thumbs/",
+  "DB_USER": "postgres",
+  "DB_PASS": "example",
+  "DB_PORT": 5432,
+  "DB_HOSTNAME": "imagedb",
+  "DB_NAME": "postgres",
+  "EXHAUSTIVE_INITIAL_POLL": "true",
+  "POLL_DIRS_MARGIN_DAYS": 3,
+  "POLL_INTERVAL": 300,
+  "LATEST_FILE_CHANGE_MARGIN": 7000,
+  "PROJ_ROOT_DIRS": [ "exp-WIDE/"
+                     ],
+  "CONTINUOUS_POLLING": "true"
+}
