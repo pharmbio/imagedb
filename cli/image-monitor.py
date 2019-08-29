@@ -179,77 +179,6 @@ def add_plate_to_db(images, latest_filedate_to_test):
 
     return current_latest_imagefile
 
-def add_plate_to_db_mongo(images, latest_filedate_to_test):
-    logging.info("start add_plate_metadata to db")
-
-    current_latest_imagefile = 0
-
-    # Connect db
-    dbclient = pymongo.MongoClient( username=imgdb_settings.DB_USER,
-                                    password=imgdb_settings.DB_PASS,
-                                    # connectTimeoutMS=500,
-                                    serverSelectionTimeoutMS=1000,
-                                    host=imgdb_settings.DB_HOSTNAME
-                                    )
-    img_db = dbclient["pharmbio_db"]
-    img_collection = img_db["pharmbio_microimages"]
-
-    # sort images (just to get thumb after image)
-    images.sort(key=image_name_sort_fn)
-
-    # Loop all Images
-    for idx, image in enumerate(images):
-
-        img_meta = parse_path_and_file(image)
-
-        logging.debug(img_meta)
-
-        # get last modified date of this image-file
-        image_modtime = os.path.getmtime(image)
-
-        # Keep track of latest processed file
-        current_latest_imagefile = max(current_latest_imagefile, image_modtime)
-
-        # Only check newer files if image is in db already
-        if image_modtime > latest_filedate_to_test:
-
-            # Skip thumbnails
-            if not img_meta['is_thumbnail']:
-
-                # Check if doc already exists in db
-                result = img_collection.find({'path': img_meta['path']})
-                # Insert image if not in db (no result)
-                if result.count() == 0:
-
-                    # create document to be inserted
-                    document = { 'project': img_meta['project'],
-                                 'plate': img_meta['plate'],
-                                 'timepoint': img_meta['timepoint'],
-                                 'path': img_meta['path'],
-                                 'metadata': img_meta }
-
-                    insert_result = img_collection.insert_one(document)
-
-                    # create thumb image
-                    thumb_path = make_thumb_path(image,
-                                                 imgdb_settings.IMAGES_THUMB_FOLDER,
-                                                 imgdb_settings.IMAGES_ROOT_FOLDER)
-                    logging.debug(thumb_path)
-                    makeThumb(image, thumb_path, False)
-
-                else:
-                    logging.debug("doc exists already")
-
-            if idx % 100 == 0:
-                logging.info("images processed:" + str(idx))
-        else:
-            logging.debug("file is to old for being inserted into database, image_modtime < latest_filedate_to_test")
-
-    return current_latest_imagefile
-
-def plateExists(name):
-    return False
-
 
 #
 # Main import function
@@ -294,42 +223,51 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
             for plate_dir in plate_dirs:
                 plate_subdirs = get_subdirs(plate_dir)
 
-                for plate_date_dir in plate_subdirs:
-                    logging.debug("plate_subdir: " + str(plate_date_dir))
+                try:
+                    for plate_date_dir in plate_subdirs:
+                        logging.debug("plate_subdir: " + str(plate_date_dir))
 
-                    # Parse filename for metadata (e.g. platename well, site, channet etc.)
-                    metadata = parse_path_plate_date(plate_date_dir)
-                    logging.debug("metadata" + str(metadata))
+                        # Parse filename for metadata (e.g. platename well, site, channet etc.)
+                        metadata = parse_path_plate_date(plate_date_dir)
+                        logging.debug("metadata" + str(metadata))
 
-                    # get date from dir
-                    dir_date = datetime(metadata['date_year'], metadata['date_month'],
-                                        metadata['date_day_of_month'])
+                        # get date from dir
+                        dir_date = datetime(metadata['date_year'], metadata['date_month'],
+                                            metadata['date_day_of_month'])
 
-                    date_delta = datetime.today() - dir_date
+                        date_delta = datetime.today() - dir_date
 
-                    logging.debug("delta" + str(date_delta))
-                    logging.debug(str(is_initial_poll))
-                    logging.debug(str(exhaustive_initial_poll))
+                        logging.debug("delta" + str(date_delta))
+                        logging.debug(str(is_initial_poll))
+                        logging.debug(str(exhaustive_initial_poll))
 
-                    # poll images in directories more recent than today + poll_dirs_date_margin_days
-                    if date_delta <= timedelta(days=poll_dirs_margin_days) or \
-                            (exhaustive_initial_poll and is_initial_poll):
+                        # poll images in directories more recent than today + poll_dirs_date_margin_days
+                        if date_delta <= timedelta(days=poll_dirs_margin_days) or \
+                                (exhaustive_initial_poll and is_initial_poll):
 
-                        logging.debug("Image folder is more recent")
+                            logging.debug("Image folder is more recent")
 
-                        # set file date to test inserting into db to last poll latest file minus margin
-                        latest_filedate_last_poll_with_margin = latest_filedate_last_poll - latest_file_change_margin;
+                            # set file date to test inserting into db to last poll latest file minus margin
+                            latest_filedate_last_poll_with_margin = latest_filedate_last_poll - latest_file_change_margin;
 
-                        # try to import files more recent than latest_filedate last poll minus margin
-                        # returns max of latest filedate in dir and the latest file to check
-                        current_dir_latest_filedate = import_plate_images_and_meta(plate_date_dir,
-                                                                                   latest_filedate_last_poll_with_margin)
+                            # try to import files more recent than latest_filedate last poll minus margin
+                            # returns max of latest filedate in dir and the latest file to check
+                            current_dir_latest_filedate = import_plate_images_and_meta(plate_date_dir,
+                                                                                       latest_filedate_last_poll_with_margin)
 
-                        # keep track of latest file in this current poll
-                        current_poll_latest_filedate = max(current_poll_latest_filedate,
-                                                           current_dir_latest_filedate)
+                            # keep track of latest file in this current poll
+                            current_poll_latest_filedate = max(current_poll_latest_filedate,
+                                                               current_dir_latest_filedate)
 
-                        # only update with latest file when everything is checked once
+                            # only update with latest file when everything is checked once
+
+                except Exception as e:
+                    print(traceback.format_exc())
+                    logging.info("Exception in plate dir")
+                    exception_file = os.path.join(IMAGES_THUMB_FOLDER, "exceptions.log")
+                    with open(exception_file, 'a') as exc_file:
+                       exc_file.write("plate_date_dir:" + str(plate_date_dir))
+                       exc_file.write(traceback.format_exc())
 
         # Set latest file mod for all monitored dirs
         latest_filedate_last_poll = max(latest_filedate_last_poll, current_poll_latest_filedate)
