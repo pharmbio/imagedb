@@ -11,7 +11,7 @@
   "POLL_DIRS_MARGIN_DAYS": 3,
   "POLL_INTERVAL": 300,
   "LATEST_FILE_CHANGE_MARGIN": 7000,
-  "PROJ_ROOT_DIRS": [ "exp-WIDE/"
+  "PROJ_ROOT_DIRS": [ "PolinaG-KO"
                      ],
   "CONTINUOUS_POLLING": "true"
 }

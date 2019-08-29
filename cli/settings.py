@@ -1,7 +1,7 @@
 import os
 import json
 
-conf_file = "settings_dev_local.json"
+conf_file = os.getenv("CONF_FILE", "settings_dev_local.json")
 with open(conf_file) as json_file:
   js_conf = json.load(json_file)
 

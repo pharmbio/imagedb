@@ -4,9 +4,9 @@ networks:
   image-db-net:
     external:
       name: image-db-net
- # traefik:
- #   external:
- #     name: traefik_web
+  traefik:
+    external:
+      name: traefik_web
 
 volumes:
   # this is microimages r-o share
@@ -45,12 +45,12 @@ services:
       - traefik.enable=true
       - traefik.docker.network=traefik_web
       - traefik.backend=web
-      - traefik.frontend.rule=Host:imagedb-web.pharmb.io
+      - traefik.frontend.rule=Host:imagedb-dev.pharmb.io
       - traefik.frontend.auth.basic=pharmbio:$$2y$$05$$RdRhskrhXJijo0FUKfVIT.E7Q2kH2Bf0BZ.1KYYcy4R9Piat/DiUK
       - traefik.port=8080
     networks:
       - image-db-net
-    #  - traefik
+      - traefik
     volumes:
       - webroot-bind:/app
       - mikroimages-bind:/share/mikro
