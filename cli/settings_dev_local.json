@@ -7,7 +7,7 @@
   "DB_PASS": "example",
   "DB_PORT": 5432,
   "DB_HOSTNAME": "imagedb",
-  "DB_NAME": "postgres",
+  "DB_NAME": "imagedb",
   "EXHAUSTIVE_INITIAL_POLL": "true",
   "POLL_DIRS_MARGIN_DAYS": 3,
   "POLL_INTERVAL": 300,

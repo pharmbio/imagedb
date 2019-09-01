@@ -38,10 +38,19 @@ def list_plate(find_plate):
 
         conn = get_connection()
 
-        query = ("SELECT plate, timepoint, path, well, site, channel "
-                 "FROM images "
-                 "WHERE plate = %s "
-                 "ORDER BY well, site, channel")
+        return_cols = ['plate',
+                       'project',
+                       'timepoint',
+                       'path',
+                       'well',
+                       'site',
+                       'channel'
+                       ]
+
+        query = ("SELECT " + ",".join(return_cols) +
+                 " FROM images"
+                 " WHERE plate = %s"
+                 " ORDER BY well, site, channel")
 
         logging.info("query" + query)
 
@@ -49,15 +58,14 @@ def list_plate(find_plate):
         cursor.execute(query, (find_plate, ))
 
         # create a list with all results as key-values
-        resultlist = []
-        for row in cursor:
-            resultlist.append({'plate': row[0],
-                          'timepoint': row[1],
-                          'path': row[2],
-                          'well': row[3],
-                          'site': row[4],
-                          'channel': row[5]
-                          })
+#        resultlist = []
+#        for row in cursor:
+#            for value, col_name in zip(row, return_cols):
+#                resultlist.append({col_name, value})
+
+        resultlist = [dict(zip([key[0] for key in cursor.description], row)) for row in cursor]
+
+        logging.info(str(resultlist))
 
         cursor.close()
         put_connection(conn)
@@ -89,7 +97,7 @@ def list_plate(find_plate):
         if conn is not None:
             put_connection(conn)
 
-def list_plates(DB_HOSTNAME="image-mongo"):
+def list_plates():
 
     logging.debug("list_plates")
 
