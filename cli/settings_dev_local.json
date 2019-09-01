@@ -1,7 +1,8 @@
 {
-  "IMAGES_ROOT_FOLDER": "/share/mikro/IMX/MDC_pharmbio/",
-  "IMAGES_CACHE_FOLDER": "/share/imagedb/image-cache",
-  "IMAGES_THUMB_FOLDER": "/share/imagedb/thumbs/",
+  "IMAGES_ROOT_DIR": "/share/mikro/IMX/MDC_pharmbio/",
+  "IMAGES_CACHE_DIR": "/share/imagedb/image-cache",
+  "IMAGES_THUMB_DIR": "/share/imagedb/thumbs/",
+  "ERROR_LOG_DIR":  "/share/imagedb/",
   "DB_USER": "postgres",
   "DB_PASS": "example",
   "DB_PORT": 5432,

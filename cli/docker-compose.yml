@@ -1,4 +1,4 @@
-version: "3.5"
+version: "2.4"
 
 networks:
   image-db-net:
@@ -34,7 +34,10 @@ services:
     restart: always
     container_name: imagedb-cli
     command: python3 image-monitor.py
+    cpus: 2
+    mem_limit: 2g
     environment:
+      # CONF_FILE: settings_dev_local.json
       CONF_FILE: settings_prod.json
       DB_USER: postgres
       DB_PASS: example
@@ -43,7 +46,5 @@ services:
       - mikroimages-bind:/share/mikro
       - imagedb-bind:/share/imagedb
       - approot-bind:/app
-    #external_links:
-    #  - image-mongo
     networks:
       - image-db-net

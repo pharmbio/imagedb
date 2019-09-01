@@ -42,7 +42,6 @@ class QueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
     def post(self):
         """Handles POST requests.
         """
-        logging.info("Hej")
         try:
             form_data = self.request.body_arguments
 
@@ -50,8 +49,7 @@ class QueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
             logging.error("Exception: %s", e)
             form_data = []
 
-        logging.info("Hej")
-        logging.info("form_data:" + str(form_data))
+        logging.debug("form_data:" + str(form_data))
 
         results = list_projects(form_data)
         logging.debug(results)

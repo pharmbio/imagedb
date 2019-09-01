@@ -9,11 +9,13 @@ import traceback
 import glob
 import pymongo
 import psycopg2
+from psycopg2 import pool
 import json
 from datetime import datetime, timedelta
 
 from filenames.filenames import parse_path_and_file
 from image_tools import makeThumb
+from image_tools import read_tiff_info
 import settings as imgdb_settings
 
 #
@@ -33,6 +35,9 @@ __pattern_path_plate_date = re.compile('^'
                                        ,
                                        re.IGNORECASE)  # Windows has case-insensitive filenames
 
+__connection_pool = None
+
+
 def parse_path_plate_date(path):
     match = re.search(__pattern_path_plate_date, path)
 
@@ -50,6 +55,26 @@ def parse_path_plate_date(path):
     metadata = group_
 
     return metadata
+
+
+def get_connection():
+
+    global __connection_pool
+    if __connection_pool is None:
+        __connection_pool = psycopg2.pool.SimpleConnectionPool(1, 2, user = imgdb_settings.DB_USER,
+                                              password = imgdb_settings.DB_PASS,
+                                              host = imgdb_settings.DB_HOSTNAME,
+                                              port = imgdb_settings.DB_PORT,
+                                              database = imgdb_settings.DB_NAME)
+
+    return __connection_pool.getconn()
+
+
+def put_connection(pooled_connection):
+
+    global __connection_pool
+    if __connection_pool:
+        __connection_pool.putconn(pooled_connection)
 
 
 #
@@ -90,21 +115,43 @@ def make_thumb_path(image, thumbdir, image_root_dir):
     thumb_path = os.path.join(thumbdir, subpath)
     return thumb_path
 
+
+def insert_meta_into_db(img_meta):
+
+    insert_query = "INSERT INTO images(project, plate, timepoint, well, site, channel, path, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
+    insert_conn = get_connection()
+    insert_cursor = insert_conn.cursor()
+    insert_cursor.execute(insert_query, (img_meta['project'],
+                                         img_meta['plate'],
+                                         img_meta['timepoint'],
+                                         img_meta['well'],
+                                         img_meta['wellsample'],
+                                         img_meta['channel'],
+                                         img_meta['path'],
+                                         json.dumps(img_meta)
+                                         ))
+    insert_cursor.close()
+    insert_conn.commit()
+    put_connection(insert_conn)
+
+def image_exists_in_db(image_path):
+
+    select_conn = get_connection()
+    select_cursor = select_conn.cursor()
+
+    select_path_query = "SELECT * FROM images WHERE path = %s"
+    select_cursor.execute(select_path_query, (image_path,))
+
+    rowcount = select_cursor.rowcount
+    select_cursor.close()
+    put_connection(select_conn)
+
+    return rowcount > 0
+
 def add_plate_to_db(images, latest_filedate_to_test):
     logging.info("start add_plate_metadata to db")
 
     current_latest_imagefile = 0
-
-    # Connect db
-    #dbclient = pymongo.MongoClient( username=imgdb_settings.DB_USER,
-    #                                password=imgdb_settings.DB_PASS,
-    #                                # connectTimeoutMS=500,
-    #                                serverSelectionTimeoutMS=1000,
-    #                                host=imgdb_settings.DB_HOSTNAME
-    #                                )
-    conn = psycopg2.connect(host=imgdb_settings.DB_HOSTNAME,
-                                 database=imgdb_settings.DB_NAME,
-                                 user=imgdb_settings.DB_USER, password=imgdb_settings.DB_PASS)
 
     # sort images (just to get thumb after image)
     images.sort(key=image_name_sort_fn)
@@ -129,35 +176,17 @@ def add_plate_to_db(images, latest_filedate_to_test):
             if not img_meta['is_thumbnail']:
 
                 # Check if image already exists in db
-                select_cursor = conn.cursor()
-
-                select_path_query = "SELECT * FROM images WHERE path = %s"
-                select_cursor.execute(select_path_query, (img_meta['path'],))
+                image_exists = image_exists_in_db(img_meta['path'])
 
                 # Insert image if not in db (no result)
-                if select_cursor.rowcount == 0:
+                if image_exists == False:
 
-                    insert_query = "INSERT INTO images(project, plate, timepoint, well, site, channel, path, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
-                    insert_cursor = conn.cursor()
-                    insert_cursor.execute(insert_query, (img_meta['project'],
-                                                         img_meta['plate'],
-                                                         img_meta['timepoint'],
-                                                         img_meta['well'],
-                                                         img_meta['wellsample'],
-                                                         img_meta['channel'],
-                                                         img_meta['path'],
-                                                         json.dumps(img_meta)
-                                                         ))
+                    # read tiff-meta-tags
+                    tiff_meta = read_tiff_info(img_meta['path'])
+                    img_meta['tiff_meta'] = tiff_meta
 
-                    conn.commit();
-
-                    #  document = { 'project': img_meta['project'],
-                    #               'plate': img_meta['plate'],
-                    #               'timepoint': img_meta['timepoint'],
-                    #               'path': img_meta['path'],
-                    #               'metadata': img_meta }
-
-                    #  insert_result = img_collection.insert_one(document)
+                    # insert into db
+                    insert_meta_into_db(img_meta)
 
                     # create thumb image
                     thumb_path = make_thumb_path(image,
@@ -262,9 +291,8 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                             # only update with latest file when everything is checked once
 
                 except Exception as e:
-                    print(traceback.format_exc())
-                    logging.info("Exception in plate dir")
-                    exception_file = os.path.join(IMAGES_THUMB_FOLDER, "exceptions.log")
+                    logging.exception("Exception in plate dir")
+                    exception_file = os.path.join(imgdb_settings.ERROR_LOG_DIR, "exceptions.log")
                     with open(exception_file, 'a') as exc_file:
                        exc_file.write("plate_date_dir:" + str(plate_date_dir))
                        exc_file.write(traceback.format_exc())
@@ -296,7 +324,7 @@ try:
     #
     logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                         datefmt='%H:%M:%S',
-                        level=logging.DEBUG)
+                        level=logging.INFO)
 
     rootLogger = logging.getLogger()
 

@@ -22,6 +22,10 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install -y \
         libpq-dev
 
+# install tiffinfo
+RUN apt-get update && apt-get install -y \
+        libtiff-tools
+
 # Install with pip before copy all files, otherwise docker needs to build
 # this layer allways after file changes in app-dir
 COPY requirements.txt /app/

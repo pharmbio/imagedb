@@ -4,10 +4,28 @@ import logging
 import os
 from PIL import Image
 import cv2 as cv2
+import subprocess
 
+def colon_delimited_to_dict(inputString):
+  # for each line in result, split into key-val on delimiter(colon)
+  splitted = inputString.splitlines()
+  result = {}
+  for line in splitted:
+    key_val = line.split(':')
+    # only process lines with delimiter
+    if len(key_val) == 2:
+      result[key_val[0].strip()] = key_val[1].strip()
+
+  return result
+
+def read_tiff_info(path):
+  result =  subprocess.run(['tiffinfo', path, "-i"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  output = str(result.stdout.decode())
+  return colon_delimited_to_dict(output)
 
 def makeThumb(path, thumbpath, overwrite):
   return makeThumb_opencv(path, thumbpath, overwrite)
+
 
 def makeThumb_pillow(path, thumbdir):
 
@@ -32,6 +50,7 @@ def makeThumb_pillow(path, thumbdir):
   # save thumb
   im.save(thumbfile_with_ext)
 
+
 def makeThumb_opencv(path, thumbpath, overwrite):
 
   # replace old ext with png
@@ -52,3 +71,10 @@ def makeThumb_opencv(path, thumbpath, overwrite):
 
     # save thumb
     cv2.imwrite(thumbpath_with_ext, imRes)
+
+
+if __name__ == '__main__':
+  # test tiff-function
+  result = read_tiff_info("/mnt/messi/tmp/WT-day7-40X-H2O2-Glu_B02_s3_w58595D8FD-A862-48FD-BE61-DDE35F0EDAC3.tif")
+  print(result)
+

@@ -1,29 +1,31 @@
 #!/usr/bin/env python3
-import pymongo as pymongo
 import logging
 import json
 import psycopg2
+from psycopg2 import pool
 import settings as imgdb_settings
 
-def get_default_collection():
-    dbclient = pymongo.MongoClient(username=imgdb_settings.DB_USER,
-                                   password=imgdb_settings.DB_PASS,
-                                   # connectTimeoutMS=500,
-                                   serverSelectionTimeoutMS=1000,
-                                   host=imgdb_settings.DB_HOSTNAME,
-                                   port=imgdb_settings.DB_PORT
-                                   )
+__connection_pool = None
 
-    img_db = dbclient["pharmbio_db"]
-    img_collection = img_db["pharmbio_microimages"]
-
-    return img_collection
 
 def get_connection():
-    return psycopg2.connect(host=imgdb_settings.DB_HOSTNAME,
-                                 database=imgdb_settings.DB_NAME,
-                                 user=imgdb_settings.DB_USER, password=imgdb_settings.DB_PASS)
 
+    global __connection_pool
+    if __connection_pool is None:
+        __connection_pool = psycopg2.pool.SimpleConnectionPool(1, 20, user = imgdb_settings.DB_USER,
+                                              password = imgdb_settings.DB_PASS,
+                                              host = imgdb_settings.DB_HOSTNAME,
+                                              port = imgdb_settings.DB_PORT,
+                                              database = imgdb_settings.DB_NAME)
+
+    return __connection_pool.getconn()
+
+
+def put_connection(pooled_connection):
+
+    global __connection_pool
+    if __connection_pool:
+        __connection_pool.putconn(pooled_connection)
 
 
 def list_plate(find_plate):
@@ -46,8 +48,8 @@ def list_plate(find_plate):
         cursor = conn.cursor()
         cursor.execute(query, (find_plate, ))
 
+        # create a list with all results as key-values
         resultlist = []
-
         for row in cursor:
             resultlist.append({'plate': row[0],
                           'timepoint': row[1],
@@ -57,9 +59,9 @@ def list_plate(find_plate):
                           'channel': row[5]
                           })
 
-        # resultlist = [dict(zip([key[0] for key in cursor.description], row)) for row in result]
-
         cursor.close()
+        put_connection(conn)
+        conn = None
 
         # Before returning (to web) delete the for user hidden "root part" IMAGES_ROOT_FOLDER part, e.g. /share/mikro/IMX.....
         for image in resultlist:
@@ -68,6 +70,9 @@ def list_plate(find_plate):
                     new_value = str(value).replace( imgdb_settings.IMAGES_ROOT_FOLDER , "")
                     image.update( {'path': new_value})
 
+        # create a nested json object of all images.
+        # A plate object containing all timepoints. The timpoints containing all wells and then all sites
+        # and then channels with image path
         plates_dict = {}
         for image in resultlist:
             plates_dict.setdefault(image['plate'], {}) \
@@ -76,18 +81,13 @@ def list_plate(find_plate):
                 .setdefault(image['site'], {}) \
                 .setdefault(image['channel'], image['path'])
 
-
-        #plateObj = {'plate_name:', plate,
-        #            'timepoints:', platesdict['plate']
-        #            }
-
         return {'plates': plates_dict}
 
     except (Exception, psycopg2.DatabaseError) as error:
         logging.exception("Message")
     finally:
         if conn is not None:
-            conn.close()
+            put_connection(conn)
 
 def list_plates(DB_HOSTNAME="image-mongo"):
 
@@ -117,6 +117,8 @@ def list_plates(DB_HOSTNAME="image-mongo"):
         # resultlist = [dict(zip([key[0] for key in cursor.description], row)) for row in result]
 
         cursor.close()
+        put_connection(conn)
+        conn = None
 
         logging.debug(json.dumps(resultlist, indent=2))
 
@@ -127,4 +129,4 @@ def list_plates(DB_HOSTNAME="image-mongo"):
         logging.exception("Message")
     finally:
         if conn is not None:
-            conn.close()
+            put_connection(conn)
