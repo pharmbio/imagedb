@@ -52,7 +52,7 @@ ROUTES = [
           (r'/api/list/(?P<plate>[^\/]+)', ListImagesQueryHandler),
           (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ImageMergeHandler),
           (r'/api/image-merge-thumb/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ThumbImageMergeHandler),
-          (r'/image-viewer/(?P<plate>[^\/]+)/(?P<timepoint>[^\/]+)/(?P<well>[^\/]+)/(?P<wellsample>[^\/]+)/(?P<channel>[^\/]+)/(?P<imageurl>.+)', ImageViewerHandler),
+          (r'/image-viewer/(?P<plate>[^\/]+)/(?P<timepoint>[^\/]+)/(?P<well>[^\/]+)/(?P<site>[^\/]+)/(?P<channel>[^\/]+)/(?P<imageurl>.+)', ImageViewerHandler),
           (r'/bstest.html', DefaultTemplateHandler),
           (r'/index.html', DefaultTemplateHandler),
           (r'/old-index.html', DefaultTemplateHandler),

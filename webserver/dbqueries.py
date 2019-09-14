@@ -4,6 +4,7 @@ import json
 import psycopg2
 from psycopg2 import pool
 import settings as imgdb_settings
+import platemodel
 
 __connection_pool = None
 
@@ -44,11 +45,12 @@ def list_plate(find_plate):
                        'path',
                        'well',
                        'site',
-                       'channel'
+                       'channel',
+                       'cell_line'
                        ]
 
         query = ("SELECT " + ",".join(return_cols) +
-                 " FROM images"
+                 " FROM images_all_view"
                  " WHERE plate = %s"
                  " ORDER BY well, site, channel")
 
@@ -67,6 +69,7 @@ def list_plate(find_plate):
 
         logging.info(str(resultlist))
 
+        # Close/Release connection
         cursor.close()
         put_connection(conn)
         conn = None
@@ -83,13 +86,27 @@ def list_plate(find_plate):
         # and then channels with image path
         plates_dict = {}
         for image in resultlist:
-            plates_dict.setdefault(image['plate'], {}) \
-                .setdefault(image['timepoint'], {}) \
-                .setdefault(image['well'], {}) \
-                .setdefault(image['site'], {}) \
-                .setdefault(image['channel'], image['path'])
+            plate_id = image['plate']
+            # get or create a new object with this key
+            plate = plates_dict.setdefault(plate_id, platemodel.Plate(plate_id))
+            plate.add_data(image)
+#        for image in resultlist:
+#            plates_dict.setdefault(image['plate'], {}) \
+#                .setdefault(image['timepoint'], {}) \
+#                .setdefault(image['well'], {}) \
+#                .setdefault(image['site'], {}) \
+#                .setdefault(image['channel'], image['path'])
 
-        return {'plates': plates_dict}
+        #json_out = json.dumps(plates_dict , default=lambda x: x.__dict__, indent=2).replace("</", "<\\/")
+        #logging.debug(json_out)
+ #       parsed = json.loads(json_out)
+    #    logging.debug(json.dumps(parsed, indent=4)) #, sort_keys=True))
+
+        result_dict = {"plates": plates_dict}
+
+        return result_dict
+
+        #return json.dumps(another_dict).replace("</", "<\\/")
 
     except (Exception, psycopg2.DatabaseError) as error:
         logging.exception("Message")
@@ -110,7 +127,7 @@ def list_plates():
                  "FROM images "
                  "ORDER BY project, plate")
 
-        logging.info("query" + str(query))
+        logging.debug("query" + str(query))
 
         cursor = conn.cursor()
         cursor.execute(query)

@@ -60,11 +60,24 @@ class ListImagesQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstr
     """
     The image list handler returns lists of image names
     """
+
+    def prepare(self):
+        header = "Content-Type"
+        body = "application/json"
+        self.set_header(header, body)
+
     def get(self, plate):
         """Handles GET requests.
         """
         logging.info("plate: " + str(plate))
 
-        result = list_plate(plate)
+        plates_dict = list_plate(plate)
 
-        self.finish({'data':result})
+        data = {"data": plates_dict}
+
+        # Serialize to json the data with the plates dict containing the platemodel objects
+        # use other function than tornado default json serializer since we are serializing
+        # custom objects
+        json_string = json.dumps(data, default=lambda x: x.__dict__).replace("</", "<\\/")
+
+        self.write(json_string)

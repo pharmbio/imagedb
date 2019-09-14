@@ -38,7 +38,7 @@ services:
     mem_limit: 2g
     environment:
       # CONF_FILE: settings_dev_local.json
-      CONF_FILE: settings_prod.json
+      CONF_FILE: ${CONF_FILE?You need to specify env CONF_FILE, e.g. settings_dev_local.json, settings_prod.json}
       DB_USER: postgres
       DB_PASS: example
       DB_PORT: 5432

@@ -114,7 +114,7 @@ function drawPlatesListSidebar(queryResults){
 
 }
 
-function loadPlateFromViewer(plate_name, timepoint, well, wellsample, channel){
+function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 
   // stop any current animation
   stopAnimation();
@@ -125,13 +125,14 @@ function loadPlateFromViewer(plate_name, timepoint, well, wellsample, channel){
         .then(data => {
 
           window.loaded_plates = data['data'].plates;
+
           console.log(window.loaded_plates);
 
           updateToolbar();
 
           setSelectedTimepoint(timepoint);
           setWellSelection(well);
-          setWellsampleSelection(wellsample);
+          setSiteSelection(site);
           setChannelSelection(channel);
 
           loadTimepointImagesIntoViewer(timepoint);
@@ -153,8 +154,12 @@ function loadPlate(plate_name) {
         .then(response => response.json())
         .then(data => {
 
+          console.log('plate data', data);
+
           window.loaded_plates = data['data'].plates;
           console.log(window.loaded_plates);
+
+          console.log("Plates loaded")
 
           updateToolbar();
 
@@ -173,8 +178,11 @@ function updateToolbar() {
   updateMetaData(getLoadedPlate());
   updateTimepointSelect(getLoadedPlate());
   updateTimepointSlider(getLoadedPlate());
+
+  console.log("countWells()", countWells(getLoadedPlate()));
+
   updateWellSelect(getLoadedPlate());
-  updateWellsampleSelect(getLoadedPlate());
+  updateSiteSelect(getLoadedPlate());
   updateChannelSelect(getLoadedPlate());
   updateMetaData(getLoadedPlate());
 
@@ -206,12 +214,12 @@ function redrawImageViewer(clearFirst = true) {
   // get what to redraw
   let timepoint = getSelectedTimepointIndex();
   console.log("timepoint", timepoint);
-  let wellsample = getSelectedWellsampleIndex();
-  console.log("wellsample", wellsample);
+  let site = getSelectedSiteIndex();
+  console.log("site", site);
   let well_name = getSelectedWell();
   console.log("well_name", well_name);
   console.log("getLoadedPlate()", getLoadedPlate());
-  let channels = getLoadedPlate()[timepoint][well_name][wellsample];
+  let channels = getLoadedPlate().timepoints[timepoint].wells[well_name].sites[site].channels;
   let imgURL = createMergeImgURLFromChannels(channels);
 
   if (clearFirst) {
@@ -246,37 +254,12 @@ function clearImageCache(){
     img.src = "";
   })
 }
-function loadTimepointImagesIntoCache(){
 
-  // get what to redraw
-  let wellsample = getSelectedWellsampleIndex();
-  let well_name = getSelectedWell();
-
-  let tpCount = countTimepoints(getLoadedPlate());
-
-  console.log("load tps");
-
-  for(let n = 1; n <= tpCount; n = n + 1){
-    let timepoint = n;
-    let channels = getLoadedPlate()[n][well_name][wellsample];
-    let imgURL = createMergeImgURLFromChannels(channels);
-
-    let img = new Image(100,100);
-    img.src = imgURL;
-    img.onload = function () {
-      console.log("Image loaded " + n);
-    };
-
-    cached_images.push(img);
-  }
-
-  console.log("done load tps into cache");
-}
 
 function loadTimepointImagesIntoViewer(skipIndex){
 
   // get what to redraw
-  let wellsample = getSelectedWellsampleIndex();
+  let site = getSelectedSiteIndex();
   let well_name = getSelectedWell();
   let tpCount = countTimepoints(getLoadedPlate());
 
@@ -286,10 +269,10 @@ function loadTimepointImagesIntoViewer(skipIndex){
     console.log("timepoint", timepoint);
     console.log("well_name", well_name);
     console.log("getLoadedPlate()", getLoadedPlate());
-    console.log("getLoadedPlate()[timepoint]", getLoadedPlate()[timepoint]);
-    console.log("getLoadedPlate()[timepoint][well_name]", getLoadedPlate()[timepoint][well_name]);
+    console.log("getLoadedPlate()[timepoint]", getLoadedPlate().timepoints[timepoint]);
+    console.log("getLoadedPlate()[timepoint][well_name]", getLoadedPlate().timepoints[timepoint].wells[well_name]);
 
-    let channels = getLoadedPlate()[timepoint][well_name][wellsample];
+    let channels = getLoadedPlate().timepoints[timepoint].wells[well_name].sites[site].channels;
     let imgURL = createMergeImgURLFromChannels(channels);
 
     if(timepoint !== skipIndex) {
@@ -321,8 +304,8 @@ function addImageToViewer(index, imgURL, opacity){
 function openViewer(well_name) {
 
   let timepoint = getSelectedTimepointIndex();
-  let wellsample = getSelectedWellsampleIndex();
-  let channels = getLoadedPlate()[timepoint][well_name][wellsample];
+  let site = getSelectedSiteIndex();
+  let channels = getLoadedPlate().timepoints[timepoint].wells[well_name].sites[site].channels;
 
   let imgURL = createMergeImgURLFromChannels(channels);
 
@@ -330,7 +313,7 @@ function openViewer(well_name) {
         getLoadedPlateName() + "/" +
         timepoint + "/" +
         well_name + "/" +
-        wellsample + "/" +
+        site + "/" +
         getSelectedChannelValue() + "/" +
         imgURL;
 
@@ -369,10 +352,10 @@ function redrawPlate(clearFirst = false) {
   // get timepoint to draw
   let timepoint = getSelectedTimepointIndex();
 
-  // get wellsample to draw
-  let wellsample = getSelectedWellsampleIndex();
+  // get site to draw
+  let site = getSelectedSiteIndex();
 
-  drawPlate(plateObj, timepoint, wellsample, clearFirst);
+  drawPlate(plateObj, timepoint, site, clearFirst);
 }
 
 function createEmptyTable(rows, cols) {
@@ -425,9 +408,9 @@ function createEmptyTable(rows, cols) {
   return table;
 }
 
-function drawPlate(plateObj, timepoint, wellsample, clearFirst) {
+function drawPlate(plateObj, timepoint, site, clearFirst) {
 
-  console.log(plateObj);
+  console.log("plateObj", plateObj);
 
   let container = document.getElementById('table-div');
 
@@ -450,25 +433,25 @@ function drawPlate(plateObj, timepoint, wellsample, clearFirst) {
 
   console.log(container);
   console.log('done create div');
-  console.log('plate:' + plateObj);
+  console.log('plate:', plateObj);
 
-  // now populate well-div's with the plateObj contents
-  Object.keys(plateObj[timepoint]).forEach(well => {
+  // now populate well-div's with the wells of the plateobj
+  Object.keys(plateObj.timepoints[timepoint].wells).forEach(well_key => {
 
-    let channels = plateObj[timepoint][well][wellsample];
+    let channels = plateObj.timepoints[timepoint].wells[well_key].sites[site].channels;
     //console.log('channels:' + channels);
 
-    let well_cell = document.getElementById(well);
+    let well_cell = document.getElementById(well_key);
 
     // Try to get existing canvas - if it doesn't exist create it
     // this way we are only drawing images on top of existing images
     // and animation becomes smooth
-    let wellCanvas = document.getElementById('wellCanvas' + well);
+    let wellCanvas = document.getElementById('wellCanvas' + well_key);
     if (wellCanvas == null) {
 
       wellCanvas = document.createElement('canvas');
       wellCanvas.className = 'wellCanvas';
-      wellCanvas.id = 'wellCanvas' + well;
+      wellCanvas.id = 'wellCanvas' + well_key;
 
       // TODO fix resizing of canvas
       // Canvas size should not be set with css-style
@@ -483,7 +466,7 @@ function drawPlate(plateObj, timepoint, wellsample, clearFirst) {
     let img = document.createElement('img');
     img.src = url;
     img.className = 'wellThumbImg';
-    img.id = 'wellThumbImg' + well;
+    img.id = 'wellThumbImg' + well_key;
 
     img.onload = function () {
       context.drawImage(img, 0, 0);
@@ -491,7 +474,7 @@ function drawPlate(plateObj, timepoint, wellsample, clearFirst) {
 
     // Create open Viewer click handlers
     wellCanvas.onclick = function () {
-      openViewer(well);
+      openViewer(well_key);
     }
 
   })
@@ -518,8 +501,8 @@ function getSelectedChannelValue() {
   return elem.options[elem.selectedIndex].value;
 }
 
-function getSelectedWellsampleIndex() {
-  let elem = document.getElementById('wellsample-select');
+function getSelectedSiteIndex() {
+  let elem = document.getElementById('site-select');
   return parseInt(elem.options[elem.selectedIndex].value);
 }
 
@@ -643,9 +626,9 @@ function updateAnimationSpeed() {
 
 
 function updateWellSelect(plateObj) {
-  let elemSelect = document.getElementById('well-select');
 
   // This select is not available on all pages, return if not
+  let elemSelect = document.getElementById('well-select');
   if(elemSelect == null){
     return;
   }
@@ -654,9 +637,12 @@ function updateWellSelect(plateObj) {
   elemSelect.options.length = 0;
 
   // Just loop all wells for first timepoint
-  Object.keys(getLoadedPlate()["1"]).forEach(function(well){
-    elemSelect.options.add(new Option(well));
+  let firstTP = Object.values(plateObj.timepoints)[0];
+  Object.keys(firstTP.wells).forEach(function(well_key){
+    elemSelect.options.add(new Option(well_key));
   });
+
+
 }
 
 function setWellSelection(well){
@@ -664,9 +650,9 @@ function setWellSelection(well){
   elemSelect.selectedIndex = getSelectIndexFromSelectValue(elemSelect, well);
 }
 
-function setWellsampleSelection(wellsample){
-  let elemSelect = document.getElementById('wellsample-select');
-  elemSelect.selectedIndex = wellsample - 1;
+function setSiteSelection(site){
+  let elemSelect = document.getElementById('site-select');
+  elemSelect.selectedIndex = site - 1;
 }
 
 function setChannelSelection(channel){
@@ -686,14 +672,15 @@ function getSelectIndexFromSelectValue(elemSelect, value) {
   return index;
 }
 
-function updateWellsampleSelect(plateObj) {
-  let elemSelect = document.getElementById('wellsample-select');
+function updateSiteSelect(plateObj) {
+  let elemSelect = document.getElementById('site-select');
 
   // reset
   elemSelect.options.length = 0;
 
-  // add as many options as wellsamples
-  let nCount = countWellsamples(plateObj);
+  // add as many options as sites
+  let nCount = countSites(plateObj);
+
   for (let n = 0; n < nCount; n++) {
     elemSelect.options[n] = new Option(n + 1);
   }
@@ -704,13 +691,16 @@ function updatePlateNameLabel(plate_name) {
 }
 
 function updateMetaData(plateObj) {
+  /*
   // Clear first
   document.getElementById('meta-div-json').innerHTML = "";
 
   let jsonViewer = new JSONViewer("");
   document.querySelector("#meta-div-json").appendChild(jsonViewer.getContainer());
   jsonViewer.showJSON(plateObj, null, 2);
+  */
 }
+
 
 function updateChannelSelect(plateObj) {
   let elemSelect = document.getElementById('channel-select');
@@ -719,6 +709,8 @@ function updateChannelSelect(plateObj) {
   elemSelect.options.length = 0;
 
   let nCount = countChannels(plateObj);
+
+  console.log("channelcount", nCount);
 
   // First add default (Merge channels options)
   if (nCount === 1) {
@@ -736,53 +728,39 @@ function updateChannelSelect(plateObj) {
 }
 
 function countTimepoints(plateObj) {
-  // A plate-object is nothing but a dict of timepoints
-  let timepoints = plateObj;
-  // Count number of keys in timepoint object
-  return Object.keys(timepoints).length;
+  // Count number of timepoint keys for the Plate object
+  let nCount = 0;
+  nCount = Object.keys(plateObj.timepoints).length;
+
+  return nCount;
 }
 
 function countChannels(plateObj) {
-  // Count number of keys for the first wellsample of first well of first Timepoint in plate object
+  // Count number of keys for the sites object of the first well of first Timepoint in plate object
   let nCount = 0;
-  Object.keys(plateObj).every(timepoint => {
-    console.log('timepoint:' + timepoint);
-    Object.keys(plateObj[timepoint]).every(well => {
-      console.log('well:' + well);
-      Object.keys(plateObj[timepoint][well]).every(function (wellsample) {
-        // The wellsample object contains a dict of channels
-        nCount = Object.keys(plateObj[timepoint][well][wellsample]).length;
-        return nCount;
-      });
-    })
-  });
+  let firstTimePointKey = Object.keys(plateObj.timepoints)[0];
+  let firstWellKey = Object.keys(plateObj.timepoints[firstTimePointKey].wells)[0];
+  let firstSiteKey = Object.keys(plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites)[0];
+  nCount = Object.keys(plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites[firstSiteKey].channels).length;
 
   return nCount;
 }
 
 function countWells(plateObj) {
-  // Count number of keys for the first Timepoint in plate object
+  // Count number of keys for the Wells object  of the first Timepoint in plate object
   let nCount = 0;
-  Object.keys(plateObj).every(function (timepoint) {
-    console.log('timepoint:' + timepoint);
-    nCount = Object.keys(plateObj[timepoint]).length;
-    return nCount;
-  });
+  let firstTimePointKey = Object.keys(plateObj.timepoints)[0];
+  nCount = Object.keys(plateObj.timepoints[firstTimePointKey].wells).length;
 
   return nCount;
 }
 
-function countWellsamples(plateObj) {
-  // Count number of keys for the first well of first Timepoint in plate object
+function countSites(plateObj) {
+  // Count number of keys for the sites object of the first well of first Timepoint in plate object
   let nCount = 0;
-  Object.keys(plateObj).every(timepoint => {
-    console.log('timepoint:' + timepoint);
-    Object.keys(plateObj[timepoint]).every(function (well) {
-      // The well object contains a dict of wellsamples
-      nCount = Object.keys(plateObj[timepoint][well]).length;
-      return nCount;
-    })
-  });
+  let firstTimePointKey = Object.keys(plateObj.timepoints)[0];
+  let firstWellKey = Object.keys(plateObj.timepoints[firstTimePointKey].wells)[0];
+  nCount = Object.keys(plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites).length;
 
   return nCount;
 }
@@ -801,14 +779,13 @@ function getWellName(row, col) {
 
 function createMergeThumbImgURLFromChannels(channels) {
 
-  let val = getSelectedChannelValue();
+  let channel_name = getSelectedChannelValue();
 
   let url = null;
-  if(val === '1-2' || val === '1-3') {
-    url = "/api/image-merge-thumb/ch1/" + channels[1] + "/ch2/" + channels[2] + "/ch3/" + channels[3]+ "/channels.png"
+  if(channel_name === '1-2' || channel_name === '1-3') {
+    url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png"
   }else{
-    let selectedChannel = parseInt(val);
-    url = "/api/image-merge-thumb/ch1/" + channels[selectedChannel] + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+    url = "/api/image-merge-thumb/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }
 
   return url;
@@ -816,14 +793,16 @@ function createMergeThumbImgURLFromChannels(channels) {
 
 function createMergeImgURLFromChannels(channels) {
 
-  let val = getSelectedChannelValue();
+  let channel_name = String(getSelectedChannelValue());
+  console.log("channel_name", channel_name);
+   console.log("channels", channels);
+  console.log("channels[channel_name]", channels[channel_name]);
 
   let url = null;
-  if(val === '1-2' || val === '1-3') {
-    url = "/api/image-merge/ch1/" + channels[1] + "/ch2/" + channels[2] + "/ch3/" + channels[3] + "/channels.png"
+  if(channel_name === '1-2' || channel_name === '1-3') {
+    url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png"
   }else{
-    let selectedChannel = parseInt(val);
-    url = "/api/image-merge/ch1/" + channels[selectedChannel] + "/ch2/" + 'undefined' + "/ch3/" + 'undefined'+ "/channels.png"
+    url = "/api/image-merge/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined'+ "/channels.png"
   }
 
   return url;

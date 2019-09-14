@@ -172,11 +172,11 @@
             <option value="9">9</option>
           </select>
 
-          <!-- Wellsample selector -->
+          <!-- Site selector -->
           <div class="input-group-prepend ml-2">
-            <label class="input-group-text" for="wellsample-select">Site</label>
+            <label class="input-group-text" for="site-select">Site</label>
           </div>
-          <select class="custom-select" style="width: 50px;" id="wellsample-select" onchange="redrawImageViewer(); return false;">
+          <select class="custom-select" style="width: 50px;" id="site-select" onchange="redrawImageViewer(); return false;">
           </select>
 
           <!-- Channel selector -->
@@ -455,9 +455,9 @@
   let plate = '{{ plate }}';
   let timepoint = '{{ timepoint }}';
   let well = '{{ well }}';
-  let wellsample = '{{ wellsample }}';
+  let site = '{{ site }}';
   let channel = '{{ channel }}';
-  loadPlateFromViewer(plate, timepoint, well, wellsample, channel);
+  loadPlateFromViewer(plate, timepoint, well, site, channel);
 
 
 </script>
