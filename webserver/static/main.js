@@ -782,8 +782,10 @@ function createMergeThumbImgURLFromChannels(channels) {
   let channel_name = getSelectedChannelValue();
 
   let url = null;
-  if(channel_name === '1-2' || channel_name === '1-3') {
-    url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png"
+  if(channel_name === '1-2') {
+    url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' "/channels.png";
+  }else if(channel_name === '1-2') {
+    url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png";
   }else{
     url = "/api/image-merge-thumb/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }
@@ -795,14 +797,16 @@ function createMergeImgURLFromChannels(channels) {
 
   let channel_name = String(getSelectedChannelValue());
   console.log("channel_name", channel_name);
-   console.log("channels", channels);
+  console.log("channels", channels);
   console.log("channels[channel_name]", channels[channel_name]);
 
   let url = null;
-  if(channel_name === '1-2' || channel_name === '1-3') {
-    url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png"
+  if(channel_name === '1-2') {
+    url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' "/channels.png";
+  }else if(channel_name === '1-2') {
+    url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png";
   }else{
-    url = "/api/image-merge/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined'+ "/channels.png"
+    url = "/api/image-merge/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }
 
   return url;
