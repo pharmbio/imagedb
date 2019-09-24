@@ -783,8 +783,8 @@ function createMergeThumbImgURLFromChannels(channels) {
 
   let url = null;
   if(channel_name === '1-2') {
-    url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' "/channels.png";
-  }else if(channel_name === '1-2') {
+    url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' + "/channels.png";
+  }else if(channel_name === '1-3') {
     url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png";
   }else{
     url = "/api/image-merge-thumb/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
@@ -802,8 +802,8 @@ function createMergeImgURLFromChannels(channels) {
 
   let url = null;
   if(channel_name === '1-2') {
-    url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' "/channels.png";
-  }else if(channel_name === '1-2') {
+    url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' + "/channels.png";
+  }else if(channel_name === '1-3') {
     url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png";
   }else{
     url = "/api/image-merge/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
