@@ -139,9 +139,16 @@ function drawPlatesListSidebar(queryResults){
     // Create a list item for the plate
     let plate_item = document.createElement('li');
     let link = document.createElement('a');
+    let linktext = plate;
     link.className = "text-info";
     link.href = "";
-    let linktext = plate;
+
+    link.setAttribute("data-toggle", "tooltip");
+    link.setAttribute("data-placement", "top"); // Placement has to be off element otherwise flicker
+    link.setAttribute("data-delay", "0");
+    link.setAttribute("data-animation", false);
+    link.title = linktext;
+
     let content = document.createTextNode(linktext);
     link.appendChild(content);
     plate_item.appendChild(link);
@@ -180,6 +187,10 @@ function drawPlatesListSidebar(queryResults){
   $('#result-list').on('click', 'span', function () {
     $(this).closest('li').find('> .thumb').click();
   });
+
+  $('[data-toggle="tooltip"]').tooltip();
+
+  // $(document).tooltip({show: null});
 }
 
 function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
