@@ -1,18 +1,87 @@
 /*
   Javascript version: ECMAScript 6 (Javascript 6)
  */
+class Plates {
+  constructor(jsondata) {
+    this.jsondata = jsondata;
+  }
+
+  getPlate(index){
+    // return first (and only) plate
+    return new Plate(this.jsondata[Object.keys(this.jsondata)[index]])
+  }
+
+  getFirstPlate(){
+    return this.getPlate(0);
+  }
+}
+
+class Plate {
+  constructor(jsondata) {
+    this.plateObj = jsondata;
+  }
+
+  getName(){
+    return this.plateObj.id;
+  }
+
+  getChannels(timepoint, well_name, site){
+        return this.plateObj.timepoints[timepoint].wells[well_name].sites[site].channels;
+  }
+
+  getWells(timepoint){
+        return this.plateObj.timepoints[timepoint].wells;
+  }
+
+  getWellsOfFirstTimePoint(){
+      return this.plateObj.timepoints.values[0].wells;
+  }
+
+  countTimepoints() {
+    // Count number of timepoint keys for the Plate object
+    let nCount = 0;
+    nCount = Object.keys(this.plateObj.timepoints).length;
+
+    return nCount;
+  }
+
+  countChannels() {
+    // Count number of keys for the sites object of the first well of first Timepoint in plate object
+    let nCount = 0;
+    let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
+    let firstWellKey = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells)[0];
+    let firstSiteKey = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites)[0];
+    nCount = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites[firstSiteKey].channels).length;
+
+    return nCount;
+  }
+
+  countWells() {
+    // Count number of keys for the Wells object  of the first Timepoint in plate object
+    let nCount = 0;
+    let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
+    nCount = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells).length;
+
+    return nCount;
+  }
+
+  countSites() {
+    // Count number of keys for the sites object of the first well of first Timepoint in plate object
+    let nCount = 0;
+    let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
+    let firstWellKey = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells)[0];
+    nCount = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites).length;
+
+    return nCount;
+  }
+}
 
 var loaded_plates = null;
 var animation = null;
 
 function getLoadedPlate() {
   // return first (and only) plate
-  return loaded_plates[Object.keys(loaded_plates)[0]];
-}
-
-function getLoadedPlateName() {
-  // return key of first (and only) plate
-  return Object.keys(loaded_plates)[0];
+  return loaded_plates.getFirstPlate();
 }
 
 function apiQuery(event) {
@@ -111,7 +180,6 @@ function drawPlatesListSidebar(queryResults){
   $('#result-list').on('click', 'span', function () {
     $(this).closest('li').find('> .thumb').click();
   });
-
 }
 
 function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
@@ -124,7 +192,7 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
         .then(response => response.json())
         .then(data => {
 
-          window.loaded_plates = data['data'].plates;
+          window.loaded_plates = new Plates(data['data'].plates);
 
           console.log(window.loaded_plates);
 
@@ -156,7 +224,7 @@ function loadPlate(plate_name) {
 
           console.log('plate data', data);
 
-          window.loaded_plates = data['data'].plates;
+          window.loaded_plates = new Plates(data['data'].plates);
           console.log(window.loaded_plates);
 
           console.log("Plates loaded")
@@ -174,12 +242,12 @@ function loadPlate(plate_name) {
 
 function updateToolbar() {
 
-  updatePlateNameLabel(getLoadedPlateName());
+  updatePlateNameLabel(getLoadedPlate().getName());
   updateMetaData(getLoadedPlate());
   updateTimepointSelect(getLoadedPlate());
   updateTimepointSlider(getLoadedPlate());
 
-  console.log("countWells()", countWells(getLoadedPlate()));
+  console.log("countWells()", getLoadedPlate().countWells());
 
   updateWellSelect(getLoadedPlate());
   updateSiteSelect(getLoadedPlate());
@@ -187,7 +255,7 @@ function updateToolbar() {
   updateMetaData(getLoadedPlate());
 
   // Enable Animate checkbox
-  if (countTimepoints(getLoadedPlate()) > 1){
+  if (getLoadedPlate().countTimepoints() > 1){
     document.getElementById("animate-cbx").disabled = false;
   }
 }
@@ -219,7 +287,7 @@ function redrawImageViewer(clearFirst = true) {
   let well_name = getSelectedWell();
   console.log("well_name", well_name);
   console.log("getLoadedPlate()", getLoadedPlate());
-  let channels = getLoadedPlate().timepoints[timepoint].wells[well_name].sites[site].channels;
+  let channels = getLoadedPlate().getChannels(timepoint, well_name, site);
   let imgURL = createMergeImgURLFromChannels(channels);
 
   if (clearFirst) {
@@ -234,7 +302,7 @@ function redrawImageViewer(clearFirst = true) {
   // set opacity = 0 on the rest
   console.log(" viewer.world.getItemCount()" + viewer.world.getItemCount());
 
-  let tpCount = countTimepoints(getLoadedPlate());
+  let tpCount = getLoadedPlate().countTimepoints();
   for (let n = 0; n <= tpCount; n++) {
     let imgItem = viewer.world.getItemAt(n);
     console.log("n=" + n, imgItem);
@@ -261,7 +329,7 @@ function loadTimepointImagesIntoViewer(skipIndex){
   // get what to redraw
   let site = getSelectedSiteIndex();
   let well_name = getSelectedWell();
-  let tpCount = countTimepoints(getLoadedPlate());
+  let tpCount = getLoadedPlate().countTimepoints();
 
   // First odd ones
   for(let timepoint = 1; timepoint <= tpCount; timepoint = timepoint + 1){
@@ -269,10 +337,8 @@ function loadTimepointImagesIntoViewer(skipIndex){
     console.log("timepoint", timepoint);
     console.log("well_name", well_name);
     console.log("getLoadedPlate()", getLoadedPlate());
-    console.log("getLoadedPlate()[timepoint]", getLoadedPlate().timepoints[timepoint]);
-    console.log("getLoadedPlate()[timepoint][well_name]", getLoadedPlate().timepoints[timepoint].wells[well_name]);
 
-    let channels = getLoadedPlate().timepoints[timepoint].wells[well_name].sites[site].channels;
+    let channels = getLoadedPlate().getChannels(timepoint, well_name, site);
     let imgURL = createMergeImgURLFromChannels(channels);
 
     if(timepoint !== skipIndex) {
@@ -305,12 +371,12 @@ function openViewer(well_name) {
 
   let timepoint = getSelectedTimepointIndex();
   let site = getSelectedSiteIndex();
-  let channels = getLoadedPlate().timepoints[timepoint].wells[well_name].sites[site].channels;
+  let channels = getLoadedPlate().getChannels(timepoint, well_name, site);
 
   let imgURL = createMergeImgURLFromChannels(channels);
 
   let viewerURL = "/image-viewer/" +
-        getLoadedPlateName() + "/" +
+        getLoadedPlate().getName() + "/" +
         timepoint + "/" +
         well_name + "/" +
         site + "/" +
@@ -342,7 +408,6 @@ function openViewerInMainDiv(imageURL) {
   });
 
 }
-
 
 
 function redrawPlate(clearFirst = false) {
@@ -436,10 +501,10 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
   console.log('plate:', plateObj);
 
   // now populate well-div's with the wells of the plateobj
-  Object.keys(plateObj.timepoints[timepoint].wells).forEach(well_key => {
+  let wells = plateObj.getWells(timepoint);
+  Object.keys(wells).forEach(well_key => {
 
-    let channels = plateObj.timepoints[timepoint].wells[well_key].sites[site].channels;
-    //console.log('channels:' + channels);
+    let channels = plateObj.getChannels(timepoint, well_key, site);
 
     let well_cell = document.getElementById(well_key);
 
@@ -524,7 +589,7 @@ function updateTimepointSelect(plateObj) {
   elemSelect.options.length = 0;
 
   // add as many options as timepoints
-  let nCount = countTimepoints(plateObj);
+  let nCount = plateObj.countTimepoints();
   for (let n = 0; n < nCount; n++) {
     elemSelect.options[n] = new Option(n + 1);
   }
@@ -542,7 +607,7 @@ function updateTimepointSliderPos() {
 
 
 function updateTimepointSlider(plateObj) {
-  let nCount = countTimepoints(plateObj);
+  let nCount = plateObj.countTimepoints();
 
   // disable if single timepoint
   let disable = true;
@@ -567,7 +632,7 @@ function updateTimepointSlider(plateObj) {
 function toggleAnimation() {
   if (document.getElementById("animate-cbx").checked) {
     // Check that animation is not ongoing already
-    if (animation == null) {
+    if (window.animation == null) {
       startAnimation();
     }
   } else {
@@ -592,20 +657,20 @@ function updateShowScalebar() {
 
 
 function stopAnimation() {
-  if (animation) {
-    clearInterval(animation);
-    animation = null;
+  if (window.animation) {
+    clearInterval(window.animation);
+    window.animation = null;
   }
 }
 
 function startAnimation() {
   let speed = getSelectedAnimationSpeed();
   let delay = 1000 - (speed * 100);
-  let nTimepoints = countTimepoints(getLoadedPlate());
+  let nTimepoints = getLoadedPlate().countTimepoints();
 
   clearImageCache();
 
-  animation = setInterval(function () {
+  window.animation = setInterval(function () {
     let current = getSelectedTimepointIndex();
     let next = current + 1;
     if (next > nTimepoints) {
@@ -618,7 +683,7 @@ function startAnimation() {
 
 function updateAnimationSpeed() {
   // Only update if running
-  if (animation) {
+  if (window.animation) {
     stopAnimation();
     startAnimation();
   }
@@ -637,12 +702,10 @@ function updateWellSelect(plateObj) {
   elemSelect.options.length = 0;
 
   // Just loop all wells for first timepoint
-  let firstTP = Object.values(plateObj.timepoints)[0];
-  Object.keys(firstTP.wells).forEach(function(well_key){
+  let wells = plateObj.getWellsOfFirstTimePoint();
+  Object.keys(wells).forEach(function(well_key){
     elemSelect.options.add(new Option(well_key));
   });
-
-
 }
 
 function setWellSelection(well){
@@ -679,7 +742,7 @@ function updateSiteSelect(plateObj) {
   elemSelect.options.length = 0;
 
   // add as many options as sites
-  let nCount = countSites(plateObj);
+  let nCount = plateObj.countSites();
 
   for (let n = 0; n < nCount; n++) {
     elemSelect.options[n] = new Option(n + 1);
@@ -708,7 +771,7 @@ function updateChannelSelect(plateObj) {
   // reset
   elemSelect.options.length = 0;
 
-  let nCount = countChannels(plateObj);
+  let nCount = plateObj.countChannels();
 
   console.log("channelcount", nCount);
 
@@ -727,54 +790,10 @@ function updateChannelSelect(plateObj) {
   }
 }
 
-function countTimepoints(plateObj) {
-  // Count number of timepoint keys for the Plate object
-  let nCount = 0;
-  nCount = Object.keys(plateObj.timepoints).length;
-
-  return nCount;
-}
-
-function countChannels(plateObj) {
-  // Count number of keys for the sites object of the first well of first Timepoint in plate object
-  let nCount = 0;
-  let firstTimePointKey = Object.keys(plateObj.timepoints)[0];
-  let firstWellKey = Object.keys(plateObj.timepoints[firstTimePointKey].wells)[0];
-  let firstSiteKey = Object.keys(plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites)[0];
-  nCount = Object.keys(plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites[firstSiteKey].channels).length;
-
-  return nCount;
-}
-
-function countWells(plateObj) {
-  // Count number of keys for the Wells object  of the first Timepoint in plate object
-  let nCount = 0;
-  let firstTimePointKey = Object.keys(plateObj.timepoints)[0];
-  nCount = Object.keys(plateObj.timepoints[firstTimePointKey].wells).length;
-
-  return nCount;
-}
-
-function countSites(plateObj) {
-  // Count number of keys for the sites object of the first well of first Timepoint in plate object
-  let nCount = 0;
-  let firstTimePointKey = Object.keys(plateObj.timepoints)[0];
-  let firstWellKey = Object.keys(plateObj.timepoints[firstTimePointKey].wells)[0];
-  nCount = Object.keys(plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites).length;
-
-  return nCount;
-}
-
 function removeChildren(domObject) {
   while (domObject.firstChild) {
     domObject.removeChild(domObject.firstChild);
   }
-}
-
-
-function getWellName(row, col) {
-  let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"];
-  return rows[row] + col.toString().padStart(2, 0)
 }
 
 function createMergeThumbImgURLFromChannels(channels) {
@@ -810,5 +829,10 @@ function createMergeImgURLFromChannels(channels) {
   }
 
   return url;
+}
+
+function getWellName(row, col) {
+  let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"];
+  return rows[row] + col.toString().padStart(2, 0)
 }
 
