@@ -29,10 +29,8 @@ def put_connection(pooled_connection):
         __connection_pool.putconn(pooled_connection)
 
 
-def list_plate(find_plate):
-    logging.debug("list_plates")
-
-    logging.debug("find_plate" + find_plate)
+def get_plate(plate_name):
+    logging.info("inside get_plate, plate_name:" + plate_name)
 
     conn = None
     try:
@@ -54,25 +52,20 @@ def list_plate(find_plate):
                  " WHERE plate = %s"
                  " ORDER BY well, site, channel")
 
-        logging.info("query" + query)
+        logging.debug("query" + query)
 
         cursor = conn.cursor()
-        cursor.execute(query, (find_plate, ))
+        cursor.execute(query, (plate_name, ))
 
         # create a list with all results as key-values
-#        resultlist = []
-#        for row in cursor:
-#            for value, col_name in zip(row, return_cols):
-#                resultlist.append({col_name, value})
-
         resultlist = [dict(zip([key[0] for key in cursor.description], row)) for row in cursor]
-
-        logging.info(str(resultlist))
 
         # Close/Release connection
         cursor.close()
         put_connection(conn)
         conn = None
+
+        logging.debug(str(resultlist))
 
         # Before returning (to web) delete the for user hidden "root part" IMAGES_ROOT_FOLDER part, e.g. /share/mikro/IMX.....
         for image in resultlist:
@@ -82,31 +75,18 @@ def list_plate(find_plate):
                     image.update( {'path': new_value})
 
         # create a nested json object of all images.
-        # A plate object containing all timepoints. The timpoints containing all wells and then all sites
-        # and then channels with image path
+        # A plate object containing all timepoints. The timpoints containing all wells and then
+        # all sites, and then channels with the image path
         plates_dict = {}
         for image in resultlist:
             plate_id = image['plate']
             # get or create a new object with this key
             plate = plates_dict.setdefault(plate_id, platemodel.Plate(plate_id))
             plate.add_data(image)
-#        for image in resultlist:
-#            plates_dict.setdefault(image['plate'], {}) \
-#                .setdefault(image['timepoint'], {}) \
-#                .setdefault(image['well'], {}) \
-#                .setdefault(image['site'], {}) \
-#                .setdefault(image['channel'], image['path'])
-
-        #json_out = json.dumps(plates_dict , default=lambda x: x.__dict__, indent=2).replace("</", "<\\/")
-        #logging.debug(json_out)
- #       parsed = json.loads(json_out)
-    #    logging.debug(json.dumps(parsed, indent=4)) #, sort_keys=True))
 
         result_dict = {"plates": plates_dict}
 
         return result_dict
-
-        #return json.dumps(another_dict).replace("</", "<\\/")
 
     except (Exception, psycopg2.DatabaseError) as error:
         logging.exception("Message")
@@ -114,9 +94,10 @@ def list_plate(find_plate):
         if conn is not None:
             put_connection(conn)
 
-def list_plates():
 
-    logging.debug("list_plates")
+def list_all_plates():
+
+    logging.info("inside list_all_plates")
 
     conn = None
     try:
@@ -124,8 +105,8 @@ def list_plates():
         conn = get_connection()
 
         query = ("SELECT DISTINCT plate, project "
-                 "FROM images "
-                 "ORDER BY project, plate")
+                 " FROM images "
+                 " ORDER BY project, plate")
 
         logging.debug("query" + str(query))
 
@@ -139,8 +120,7 @@ def list_plates():
                                'project': row[1]
                                })
 
-        # resultlist = [dict(zip([key[0] for key in cursor.description], row)) for row in result]
-
+        # Close/Release connection
         cursor.close()
         put_connection(conn)
         conn = None
@@ -148,7 +128,6 @@ def list_plates():
         logging.debug(json.dumps(resultlist, indent=2))
 
         return resultlist
-
 
     except (Exception, psycopg2.DatabaseError) as error:
         logging.exception("Message")

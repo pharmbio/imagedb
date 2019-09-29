@@ -84,12 +84,12 @@ function getLoadedPlate() {
   return loaded_plates.getFirstPlate();
 }
 
-function apiQuery(event) {
+function apiListPlates(event) {
   event.preventDefault();
 
   document.getElementById("left-sidebar-spinner").style.visibility = "visible";
 
-  fetch('/api/query', {
+  fetch('/api/list-plates', {
     method: 'POST',
     body: new FormData(document.getElementById('query-form'))})
         .then(response => response.json())
@@ -100,13 +100,13 @@ function apiQuery(event) {
           console.log('hiding spinner');
           document.getElementById("left-sidebar-spinner").style.visibility = "hidden";
 
-          queryResultLoaded(data);
+          listPlatesQueryResultLoaded(data);
 
         })
         .catch(error => console.error('Error:', error));
 }
 
-function queryResultLoaded(data) {
+function listPlatesQueryResultLoaded(data) {
   let queryResults = data.results;
   drawPlatesListSidebar(queryResults);
 }
@@ -156,16 +156,16 @@ function drawPlatesListSidebar(queryResults){
     // Add plate click handler
     plate_item.onclick = function (e) {
       e.preventDefault();
-      loadPlate(plate)
+      apiLoadPlate(plate)
     };
 
     // add plate item to projects plate_list
     plate_list.appendChild(plate_item);
     last_proj = proj;
   });
-  
+
   //
-  // Turn sidebar list into a clickable tree-view with projects collapsed
+  // Turn sidebar list into a clickable tree-view with projects collapsedm   vb
   // with this jQuery plugin
   //
   $('#result-list').bonsai({
@@ -194,13 +194,40 @@ function drawPlatesListSidebar(queryResults){
 
 }
 
+function apiLoadPlate(plate_name) {
+
+  // stop any current animation
+  stopAnimation();
+  document.getElementById("animate-cbx").checked = false;
+
+  fetch('/api/plate/' + plate_name)
+        .then(response => response.json())
+        .then(data => {
+
+          console.log('plate data', data);
+
+          window.loaded_plates = new Plates(data['data'].plates);
+          console.log(window.loaded_plates);
+
+          console.log("Plates loaded")
+
+          updateToolbar();
+
+          redrawPlate(true);
+
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        })
+}
+
 function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 
   // stop any current animation
   stopAnimation();
   document.getElementById("animate-cbx").checked = false;
 
-  fetch('/api/list/' + plate_name)
+  fetch('/api/plate/' + plate_name)
         .then(response => response.json())
         .then(data => {
 
@@ -217,33 +244,6 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 
           loadTimepointImagesIntoViewer(timepoint);
           // redrawImageViewer(true);
-
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        })
-}
-
-function loadPlate(plate_name) {
-
-  // stop any current animation
-  stopAnimation();
-  document.getElementById("animate-cbx").checked = false;
-
-  fetch('/api/list/' + plate_name)
-        .then(response => response.json())
-        .then(data => {
-
-          console.log('plate data', data);
-
-          window.loaded_plates = new Plates(data['data'].plates);
-          console.log(window.loaded_plates);
-
-          console.log("Plates loaded")
-
-          updateToolbar();
-
-          redrawPlate(true);
 
         })
         .catch(error => {
@@ -327,14 +327,6 @@ function redrawImageViewer(clearFirst = true) {
     }
   }
 }
-
-var cached_images = [];
-function clearImageCache(){
-  cached_images.forEach(function (img) {
-    img.src = "";
-  })
-}
-
 
 function loadTimepointImagesIntoViewer(skipIndex){
 
@@ -679,8 +671,6 @@ function startAnimation() {
   let speed = getSelectedAnimationSpeed();
   let delay = 1000 - (speed * 100);
   let nTimepoints = getLoadedPlate().countTimepoints();
-
-  clearImageCache();
 
   window.animation = setInterval(function () {
     let current = getSelectedTimepointIndex();

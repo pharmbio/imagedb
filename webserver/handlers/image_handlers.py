@@ -13,7 +13,7 @@ import settings as imgdb_settings
 
 class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
     """
-    The image handler returns actual images
+    The image handler returns actual images, not just links
     """
     async def get(self, ch1, ch2, ch3):
         """Handles GET requests.
@@ -53,11 +53,10 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
         self.set_header("Content-type", "image/png")
         self.write(open(img_path, 'rb').read())
 
-        #self.write({'results': 'nothing here says anders again'})
 
 class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
     """
-    The image handler returns actual images
+    The image handler returns actual images, not just links
     """
     async def get(self, ch1, ch2, ch3):
         """Handles GET requests.
@@ -89,7 +88,6 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
         self.set_header("Content-type", "image/png")
         self.write(open(img_path, 'rb').read())
 
-        #self.write({'results': 'nothing here says anders again'})
 
 class ImageMergeHandlerGetURL(tornado.web.RequestHandler): #pylint: disable=abstract-method
     """
@@ -111,8 +109,8 @@ class ImageMergeHandlerGetURL(tornado.web.RequestHandler): #pylint: disable=abst
         logging.info("Hej")
         logging.info("form_data:" + str(form_data))
 
-
         self.finish({'results':'nothing here says anderd'})
+
 
 class ImageViewerHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
 

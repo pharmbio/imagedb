@@ -116,7 +116,10 @@
 
 <body>
 
-<div class="d-flex splitpane" id="splitpane">
+<!-- the sidebar and center page content is splitted with a jquery resize SplitterBars
+     the splitter parent div should be class .splitpane, other classes are
+      .left-splitpane, .right-splitpane and .splitter-bar -->
+<div class="d-flex splitpane" id="all_content_wrapper">
 
   <!-- Sidebar -->
   <div class="bg-light border-right left-splitpane" id="sidebar-wrapper";>
@@ -154,7 +157,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
 
       <!-- Search form -->
-      <form id='query-form' onsubmit='apiQuery(event);return false;'>
+      <form id='query-form' onsubmit='apiListPlates(event);return false;'>
         <div class="input-group">
 
           <input type="text" class="form-control input-sm" maxlength="" placeholder="Search" />

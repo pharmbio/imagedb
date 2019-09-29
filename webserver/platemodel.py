@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 class Plate:
 
     def __init__(self, id):
@@ -12,17 +13,19 @@ class Plate:
         timepoint = self.timepoints.setdefault(timepoint_id, Timepoint(timepoint_id))
         timepoint.add_data(image_meta)
 
+
 class Timepoint:
 
-  def __init__(self, id):
-      self.id = id
-      self.wells = dict()
+    def __init__(self, id):
+        self.id = id
+        self.wells = dict()
 
-  def add_data(self, image_meta):
-      well_id = image_meta['well']
-      # get or create a new object with this key
-      well = self.wells.setdefault(well_id, Well(well_id))
-      well.add_data(image_meta)
+    def add_data(self, image_meta):
+        well_id = image_meta['well']
+        # get or create a new object with this key
+        well = self.wells.setdefault(well_id, Well(well_id))
+        well.add_data(image_meta)
+
 
 class Well:
 
@@ -35,6 +38,7 @@ class Well:
         # get or create a new object with this key
         site = self.sites.setdefault(site_id, Site(site_id))
         site.add_data(image_meta)
+
 
 class Site:
 

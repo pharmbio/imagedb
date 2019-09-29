@@ -2,7 +2,7 @@
 """
 This is where most of the logic goes.
 
-This file has the QueryHandler, which parses the search form and does database
+This file has the ListAllPlatesQueryHandler, which parses the search form and does database
 queries.
 """
 import json
@@ -10,13 +10,13 @@ import logging
 
 import tornado.web
 
-from dbqueries import list_plates, list_plate
+from dbqueries import list_all_plates, get_plate
 
 
 def make_totally_real_query(data):
     """
     Makes a totally real query to a totally real database and returns totally
-    real data.
+    real data for testing
     """
     import random
     real_data = []
@@ -24,20 +24,10 @@ def make_totally_real_query(data):
         real_data += ["bild_%i" % random.randint(16,1853)]
     return real_data
 
-def search_db(query):
-    result = list_plates()
-    return result
 
-def list_projects(query):
-    logging.info('list projs')
-
-    result = list_plates()
-    return result
-
-
-class QueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
+class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
     """
-    The query handler handles form posts and returns a list of hits.
+    The query handler handles form posts and returns list of results
     """
     def post(self):
         """Handles POST requests.
@@ -51,15 +41,12 @@ class QueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
 
         logging.debug("form_data:" + str(form_data))
 
-        results = list_projects(form_data)
+        results = list_all_plates()
         logging.debug(results)
         self.finish({'results':results})
 
 
-class ListImagesQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
-    """
-    The image list handler returns lists of image names
-    """
+class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
 
     def prepare(self):
         header = "Content-Type"
@@ -69,9 +56,9 @@ class ListImagesQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstr
     def get(self, plate):
         """Handles GET requests.
         """
-        logging.info("plate: " + str(plate))
+        logging.info("plate_name: " + str(plate))
 
-        plates_dict = list_plate(plate)
+        plates_dict = get_plate(plate)
 
         data = {"data": plates_dict}
 

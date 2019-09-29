@@ -1,3 +1,8 @@
+/*
+  The splitter is a modified version of https://github.com/ashduckett/SplitterBar
+  Modified by Anders Larsson 2019-09-29
+ */
+
 (function($) {
 
     // We should take in an argument for endDrag
