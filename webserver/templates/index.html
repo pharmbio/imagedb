@@ -24,32 +24,60 @@
   <!-- this imagedb -->
   <link rel='stylesheet' href='/static/main.css'>
 
-  <!-- json-viewer -->
+  <!-- json-viewer for meta data -->
   <link rel="stylesheet" href="/static/json-viewer/json-viewer.css">
 
-  <!-- jquery-bonzai -->
+  <!-- jquery-bonzai for left pane tree view-->
   <link rel="stylesheet" href="/static/jquery-bonzai/jquery.bonsai.css">
-
-  <!-- fancy tree view plugin -->
-  <link href="//cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/skin-win8/ui.fancytree.min.css" rel="stylesheet">
 
   <!-- Custom inline css override -->
   <style type="text/css">
 
-
-    /* Jquery-bonzai override */
-    .bonsai > li {
-      font-size:14px;
-      margin: 3px;
-    }
-
+    /* Sidebar size etc.*/
     #sidebar-wrapper {
-      width: 220px;
+      width: 180px;
       white-space: nowrap;
     }
 
+    /* Splitter css */
+    .splitpane {
+      display: flex;
+    }
+    .right-splitpane {
+      flex: 1;
+    }
+    .splitter-bar {
+      width: 3px;
+      cursor: col-resize;
+    }
+    /* -- end splitter -- */
 
-    /* This is just for making left sidebar scrollable */
+    /* Jquery-bonzai override */
+    .bonsai > li {
+      font-size:13px;
+      margin: 3px;
+    }
+
+    /* Overrides color on range-slider */
+    .irs--flat .irs-from,
+    .irs--flat .irs-to,
+    .irs--flat .irs-single {
+      background-color:#17a2b8;
+    }
+    .irs--flat .irs-bar{
+      background-color:#17a2b8;
+    }
+    .irs--flat .irs-from:before,
+    .irs--flat .irs-to:before,
+    .irs--flat .irs-single:before {
+      border-top-color:#17a2b8;
+    }
+    .irs--flat .irs-handle>i:first-child {
+      background-color:#17a2b8
+    }
+    /* -- end range-slider */
+
+     /* This is just for making left sidebar scrollable */
     /*
     #sidebar-wrapper {
       z-index: 1000;
@@ -75,26 +103,6 @@
     */
     /* end -This is just for making left sidebar scrollable */
 
-
-    /* Overrides color on range-slider */
-    .irs--flat .irs-from,
-    .irs--flat .irs-to,
-    .irs--flat .irs-single {
-      background-color:#17a2b8;
-    }
-    .irs--flat .irs-bar{
-      background-color:#17a2b8;
-    }
-    .irs--flat .irs-from:before,
-    .irs--flat .irs-to:before,
-    .irs--flat .irs-single:before {
-      border-top-color:#17a2b8;
-    }
-    .irs--flat .irs-handle>i:first-child {
-      background-color:#17a2b8
-    }
-    /* -- end range-slider */
-
     /*
       This changes bootstrap base font and all relatives
      */
@@ -108,10 +116,10 @@
 
 <body>
 
-<div class="d-flex" id="wrapper">
+<div class="d-flex splitpane" id="splitpane">
 
   <!-- Sidebar -->
-  <div class="bg-light border-right" id="sidebar-wrapper";>
+  <div class="bg-light border-right left-splitpane" id="sidebar-wrapper";>
     <div class="sidebar-heading">Projects/Plates</div>
 
     <div class="sidebar-heading">
@@ -136,9 +144,11 @@
   </div>
   <!-- /#sidebar-wrapper -->
 
+  <!-- splitter -->
+  <div class="border-right bg-light splitter-bar"></div>
 
   <!-- Page Content -->
-  <div id="page-content-wrapper">
+  <div class="right-splitpane" id="page-content-wrapper">
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
@@ -346,25 +356,24 @@
 
 <!-- end Modal dialogs -->
 
-
 <!-- Bootstrap core JavaScript -->
 <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
 <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-<!-- fancy tree view plugin -->
-<script src="//cdn.jsdelivr.net/npm/jquery.fancytree@2.27/dist/jquery.fancytree-all-deps.min.js"></script>
-
 <!-- openseadragon image-viewer -->
 <script src="/static/openseadragon/openseadragon.min.js"></script>
 
-<!-- json-viewer -->
+<!-- json-viewer for meta-data-->
 <script src="/static/json-viewer/json-viewer.js"></script>
 
-<!-- jquery-bonzai -->
+<!-- jquery-bonzai for left pane tree view-->
 <script src="/static/jquery-bonzai/jquery.bonsai.js"></script>
 
 <!-- range-slider jquery plugin-->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/js/ion.rangeSlider.min.js"></script>
+
+<!-- splitbar for resizable split between left pane and main pane-->
+<script src="/static/splitterbar/SplitterBar.js"></script>
 
 <!-- this imagedb -->
 <script src='/static/main.js'></script>
@@ -398,6 +407,9 @@
         }
       }
     });
+
+    // Enable Pane-splitter
+    $(".splitpane").SplitterBar();
 
     // Submit empty search to load all plates into start page
     $("#query-form").submit();
