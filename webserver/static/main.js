@@ -163,8 +163,7 @@ function drawPlatesListSidebar(queryResults){
     plate_list.appendChild(plate_item);
     last_proj = proj;
   });
-
-
+  
   //
   // Turn sidebar list into a clickable tree-view with projects collapsed
   // with this jQuery plugin
@@ -188,9 +187,11 @@ function drawPlatesListSidebar(queryResults){
     $(this).closest('li').find('> .thumb').click();
   });
 
-  $('[data-toggle="tooltip"]').tooltip();
+  // Activate tooltips (all that have tooltip attribute within the resultlist)
+  $('#result-list [data-toggle="tooltip"]').tooltip({
+    trigger : 'hover'
+  });
 
-  // $(document).tooltip({show: null});
 }
 
 function loadPlateFromViewer(plate_name, timepoint, well, site, channel){

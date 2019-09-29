@@ -23,6 +23,12 @@
             return false;
         });
 
+        // // Add a mouse leave to be sure dragging doesnt stick
+        //  $(this).mouseleave((event) => {
+        //     isDragging = false;
+        //     return false;
+        // });
+
         $(this).mousemove((event) => {
             if(isDragging) {
                 let leftOfLeft = leftSide.position().left;
