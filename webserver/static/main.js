@@ -144,7 +144,7 @@ function drawPlatesListSidebar(queryResults){
     link.href = "";
 
     link.setAttribute("data-toggle", "tooltip");
-    link.setAttribute("data-placement", "top"); // Placement has to be off element otherwise flicker
+    link.setAttribute("data-placement", "right"); // Placement has to be off element otherwise flicker
     link.setAttribute("data-delay", "0");
     link.setAttribute("data-animation", false);
     link.title = linktext;
@@ -189,7 +189,8 @@ function drawPlatesListSidebar(queryResults){
 
   // Activate tooltips (all that have tooltip attribute within the resultlist)
   $('#result-list [data-toggle="tooltip"]').tooltip({
-    trigger : 'hover'
+    trigger : 'hover',
+    boundary: 'window'
   });
 
 }
