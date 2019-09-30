@@ -74,6 +74,14 @@ class Plate {
 
     return nCount;
   }
+
+  getFormattedWellMeta(timepoint, well_name){
+    let meta = '';
+    meta += "Well: " + this.plateObj.timepoints[timepoint].wells[well_name].id + "<br>";
+    meta += "reagent: " + this.plateObj.timepoints[timepoint].wells[well_name].id + "<br>";
+    return meta;
+  }
+
 }
 
 var loaded_plates = null;
@@ -144,7 +152,7 @@ function drawPlatesListSidebar(queryResults){
     link.href = "";
 
     link.setAttribute("data-toggle", "tooltip");
-    link.setAttribute("data-placement", "right"); // Placement has to be off element otherwise flicker
+    link.setAttribute("data-placement", "top"); // Placement has to be off element otherwise flicker
     link.setAttribute("data-delay", "0");
     link.setAttribute("data-animation", false);
     link.title = linktext;
@@ -509,8 +517,8 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
   let wells = plateObj.getWells(timepoint);
   Object.keys(wells).forEach(well_key => {
 
+    let well = wells[well_key];
     let channels = plateObj.getChannels(timepoint, well_key, site);
-
     let well_cell = document.getElementById(well_key);
 
     // Try to get existing canvas - if it doesn't exist create it
@@ -527,6 +535,7 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
       // Canvas size should not be set with css-style
       wellCanvas.width = 100;
       wellCanvas.height = 100;
+      // wellCanvas.style.border = "2px solid #cfcfcf";
 
       well_cell.appendChild(wellCanvas);
     }
@@ -538,6 +547,9 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
     img.className = 'wellThumbImg';
     img.id = 'wellThumbImg' + well_key;
 
+    //wellThumbImg
+
+
     img.onload = function () {
       context.drawImage(img, 0, 0);
     };
@@ -547,7 +559,22 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
       openViewer(well_key);
     }
 
+    // Add tooltip when hoovering an image
+    wellCanvas.setAttribute("data-toggle", "tooltip");
+    wellCanvas.setAttribute("data-placement", "right"); // Placement has to be off element otherwise flicker
+    wellCanvas.setAttribute("data-delay", "0");
+    wellCanvas.setAttribute("data-animation", false);
+    wellCanvas.setAttribute("data-html", true);
+    wellCanvas.title = plateObj.getFormattedWellMeta(timepoint, well_key);
+
   })
+
+  // Activate tooltips (all that have tooltip attribute within the resultlist)
+  $('#table-div [data-toggle="tooltip"]').tooltip({
+    trigger : 'hover',
+    boundary: 'window',
+    // onBeforeShow: getWellMeta()
+  });
 }
 
 

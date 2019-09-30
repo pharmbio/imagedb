@@ -33,6 +33,19 @@
   <!-- Custom inline css override -->
   <style type="text/css">
 
+    .tooltip-inner {
+      color: #000;
+      background-color: #fff;
+      text-align:left;
+     }
+
+    .bs-tooltip-right{
+      padding:2px 2px;
+      color:#fff;
+      background-color:#245973;
+      border-radius:2px;
+    }
+
     /* Sidebar size etc.*/
     #sidebar-wrapper {
       width: 180px;
@@ -167,6 +180,29 @@
 
         </div>
       </form>
+
+
+      <!-- Upper Toolbar form -->
+      <form id='plate-tool-upper-form' onsubmit='redrawPlate(); return false;'>
+
+        <div class="input-group align-bottom align-content-lg-end">
+
+          <!-- Zoom selector -->
+          <div class="input-group-prepend ml-2">
+            <label class="input-group-text" for="zoom-select">Zoom</label>
+          </div>
+          <select class="custom-select" style="width: 60px;" id="zoom-select" onchange="redrawPlate(); return false;">
+          </select>
+
+          <!-- Zoom slider -->
+          <!--
+          <div id="zoom-slider-div" class="ml-2" style="width:100px;height:20px;hidden:true;">
+            <input type="text" id="zoom-slider" name="" value="" style="width:0px;" />
+          </div>
+          -->
+        </div>
+      </form>
+
 
       <!-- Navbar menues -->
       <div class="collapse navbar-collapse" id="navbarSupportedContent" >
