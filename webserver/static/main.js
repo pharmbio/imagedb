@@ -503,8 +503,8 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
   // first create a new plate consisting of empty well-div's
   // TODO fix for other plate sizes
   if (document.getElementById('plateTable') == null) {
-    let rows = 8;
-    let cols = 12;
+    let rows = 16; // 8
+    let cols = 24; // 24
     let table = createEmptyTable(rows, cols);
     container.appendChild(table);
   }
@@ -539,6 +539,11 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
 
       well_cell.appendChild(wellCanvas);
     }
+    let zoom = getSelectedZoomValue();
+    let scale = zoom/100;
+
+    wellCanvas.width = 100 * scale;
+    wellCanvas.height = 100 * scale;
 
     let context = wellCanvas.getContext('2d');
     let url = createMergeThumbImgURLFromChannels(channels);
@@ -580,6 +585,11 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
 
 function getSelectedTimepointIndex() {
   let elem = document.getElementById('timepoint-select');
+  return parseInt(elem.options[elem.selectedIndex].value);
+}
+
+function getSelectedZoomValue() {
+  let elem = document.getElementById('zoom-select');
   return parseInt(elem.options[elem.selectedIndex].value);
 }
 
