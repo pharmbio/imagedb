@@ -42,16 +42,3 @@ services:
       - 8088:8080
     networks:
       - image-db-net
-
-  pgweb:
-    container_name: pgweb
-    restart: always
-    image: sosedoff/pgweb:0.11.3
-    ports:
-      - "8081:8081"
-    networks:
-      - image-db-net
-    #links:
-    #  - postgres:postgres  # my database container is called postgres, not db
-    #environment:
-    #  - DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
