@@ -14,16 +14,17 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ${SHARE_DB_DATA?You need to specify env SHARE_DB_DATA, e.g. SHARE_DB_DATA=/mnt/db_data}
+      device: ${SHARE_DB_DATA?You need to specify env SHARE_DB_DATA, e.g. SHARE_DB_DATA=/mnt/imageDB/postgres-db/}
       o: bind
 
 services:
 
   imagedb:
-    image: postgres:11.5
+    image: bitnami/postgresql:11.5.0-debian-9-r26
     restart: always
     cpus: 4
-    mem_limit: 8g
+    mem_limit: 4g
+    user: ${CURRENT_UID}
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
