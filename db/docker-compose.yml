@@ -6,7 +6,16 @@ networks:
     name: image-db-net
 
 volumes:
+  # Either use a docker-volume for database
+  #db-data-pg:
+  
+  # Or bind mount a directory
   db-data-pg:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${SHARE_DB_DATA?You need to specify env SHARE_DB_DATA, e.g. SHARE_DB_DATA=/mnt/db_data}
+      o: bind
 
 services:
 
