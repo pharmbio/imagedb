@@ -24,7 +24,6 @@ services:
     restart: always
     cpus: 4
     mem_limit: 4g
-    user: ${CURRENT_UID}
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
