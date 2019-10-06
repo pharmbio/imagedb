@@ -7,20 +7,20 @@ networks:
 
 volumes:
   # Either use a docker-volume for database
-    db-data-pg:
+  #  db-data-pg:
   
   # Or bind mount a directory
-  #db-data-pg:
-  #  driver: local
-  #  driver_opts:
-  #    type: none
-  #    device: ${SHARE_DB_DATA?You need to specify env SHARE_DB_DATA, e.g. SHARE_DB_DATA=/mnt/imageDB/postgres-db/}
-  #    o: bind
+  db-data-pg:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${SHARE_DB_DATA?You need to specify env SHARE_DB_DATA, e.g. SHARE_DB_DATA=/mnt/imageDB/postgres-db/}
+      o: bind
 
 services:
 
   imagedb:
-    image: bitnami/postgresql:11.5.0-debian-9-r26
+    image: postgres:11.5
     restart: always
     cpus: 4
     mem_limit: 4g
@@ -29,7 +29,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
     volumes:
-      - db-data-pg:/bitnami/postgresql
+      - db-data-pg:/var/lib/postgresql/data
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     networks:
       - image-db-net
