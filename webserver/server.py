@@ -49,7 +49,7 @@ ROUTES = [
           #(r'/thumbs/(.*)', tornado.web.StaticFileHandler, {'path': '/share/imagedb/thumbs/share/mikro/IMX/MDC Polina Georgiev/'}),
           (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), 'static')}),
           (r'/api/list-plates', ListAllPlatesQueryHandler),
-          (r'/api/plate/(?P<plate>[^\/]+)', GetPlateQueryHandler),
+          (r'/api/plate/(?P<plate>.+)', GetPlateQueryHandler),
           (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ImageMergeHandler),
           (r'/api/image-merge-thumb/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ThumbImageMergeHandler),
           (r'/image-viewer/(?P<plate>[^\/]+)/(?P<timepoint>[^\/]+)/(?P<well>[^\/]+)/(?P<site>[^\/]+)/(?P<channel>[^\/]+)/(?P<imageurl>.+)', ImageViewerHandler),

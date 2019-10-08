@@ -1,6 +1,7 @@
 import os
 from filenames.pharmbio_filename_v1 import parse_path_and_file as parse_path_and_file_v1
 from filenames.pharmbio_filename_v2 import parse_path_and_file as parse_path_and_file_v2
+from filenames.pharmbio_filename_v3 import parse_path_and_file as parse_path_and_file_v3
 
 #def parse_path_and_file(filename):
 #    for func in [parse_path_and_file_v1, parse_path_and_file_v2]:
@@ -15,6 +16,10 @@ def parse_path_and_file(filename):
         return metadata
 
     metadata = parse_path_and_file_v2(filename)
+    if metadata is not None:
+        return metadata
+
+    metadata = parse_path_and_file_v3(filename)
     if metadata is not None:
         return metadata
 

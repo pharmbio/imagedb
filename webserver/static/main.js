@@ -209,7 +209,10 @@ function apiLoadPlate(plate_name) {
   stopAnimation();
   document.getElementById("animate-cbx").checked = false;
 
-  fetch('/api/plate/' + plate_name)
+  let encoded = encodeURI(plate_name);
+  console.log("encoded", encoded);
+
+  fetch('/api/plate/' + encoded)
         .then(response => response.json())
         .then(data => {
 
