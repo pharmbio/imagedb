@@ -25,6 +25,27 @@ class Plate {
     return this.plateObj.id;
   }
 
+  getPlateLayout(){
+    // Get last well and see if size is within 96 plate limit
+    // if not return 384 size specs
+    let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
+    let lastIndex = Object.values(this.plateObj.timepoints[firstTimePointKey].wells).length - 1;
+    let lastWell = Object.values(this.plateObj.timepoints[firstTimePointKey].wells)[lastIndex];
+    let lastWellName = lastWell.id;
+    let rowCount = getRowIndexFrowWellName(lastWellName);
+    let colCount = getColIndexFrowWellName(lastWellName);
+
+    console.log("rowCount", rowCount);
+    console.log("colCount", colCount);
+
+    if(rowCount > 8 || colCount > 12){
+      return { "rows": 16, "cols": 24 };
+    }
+    else{
+      return { "rows": 8, "cols": 12 };
+    }
+  }
+
   getChannels(timepoint, well_name, site){
         return this.plateObj.timepoints[timepoint].wells[well_name].sites[site].channels;
   }
@@ -495,20 +516,18 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
 
   let container = document.getElementById('table-div');
 
-  if (container)
-
   // If for example a new plate have been selected
   // all old well_images should be removed since plate layout might change
-    if (clearFirst) {
-      removeChildren(container);
-    }
+  // But will not get cleared first if it is an animation
+  if (clearFirst) {
+    removeChildren(container);
+  }
 
   // first create a new plate consisting of empty well-div's
   // TODO fix for other plate sizes
   if (document.getElementById('plateTable') == null) {
-    let rows = 16; // 8
-    let cols = 24; // 24
-    let table = createEmptyTable(rows, cols);
+    let plateLayout = plateObj.getPlateLayout();
+    let table = createEmptyTable(plateLayout.rows, plateLayout.cols);
     container.appendChild(table);
   }
 
@@ -879,3 +898,14 @@ function getWellName(row, col) {
   return rows[row] + col.toString().padStart(2, 0)
 }
 
+function getRowIndexFrowWellName(name) {
+  let ascVal = name.charCodeAt(0);
+  // A = char code 65
+  let rowIndex = ascVal - 64;
+  return rowIndex;
+}
+
+function getColIndexFrowWellName(name) {
+  let colIndex = parseInt(name.substr(1), 10);
+  return colIndex;
+}
