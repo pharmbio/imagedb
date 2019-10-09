@@ -424,7 +424,7 @@ function openViewer(well_name) {
   let imgURL = createMergeImgURLFromChannels(channels);
 
   let viewerURL = "/image-viewer/" +
-        getLoadedPlate().getName() + "/" +
+        getLoadedPlate().getName() + "/timepoint=" +
         timepoint + "/" +
         well_name + "/" +
         site + "/" +
@@ -903,12 +903,12 @@ function createMergeImgURLFromChannels(channels) {
   if(channel_name === '1-2') {
     let key_ch1 = Object.keys(channels)[0];
     let key_ch2 = Object.keys(channels)[1];
-    url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' + "/channels.png";
+    url = "/api/image-merge/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + 'undefined' + "/channels.png";
   }else if(channel_name === '1-3') {
     let key_ch1 = Object.keys(channels)[0];
     let key_ch2 = Object.keys(channels)[1];
     let key_ch3 = Object.keys(channels)[2];
-    url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png";
+    url = "/api/image-merge/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + channels[key_ch3].path + "/channels.png";
   }else{
     url = "/api/image-merge/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }

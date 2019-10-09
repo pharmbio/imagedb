@@ -43,14 +43,16 @@ services:
     cpus: 2
     mem_limit: 2g
     ports:
-      - 8095:8080
+      - 8080:8080
     restart: always
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik_web
       - traefik.backend=web
       - traefik.frontend.rule=Host:ct-pharmbio.scilifelab.se
-      - traefik.frontend.auth.basic=pharmbio:$$2y$$05$$RdRhskrhXJijo0FUKfVIT.E7Q2kH2Bf0BZ.1KYYcy4R9Piat/DiUK
+      # all $ in password hash has to be double for escaping
+      - traefik.frontend.auth.basic=imagedb:$$apr1$$ac9j/ce7$$XA54/thOjghzgiG7Ru3Zq/
+      - traefik.frontend.auth.basic.realm=Connect-To-ImageDB
       - traefik.port=8080
     networks:
       - image-db-net
