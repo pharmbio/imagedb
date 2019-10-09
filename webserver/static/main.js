@@ -35,15 +35,27 @@ class Plate {
     let rowCount = getRowIndexFrowWellName(lastWellName);
     let colCount = getColIndexFrowWellName(lastWellName);
 
-    console.log("rowCount", rowCount);
-    console.log("colCount", colCount);
-
     if(rowCount > 8 || colCount > 12){
       return { "rows": 16, "cols": 24 };
     }
     else{
       return { "rows": 8, "cols": 12 };
     }
+  }
+
+  getAvailableSites(){
+    // get names of the sites of the first timepoint and first well
+    let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
+    let firstWellKey = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells)[0];
+    let sites = this.plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites;
+
+    let siteNames = [];
+    for(let site of Object.values(sites)){
+        console.log("site", site);
+        siteNames.push(site.id);
+    }
+
+    return siteNames;
   }
 
   getChannels(timepoint, well_name, site){
@@ -57,7 +69,6 @@ class Plate {
   getWellsOfFirstTimePoint(){
       return this.plateObj.timepoints.values[0].wells;
   }
-
   countTimepoints() {
     // Count number of timepoint keys for the Plate object
     let nCount = 0;
@@ -804,10 +815,11 @@ function updateSiteSelect(plateObj) {
   elemSelect.options.length = 0;
 
   // add as many options as sites
-  let nCount = plateObj.countSites();
+  let siteNames = plateObj.getAvailableSites();
 
-  for (let n = 0; n < nCount; n++) {
-    elemSelect.options[n] = new Option(n + 1);
+  // Loop through the siteNames array
+  for (let name of siteNames) {
+    elemSelect.add(new Option(name, name));
   }
 }
 
@@ -863,10 +875,16 @@ function createMergeThumbImgURLFromChannels(channels) {
   let channel_name = getSelectedChannelValue();
 
   let url = null;
+
   if(channel_name === '1-2') {
-    url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' + "/channels.png";
+    let key_ch1 = Object.keys(channels)[0];
+    let key_ch2 = Object.keys(channels)[1];
+    url = "/api/image-merge-thumb/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + 'undefined' + "/channels.png";
   }else if(channel_name === '1-3') {
-    url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png";
+    let key_ch1 = Object.keys(channels)[0];
+    let key_ch2 = Object.keys(channels)[1];
+    let key_ch3 = Object.keys(channels)[2];
+    url = "/api/image-merge-thumb/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + channels[key_ch3].path + "/channels.png";
   }else{
     url = "/api/image-merge-thumb/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }
@@ -883,8 +901,13 @@ function createMergeImgURLFromChannels(channels) {
 
   let url = null;
   if(channel_name === '1-2') {
+    let key_ch1 = Object.keys(channels)[0];
+    let key_ch2 = Object.keys(channels)[1];
     url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' + "/channels.png";
   }else if(channel_name === '1-3') {
+    let key_ch1 = Object.keys(channels)[0];
+    let key_ch2 = Object.keys(channels)[1];
+    let key_ch3 = Object.keys(channels)[2];
     url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png";
   }else{
     url = "/api/image-merge/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
