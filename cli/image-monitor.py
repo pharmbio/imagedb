@@ -32,7 +32,7 @@ def get_connection():
 
 
 def put_connection(pooled_connection):
-    
+
     global __connection_pool
     if __connection_pool:
         __connection_pool.putconn(pooled_connection)
