@@ -17,6 +17,7 @@ from image_tools import makeThumb
 from image_tools import read_tiff_info
 import settings as imgdb_settings
 
+__connection_pool = None
 
 def get_connection():
 
@@ -27,12 +28,11 @@ def get_connection():
                                               host = imgdb_settings.DB_HOSTNAME,
                                               port = imgdb_settings.DB_PORT,
                                               database = imgdb_settings.DB_NAME)
-
     return __connection_pool.getconn()
 
 
 def put_connection(pooled_connection):
-
+    
     global __connection_pool
     if __connection_pool:
         __connection_pool.putconn(pooled_connection)
@@ -121,6 +121,7 @@ def image_exists_in_db(image_path):
 
 def add_plate_to_db(images, latest_filedate_to_test):
     logging.info("start add_plate_metadata to db")
+    logging.info("hello")
 
     current_latest_imagefile = 0
 
@@ -174,9 +175,11 @@ def add_plate_to_db(images, latest_filedate_to_test):
 
             if idx % 100 == 0:
                 logging.info("images processed:" + str(idx))
+                logging.info("images total to process:" + str(len(images)))
         else:
             logging.debug("file is to old for being inserted into database, image_modtime < latest_filedate_to_test")
 
+    logging.info("done add_plate_metadata to db")
     return current_latest_imagefile
 
 
