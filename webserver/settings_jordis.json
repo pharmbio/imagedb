@@ -1,5 +1,5 @@
 {
-  "IMAGES_ROOT_DIR": "/share/mikro/IMX/MDC_pharmbio/",
+  "IMAGES_ROOT_DIR": "/share/mikro/",
   "IMAGES_CACHE_DIR": "/share/imagedb/image-cache",
   "IMAGES_THUMB_DIR": "/share/imagedb/thumbs/",
   "ERROR_LOG_DIR":  "/share/imagedb/",
@@ -11,8 +11,8 @@
   "EXHAUSTIVE_INITIAL_POLL": "true",
   "POLL_DIRS_MARGIN_DAYS": 3,
   "POLL_INTERVAL": 300,
-  "LATEST_FILE_CHANGE_MARGIN": 7000,
-  "PROJ_ROOT_DIRS": [ "PolinaG-KO"
+  "LATEST_FILE_CHANGE_MARGIN": 7200,
+  "PROJ_ROOT_DIRS": [ "Bartek/"
                      ],
   "CONTINUOUS_POLLING": "true"
 }

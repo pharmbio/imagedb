@@ -38,17 +38,19 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: imageweb
+    environment:
+      CONF_FILE: ${CONF_FILE?You need to specify env CONF_FILE, e.g. settings_dev_local.json, settings_prod.json}
     cpus: 2
     mem_limit: 2g
     ports:
-      - 8095:8080
+      - 8080:8080
     restart: always
     labels:
       - traefik.enable=true
       - traefik.docker.network=traefik_web
       - traefik.backend=web
-      - traefik.frontend.rule=Host:imagedb-dev.pharmb.io
-      - traefik.frontend.auth.basic=pharmbio:$$2y$$05$$RdRhskrhXJijo0FUKfVIT.E7Q2kH2Bf0BZ.1KYYcy4R9Piat/DiUK
+      - traefik.frontend.rule=Host:domain-name.se
+      - traefik.frontend.auth.basic=username:$$ljkhdfoiwu09u234ioj09u09upujlkjw09du3ioj23poij
       - traefik.port=8080
     networks:
       - image-db-net

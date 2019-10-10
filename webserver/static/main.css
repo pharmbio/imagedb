@@ -12,6 +12,7 @@ ul li a {
 .wellCell {
     width: 100px;
     height: 100px;
+    background: #ff0000;
 }
 
 .headerCell {
@@ -33,7 +34,7 @@ ul li a {
     /* This makes empty cells become a bit smaller*/
     width: 50px;
     height: 50px;
-    border: 2px solid #ffffff;
+    border: 0px solid #ffffff;
 }
 
 /*
@@ -67,7 +68,8 @@ ul li a {
     overflow: hidden;
 }
 
-
+/*
 .image-blob {
     padding-left: 10px;
 }
+*/

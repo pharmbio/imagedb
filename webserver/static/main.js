@@ -25,6 +25,39 @@ class Plate {
     return this.plateObj.id;
   }
 
+  getPlateLayout(){
+    // Get last well and see if size is within 96 plate limit
+    // if not return 384 size specs
+    let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
+    let lastIndex = Object.values(this.plateObj.timepoints[firstTimePointKey].wells).length - 1;
+    let lastWell = Object.values(this.plateObj.timepoints[firstTimePointKey].wells)[lastIndex];
+    let lastWellName = lastWell.id;
+    let rowCount = getRowIndexFrowWellName(lastWellName);
+    let colCount = getColIndexFrowWellName(lastWellName);
+
+    if(rowCount > 8 || colCount > 12){
+      return { "rows": 16, "cols": 24 };
+    }
+    else{
+      return { "rows": 8, "cols": 12 };
+    }
+  }
+
+  getAvailableSites(){
+    // get names of the sites of the first timepoint and first well
+    let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
+    let firstWellKey = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells)[0];
+    let sites = this.plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites;
+
+    let siteNames = [];
+    for(let site of Object.values(sites)){
+        console.log("site", site);
+        siteNames.push(site.id);
+    }
+
+    return siteNames;
+  }
+
   getChannels(timepoint, well_name, site){
         return this.plateObj.timepoints[timepoint].wells[well_name].sites[site].channels;
   }
@@ -34,9 +67,9 @@ class Plate {
   }
 
   getWellsOfFirstTimePoint(){
-      return this.plateObj.timepoints.values[0].wells;
+      let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
+      return this.getWells(firstTimePointKey);
   }
-
   countTimepoints() {
     // Count number of timepoint keys for the Plate object
     let nCount = 0;
@@ -246,13 +279,7 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 
           updateToolbar();
 
-          setSelectedTimepoint(timepoint);
-          setWellSelection(well);
-          setSiteSelection(site);
-          setChannelSelection(channel);
-
           loadTimepointImagesIntoViewer(timepoint);
-          // redrawImageViewer(true);
 
         })
         .catch(error => {
@@ -385,16 +412,14 @@ function openViewer(well_name) {
   let timepoint = getSelectedTimepointIndex();
   let site = getSelectedSiteIndex();
   let channels = getLoadedPlate().getChannels(timepoint, well_name, site);
-
   let imgURL = createMergeImgURLFromChannels(channels);
 
-  let viewerURL = "/image-viewer/" +
-        getLoadedPlate().getName() + "/" +
-        timepoint + "/" +
-        well_name + "/" +
-        site + "/" +
-        getSelectedChannelValue() + "/" +
-        imgURL;
+  let viewerURL = "/image-viewer/" + getLoadedPlate().getName() +
+        "/tp/" + timepoint +
+        "/well/" + well_name +
+        "/site/" + site +
+        "/ch/" + getSelectedChannelValue() +
+        "/url/" + imgURL;
 
   //window.open(viewerURL, "ImageViewerWindow");
   window.open(viewerURL);
@@ -492,20 +517,18 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
 
   let container = document.getElementById('table-div');
 
-  if (container)
-
   // If for example a new plate have been selected
   // all old well_images should be removed since plate layout might change
-    if (clearFirst) {
-      removeChildren(container);
-    }
+  // But will not get cleared first if it is an animation
+  if (clearFirst) {
+    removeChildren(container);
+  }
 
   // first create a new plate consisting of empty well-div's
   // TODO fix for other plate sizes
   if (document.getElementById('plateTable') == null) {
-    let rows = 16; // 8
-    let cols = 24; // 24
-    let table = createEmptyTable(rows, cols);
+    let plateLayout = plateObj.getPlateLayout();
+    let table = createEmptyTable(plateLayout.rows, plateLayout.cols);
     container.appendChild(table);
   }
 
@@ -782,10 +805,11 @@ function updateSiteSelect(plateObj) {
   elemSelect.options.length = 0;
 
   // add as many options as sites
-  let nCount = plateObj.countSites();
+  let siteNames = plateObj.getAvailableSites();
 
-  for (let n = 0; n < nCount; n++) {
-    elemSelect.options[n] = new Option(n + 1);
+  // Loop through the siteNames array
+  for (let name of siteNames) {
+    elemSelect.add(new Option(name, name));
   }
 }
 
@@ -838,15 +862,26 @@ function removeChildren(domObject) {
 
 function createMergeThumbImgURLFromChannels(channels) {
 
-  let channel_name = getSelectedChannelValue();
+  let selected_channel = String(getSelectedChannelValue());
+  console.log("selected_channel", selected_channel);
+  console.log("channels", channels);
+  console.log("channels[selected_channel]", channels[selected_channel]);
 
   let url = null;
-  if(channel_name === '1-2') {
-    url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' + "/channels.png";
-  }else if(channel_name === '1-3') {
-    url = "/api/image-merge-thumb/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png";
+
+  if(selected_channel === '1-2') {
+    let key_ch1 = Object.keys(channels)[0];
+    let key_ch2 = Object.keys(channels)[1];
+    url = "/api/image-merge-thumb/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + 'undefined' + "/channels.png";
+  }else if(selected_channel === '1-3') {
+    let key_ch1 = Object.keys(channels)[0];
+    let key_ch2 = Object.keys(channels)[1];
+    let key_ch3 = Object.keys(channels)[2];
+    url = "/api/image-merge-thumb/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + channels[key_ch3].path + "/channels.png";
   }else{
-    url = "/api/image-merge-thumb/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+    let channelIndex = parseInt(selected_channel, 10) - 1;
+    let key_chx = Object.keys(channels)[channelIndex];
+    url = "/api/image-merge-thumb/ch1/" + channels[key_chx].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }
 
   return url;
@@ -854,18 +889,25 @@ function createMergeThumbImgURLFromChannels(channels) {
 
 function createMergeImgURLFromChannels(channels) {
 
-  let channel_name = String(getSelectedChannelValue());
-  console.log("channel_name", channel_name);
+  let selected_channel = String(getSelectedChannelValue());
+  console.log("channel_name", selected_channel);
   console.log("channels", channels);
-  console.log("channels[channel_name]", channels[channel_name]);
+  console.log("channels[channel_name]", channels[selected_channel]);
 
   let url = null;
-  if(channel_name === '1-2') {
-    url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + 'undefined' + "/channels.png";
-  }else if(channel_name === '1-3') {
-    url = "/api/image-merge/ch1/" + channels["1"].path + "/ch2/" + channels["2"].path + "/ch3/" + channels["3"].path + "/channels.png";
+  if(selected_channel === '1-2') {
+    let key_ch1 = Object.keys(channels)[0];
+    let key_ch2 = Object.keys(channels)[1];
+    url = "/api/image-merge/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + 'undefined' + "/channels.png";
+  }else if(selected_channel === '1-3') {
+    let key_ch1 = Object.keys(channels)[0];
+    let key_ch2 = Object.keys(channels)[1];
+    let key_ch3 = Object.keys(channels)[2];
+    url = "/api/image-merge/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + channels[key_ch3].path + "/channels.png";
   }else{
-    url = "/api/image-merge/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+    let channelIndex = parseInt(selected_channel, 10) - 1;
+    let key_chx = Object.keys(channels)[channelIndex];
+    url = "/api/image-merge/ch1/" + channels[key_chx].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }
 
   return url;
@@ -876,3 +918,14 @@ function getWellName(row, col) {
   return rows[row] + col.toString().padStart(2, 0)
 }
 
+function getRowIndexFrowWellName(name) {
+  let ascVal = name.charCodeAt(0);
+  // A = char code 65
+  let rowIndex = ascVal - 64;
+  return rowIndex;
+}
+
+function getColIndexFrowWellName(name) {
+  let colIndex = parseInt(name.substr(1), 10);
+  return colIndex;
+}
