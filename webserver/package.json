@@ -3,25 +3,25 @@
     "name": "Anders Larsson"
   },
   "bugs": {
-    "url": "https://github.com/Anders/BildViewer/issues"
+    "url": "https://github.com/pharmbio/imagedb/issues"
   },
   "bundleDependencies": false,
   "deprecated": false,
-  "description": "Anders bild viewer.",
+  "description": "Pharmbio imagedb-viewer",
   "devDependencies": {
     "terser": "^3.17.0"
   },
   "dependencies": {},
-  "homepage": "http://anders.org/",
+  "homepage": "https://github.com/pharmbio/imagedb/",
   "keywords": [
-    "anders"
+    "imagedb"
   ],
   "license": "GPL-3.0-only",
   "main": "src/main.js",
-  "name": "anders-bild-viewer",
+  "name": "pharmbio-imagedb",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Anders/BildViewer.git"
+    "url": "git+https://github.com/pharmbio/imagedb.git"
   },
   "scripts": {
     "minify": "terser static/main.js -o static/main.min.js -c -m --comments '/Version/'"

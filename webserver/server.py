@@ -45,8 +45,6 @@ class IndexTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
 
 
 ROUTES = [
-          #(r'/images/(.*)', tornado.web.StaticFileHandler, {'path': imgdb_settings.IMAGES_ROOT_FOLDER}),
-          #(r'/thumbs/(.*)', tornado.web.StaticFileHandler, {'path': '/share/imagedb/thumbs/share/mikro/IMX/MDC Polina Georgiev/'}),
           (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), 'static')}),
           (r'/api/list-plates', ListAllPlatesQueryHandler),
           (r'/api/plate/(?P<plate>.+)', GetPlateQueryHandler),
