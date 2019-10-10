@@ -49,10 +49,10 @@ services:
       - traefik.enable=true
       - traefik.docker.network=traefik_web
       - traefik.backend=web
-      - traefik.frontend.rule=Host:mydomain.com
+      - traefik.frontend.rule=Host:ct-pharmbio.scilifelab.se
       # all $ in password hash has to be double for escaping
-      - traefik.frontend.auth.basic=username:$$jknhi3h497h4ir3uh98hfoihfkjhnkfjhkdho9f84
-      #- traefik.frontend.auth.basic.realm=Connect-To-ImageDB
+      - traefik.frontend.auth.basic=imagedb:$$apr1$$ac9j/ce7$$XA54/thOjghzgiG7Ru3Zq/
+      - traefik.frontend.auth.basic.realm=Connect-To-ImageDB
       - traefik.port=8080
     networks:
       - image-db-net
