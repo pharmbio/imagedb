@@ -39,7 +39,6 @@ def parse_path_and_file(path):
 
     # site
     match = re.search('.*\(fld ([0-9]) ', path)
-    site = match.group(1)
     if match is None:
       site = 1
     else:
@@ -83,6 +82,11 @@ def parse_path_and_file(path):
     return metadata
 
   except:
+    logging.exception("could not parse")
     return None
 
 
+if __name__ == '__main__':
+    # Testparse
+    retval = parse_path_and_file("/share/mikro/Jordi/IN Cell test/384 wellplate BD Falcon black 4x DAPI/384 wellplate BD Falcon black 4x DAPI_1/B - 02(wv DAPI - DAPI).tif")
+    print(str(retval))
