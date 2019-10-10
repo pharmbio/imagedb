@@ -242,9 +242,6 @@ function apiLoadPlate(plate_name) {
   stopAnimation();
   document.getElementById("animate-cbx").checked = false;
 
-  //let encoded = encodeURI(plate_name);
-  //console.log("encoded", encoded);
-
   fetch('/api/plate/' + plate_name)
         .then(response => response.json())
         .then(data => {
@@ -282,13 +279,7 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 
           updateToolbar();
 
-          // setSelectedTimepoint(timepoint);
-          setWellSelection(well);
-          // setSiteSelection(site);
-          //setChannelSelection(channel);
-
           loadTimepointImagesIntoViewer(timepoint);
-          // redrawImageViewer(true);
 
         })
         .catch(error => {
