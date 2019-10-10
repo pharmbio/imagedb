@@ -67,7 +67,8 @@ class Plate {
   }
 
   getWellsOfFirstTimePoint(){
-      return this.plateObj.timepoints.values[0].wells;
+      let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
+      return this.getWells(firstTimePointKey);
   }
   countTimepoints() {
     // Count number of timepoint keys for the Plate object
@@ -281,10 +282,10 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 
           updateToolbar();
 
-          setSelectedTimepoint(timepoint);
+          // setSelectedTimepoint(timepoint);
           setWellSelection(well);
-          setSiteSelection(site);
-          setChannelSelection(channel);
+          // setSiteSelection(site);
+          //setChannelSelection(channel);
 
           loadTimepointImagesIntoViewer(timepoint);
           // redrawImageViewer(true);
@@ -420,16 +421,14 @@ function openViewer(well_name) {
   let timepoint = getSelectedTimepointIndex();
   let site = getSelectedSiteIndex();
   let channels = getLoadedPlate().getChannels(timepoint, well_name, site);
-
   let imgURL = createMergeImgURLFromChannels(channels);
 
-  let viewerURL = "/image-viewer/" +
-        getLoadedPlate().getName() + "/timepoint=" +
-        timepoint + "/" +
-        well_name + "/" +
-        site + "/" +
-        getSelectedChannelValue() + "/" +
-        imgURL;
+  let viewerURL = "/image-viewer/" + getLoadedPlate().getName() +
+        "/tp/" + timepoint +
+        "/well/" + well_name +
+        "/site/" + site +
+        "/ch/" + getSelectedChannelValue() +
+        "/url/" + imgURL;
 
   //window.open(viewerURL, "ImageViewerWindow");
   window.open(viewerURL);
@@ -872,21 +871,26 @@ function removeChildren(domObject) {
 
 function createMergeThumbImgURLFromChannels(channels) {
 
-  let channel_name = getSelectedChannelValue();
+  let selected_channel = String(getSelectedChannelValue());
+  console.log("selected_channel", selected_channel);
+  console.log("channels", channels);
+  console.log("channels[selected_channel]", channels[selected_channel]);
 
   let url = null;
 
-  if(channel_name === '1-2') {
+  if(selected_channel === '1-2') {
     let key_ch1 = Object.keys(channels)[0];
     let key_ch2 = Object.keys(channels)[1];
     url = "/api/image-merge-thumb/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + 'undefined' + "/channels.png";
-  }else if(channel_name === '1-3') {
+  }else if(selected_channel === '1-3') {
     let key_ch1 = Object.keys(channels)[0];
     let key_ch2 = Object.keys(channels)[1];
     let key_ch3 = Object.keys(channels)[2];
     url = "/api/image-merge-thumb/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + channels[key_ch3].path + "/channels.png";
   }else{
-    url = "/api/image-merge-thumb/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+    let channelIndex = parseInt(selected_channel, 10) - 1;
+    let key_chx = Object.keys(channels)[channelIndex];
+    url = "/api/image-merge-thumb/ch1/" + channels[key_chx].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }
 
   return url;
@@ -894,23 +898,25 @@ function createMergeThumbImgURLFromChannels(channels) {
 
 function createMergeImgURLFromChannels(channels) {
 
-  let channel_name = String(getSelectedChannelValue());
-  console.log("channel_name", channel_name);
+  let selected_channel = String(getSelectedChannelValue());
+  console.log("channel_name", selected_channel);
   console.log("channels", channels);
-  console.log("channels[channel_name]", channels[channel_name]);
+  console.log("channels[channel_name]", channels[selected_channel]);
 
   let url = null;
-  if(channel_name === '1-2') {
+  if(selected_channel === '1-2') {
     let key_ch1 = Object.keys(channels)[0];
     let key_ch2 = Object.keys(channels)[1];
     url = "/api/image-merge/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + 'undefined' + "/channels.png";
-  }else if(channel_name === '1-3') {
+  }else if(selected_channel === '1-3') {
     let key_ch1 = Object.keys(channels)[0];
     let key_ch2 = Object.keys(channels)[1];
     let key_ch3 = Object.keys(channels)[2];
     url = "/api/image-merge/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + channels[key_ch3].path + "/channels.png";
   }else{
-    url = "/api/image-merge/ch1/" + channels[channel_name].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+    let channelIndex = parseInt(selected_channel, 10) - 1;
+    let key_chx = Object.keys(channels)[channelIndex];
+    url = "/api/image-merge/ch1/" + channels[key_chx].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }
 
   return url;
