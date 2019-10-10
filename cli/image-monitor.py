@@ -17,44 +17,6 @@ from image_tools import makeThumb
 from image_tools import read_tiff_info
 import settings as imgdb_settings
 
-#
-# Adopted from: https://github.com/HASTE-project/haste-image-analysis-container2/tree/master/haste/image_analysis_container2/filenames
-# path example
-# 'ACHN-20X-P009060/2019-02-19/and-more/not/needed/'
-# or
-# '181212-U2OS-20X-BpA-HD-DB-high_E02_s7_w3_thumbCFB5B241-4E5B-4AB4-8861-A9B6E8F9FE00.tif
-#
-__pattern_path_plate_date = re.compile('^'
-                                       + '.*'         # any
-                                       + '/([0-9]{6}-)?' # maybe date here also (1)
-                                       + '([^-/]+)'  # project-name (2)
-                                       + '-([^-/]+)'  # magnification (3)
-                                       + '-([^/]+)'   # plate (4)
-                                       + '/([0-9]{4})-([0-9]{2})-([0-9]{2})' # date (yyyy, mm, dd) (5,6,7)
-                                       ,
-                                       re.IGNORECASE)  # Windows has case-insensitive filenames
-
-__connection_pool = None
-
-
-def parse_path_plate_date(path):
-    match = re.search(__pattern_path_plate_date, path)
-
-    if match is None:
-        return None
-
-    group_ = {
-        'project': match.group(2),
-        'magnification': match.group(3),
-        'plate': match.group(4),
-        'date_year': int(match.group(5)),
-        'date_month': int(match.group(6)),
-        'date_day_of_month': int(match.group(7)),
-    }
-    metadata = group_
-
-    return metadata
-
 
 def get_connection():
 
@@ -117,11 +79,6 @@ def get_all_image_files(path):
 def get_last_modified(path):
     return
 
-def image_name_sort_fn(filename):
-    metadata = parse_path_and_file(filename)
-    return metadata['path']
-
-
 def make_thumb_path(image, thumbdir, image_root_dir):
     subpath = str(image).replace(image_root_dir, "")
     # Need to strip / otherwise can not join as subpath
@@ -168,7 +125,7 @@ def add_plate_to_db(images, latest_filedate_to_test):
     current_latest_imagefile = 0
 
     # sort images (just to get thumb after image)
-    images.sort(key=image_name_sort_fn)
+    # images.sort(key=image_name_sort_fn)
 
     # Loop all Images
     for idx, image in enumerate(images):
@@ -254,7 +211,8 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
         logging.info("Staring new poll")
         logging.info("latest_filedate_last_poll=" + str(datetime.fromtimestamp(latest_filedate_last_poll)))
 
-        plate_filter = ""
+        # TODO maybe reimplement plate_filter
+        # plate_filter = ""
 
         current_poll_latest_filedate = 0
         for proj_root_dir_name in proj_root_dirs:
@@ -264,31 +222,14 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
             logging.debug("proj_root_dir" + str(proj_root_dir))
             subdirs = get_subdirs_recursively_no_thumb_dir(proj_root_dir)
 
-            #for dir in subdirs:
-            #    logging.debug("dir" +  str(dir))
-
-            #image_dir = os.path.join(imgdb_settings.IMAGES_ROOT_FOLDER, proj_root_dir)
-            #plate_dirs = get_subdirs(image_dir)
-            #logging.debug("plate_dirs" + str(plate_dirs))
-
-            # pretend every subdir is a plate di
+            # pretend every subdir is a plate dir
             for plate_dir in subdirs:
-                #plate_subdirs = get_subdirs(plate_dir)
 
                 try:
-                    # for plate_date_dir in plate_subdirs:
-                    # logging.debug("plate_subdir: " + str(plate_date_dir))
 
                     logging.debug("plate_dir: " + str(plate_dir))
 
-                    #   # Parse filename for metadata (e.g. platename well, site, channet etc.)
-                    #   metadata = parse_path_plate_date(plate_date_dir)
-                    #   logging.debug("metadata" + str(metadata))
-
-                    #   # get date from dir
-                    #   dir_date = datetime(metadata['date_year'], metadata['date_month'],
-                    #                       metadata['date_day_of_month'])
-
+                    # get date from dir
                     dir_last_modified = os.path.getmtime(plate_dir)
                     logging.debug("dir_last_modified" + str(
                                   time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(dir_last_modified))))
@@ -312,35 +253,6 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                                                            current_dir_latest_filedate)
 
                         # only update with latest file when everything is checked once
-
-                    # get_last_modified(plate_dir)
-
-                    # # get date from dir
-                    # date_delta = datetime.today() - dir_date
-                    #
-                    #     logging.debug("delta" + str(date_delta))
-                    #     logging.debug(str(is_initial_poll))
-                    #     logging.debug(str(exhaustive_initial_poll))
-                    #
-                    #     # poll images in directories more recent than today + poll_dirs_date_margin_days
-                    #     if date_delta <= timedelta(days=poll_dirs_margin_days) or \
-                    #             (exhaustive_initial_poll and is_initial_poll):
-                    #
-                    #         logging.debug("Image folder is more recent")
-                    #
-                    #         # set file date to test inserting into db to last poll latest file minus margin
-                    #         latest_filedate_last_poll_with_margin = latest_filedate_last_poll - latest_file_change_margin;
-                    #
-                    #         # try to import files more recent than latest_filedate last poll minus margin
-                    #         # returns max of latest filedate in dir and the latest file to check
-                    #         current_dir_latest_filedate = import_plate_images_and_meta(plate_date_dir,
-                    #                                                                    latest_filedate_last_poll_with_margin)
-                    #
-                    #         # keep track of latest file in this current poll
-                    #         current_poll_latest_filedate = max(current_poll_latest_filedate,
-                    #                                            current_dir_latest_filedate)
-                    #
-                    #         # only update with latest file when everything is checked once
 
                 except Exception as e:
                     logging.exception("Exception in plate dir")
