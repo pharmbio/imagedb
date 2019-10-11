@@ -88,5 +88,5 @@ def parse_path_and_file(path):
 
 if __name__ == '__main__':
     # Testparse
-    retval = parse_path_and_file("/share/mikro/Jordi/IN Cell test/384 wellplate BD Falcon black 4x DAPI/384 wellplate BD Falcon black 4x DAPI_1/B - 02(wv DAPI - DAPI).tif")
+    retval = parse_path_and_file("/share/mikro/Schayan/Cell number validation screen/U2OS 384 BD Falcon 10x Cy5_500 cells seeded_1/E - 09(wv DAPI - DAPI).tif")
     print(str(retval))
