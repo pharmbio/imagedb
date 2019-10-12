@@ -11,8 +11,9 @@ CREATE TABLE images (
     timepoint   int,
     well        text,
     site        int,
-    channel     int,
+    channel     text,
     path        text,
+    file_meta   jsonb,
     metadata    jsonb
 );
 
@@ -37,7 +38,7 @@ CREATE TABLE plate_acquisition (
   barcode         text,
   imaged          date,
   microscope      text,
-  channel_map     int
+  channel_map     text
 );
 CREATE INDEX  ix_plate_acquisition_barcode ON plate_acquisition(barcode);
 CREATE INDEX  ix_plate_acquisition_channel_map ON plate_acquisition(channel_map);
@@ -76,8 +77,8 @@ CREATE INDEX  ix_compound_comp_id ON compound(comp_id);
 
 --DROP TABLE IF EXISTS  channel_map CASCADE;
 CREATE TABLE channel_map (
-  map_id       int,
-  channel      int,
+  map_id       text,
+  channel      text,
   dye          text
 );
 CREATE INDEX  ix_channel_map_map_id ON channel_map(map_id);

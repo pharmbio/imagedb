@@ -49,8 +49,8 @@ services:
       - traefik.enable=true
       - traefik.docker.network=traefik_web
       - traefik.backend=web
-      - traefik.frontend.rule=Host:domain-name.se
-      - traefik.frontend.auth.basic=username:$$ljkhdfoiwu09u234ioj09u09upujlkjw09du3ioj23poij
+      - traefik.frontend.rule=Host:ct-pharmbio.scilifelab.se
+      - traefik.frontend.auth.basic=imagedb:$$apr1$$ac9j/ce7$$XA54/thOjghzgiG7Ru3Zq/
       - traefik.port=8080
     networks:
       - image-db-net

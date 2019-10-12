@@ -47,12 +47,13 @@ def parse_path_and_file(path):
     # channel
     match = re.search('.*wv (.+) - ', path)
     channel_name = match.group(1)
-    channel_names = ['FITC',
-                     'Cy3',
-                     'Cy5',
-                     'DAPI',
-                     'TL-Brightfield']
-    channel = channel_names.index(channel_name)
+    channel = channel_name;
+    # channel_names = ['FITC',
+    #                  'Cy3',
+    #                  'Cy5',
+    #                  'DAPI',
+    #                  'TL-Brightfield']
+    # channel = channel_names.index(channel_name)
 
     # logging
     logging.debug("project" + project)

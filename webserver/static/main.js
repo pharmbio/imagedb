@@ -51,11 +51,20 @@ class Plate {
 
     let siteNames = [];
     for(let site of Object.values(sites)){
-        console.log("site", site);
         siteNames.push(site.id);
     }
 
     return siteNames;
+  }
+
+  getChannelNames(){
+    // Get channel keys for the first sites object of the first well of first Timepoint in plate object
+    let nCount = 0;
+    let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
+    let firstWellKey = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells)[0];
+    let firstSiteKey = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites)[0];
+    let channelNames = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells[firstWellKey].sites[firstSiteKey].channels);
+    return channelNames;
   }
 
   getChannels(timepoint, well_name, site){
@@ -79,7 +88,7 @@ class Plate {
   }
 
   countChannels() {
-    // Count number of keys for the sites object of the first well of first Timepoint in plate object
+    // Count number of keys for the first sites object of the first well of first Timepoint in plate object
     let nCount = 0;
     let firstTimePointKey = Object.keys(this.plateObj.timepoints)[0];
     let firstWellKey = Object.keys(this.plateObj.timepoints[firstTimePointKey].wells)[0];
@@ -88,6 +97,7 @@ class Plate {
 
     return nCount;
   }
+
 
   countWells() {
     // Count number of keys for the Wells object  of the first Timepoint in plate object
@@ -534,7 +544,6 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
 
   console.log(container);
   console.log('done create div');
-  console.log('plate:', plateObj);
 
   // now populate well-div's with the wells of the plateobj
   let wells = plateObj.getWells(timepoint);
@@ -849,8 +858,10 @@ function updateChannelSelect(plateObj) {
   }
 
   // add as many options as channels
-  for (let n = 0; n < nCount; n++) {
-    elemSelect.options[n + 1] = new Option(n + 1);
+  let channel_names = plateObj.getChannelNames();
+  for (let n = 1; n <= nCount; n++) {
+    channel_name = channel_names[n-1];
+    elemSelect.add(new Option("" + n + "-" + channel_name, n));
   }
 }
 
@@ -863,12 +874,8 @@ function removeChildren(domObject) {
 function createMergeThumbImgURLFromChannels(channels) {
 
   let selected_channel = String(getSelectedChannelValue());
-  console.log("selected_channel", selected_channel);
-  console.log("channels", channels);
-  console.log("channels[selected_channel]", channels[selected_channel]);
 
   let url = null;
-
   if(selected_channel === '1-2') {
     let key_ch1 = Object.keys(channels)[0];
     let key_ch2 = Object.keys(channels)[1];
@@ -890,9 +897,6 @@ function createMergeThumbImgURLFromChannels(channels) {
 function createMergeImgURLFromChannels(channels) {
 
   let selected_channel = String(getSelectedChannelValue());
-  console.log("channel_name", selected_channel);
-  console.log("channels", channels);
-  console.log("channels[channel_name]", channels[selected_channel]);
 
   let url = null;
   if(selected_channel === '1-2') {

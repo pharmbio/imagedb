@@ -61,20 +61,21 @@ def get_subdirs_recursively_no_thumb_dir(path):
               subdir = os.path.join(root, subdir)
               subdirs.append(subdir)
     return subdirs
-#
-# Recursively gets all files in subdirs
-#
+
 def get_all_image_files(path):
     # get all files
-    logging.debug(path)
+    logging.info(path)
 
-    # For now return all tiff-files
-    all_files = glob.glob(os.path.join(path, '**/*.tif'), recursive=True)
-    # all_files.extend( glob.glob(os.path.join(path, '**/*.png'), recursive=True))
+    all_files = []
+    for file in os.listdir(path):
+        if file.lower().endswith(".tif") or file.lower().endswith(".tiff"):
+            absolute_file = os.path.join(path, file)
+            all_files.append(absolute_file)
 
-    logging.debug(all_files)
+    logging.info("found files" + str(all_files))
 
     return all_files
+
 
 def get_last_modified(path):
     return
@@ -89,7 +90,7 @@ def make_thumb_path(image, thumbdir, image_root_dir):
 
 def insert_meta_into_db(img_meta):
 
-    insert_query = "INSERT INTO images(project, plate, timepoint, well, site, channel, path, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
+    insert_query = "INSERT INTO images(project, plate, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
     insert_conn = get_connection()
     insert_cursor = insert_conn.cursor()
     insert_cursor.execute(insert_query, (img_meta['project'],
@@ -99,6 +100,7 @@ def insert_meta_into_db(img_meta):
                                          img_meta['wellsample'],
                                          img_meta['channel'],
                                          img_meta['path'],
+                                         json.dumps(img_meta['file_meta']),
                                          json.dumps(img_meta)
                                          ))
     insert_cursor.close()
@@ -155,7 +157,7 @@ def add_plate_to_db(images, latest_filedate_to_test):
 
                     # read tiff-meta-tags
                     tiff_meta = read_tiff_info(img_meta['path'])
-                    img_meta['tiff_meta'] = tiff_meta
+                    img_meta['file_meta'] = tiff_meta
 
                     # insert into db
                     insert_meta_into_db(img_meta)
@@ -309,6 +311,8 @@ try:
                         default=imgdb_settings.EXHAUSTIVE_INITIAL_POLL)
     parser.add_argument('-lfcm', '--latest-file-change-margin', help='Description for xxx argument',
                         default=imgdb_settings.LATEST_FILE_CHANGE_MARGIN)
+    #parser.add_argument('-ll', '--log-level', help='Description for xxx argument',
+    #                    default=imgdb_settings.LOG_LEVEL)
 
     args = parser.parse_args()
 
