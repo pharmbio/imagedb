@@ -6,3 +6,4 @@ node_modules/
 imagedb
 __pycache__
 .DS_Store
+.env
