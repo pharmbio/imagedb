@@ -49,8 +49,10 @@ services:
       - traefik.enable=true
       - traefik.docker.network=traefik_web
       - traefik.backend=web
-      - traefik.frontend.rule=Host:ct-pharmbio.scilifelab.se
-      - traefik.frontend.auth.basic=imagedb:$$apr1$$ac9j/ce7$$XA54/thOjghzgiG7Ru3Zq/
+      - traefik.frontend.rule=${TRAEFIK_FRONTEND_RULE?You need to specify env TRAEFIK_FRONTEND_RULE, e.g. TRAEFIK_FRONTEND_RULE=HOST:name.my-domain.com}
+      # If TRAEFIK_BASIC_AUTH is specified here in docker-compose file then you need to escape $ with $ see traefik webpage
+      # if specified in .env file then you don't need to escape $
+      - traefik.frontend.auth.basic=${TRAEFIK_BASIC_AUTH? You need to specify env TRAEFIK_BASIC_AUTH, e.g. TRAEFIK_BASIC_AUTH=username:$blablsbskjfhbsjhslkfsjlkdslkjf/kljsd}
       - traefik.port=8080
     networks:
       - image-db-net
