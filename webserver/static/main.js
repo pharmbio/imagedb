@@ -829,6 +829,7 @@ function updateSiteSelect(plateObj) {
 
 function updatePlateNameLabel(plate_name) {
   document.getElementById('plate-name-label').innerHTML = "Plate: " + plate_name;
+  document.getElementById('plate-name-label').title = "Plate: " + plate_name;
 }
 
 function updateMetaData(plateObj) {

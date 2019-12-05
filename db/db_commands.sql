@@ -14,8 +14,9 @@ SHOW ALL
 CREATE DATABASE imagedb;
 
 -- Log in to new database
+\c imagedb;
 
-DROP TABLE images;
+DROP TABLE IF EXISTS images;
 CREATE TABLE images (
     project     text,
     plate       text,
@@ -35,7 +36,7 @@ CREATE INDEX  ix_images_site ON images(site);
 CREATE INDEX  ix_images_channel ON images(channel);
 CREATE INDEX  ix_images_path ON images(path);
 
-DROP TABLE plate;
+DROP TABLE IF EXISTS plate CASCADE;
 CREATE TABLE plate (
   barcode               text,
   seeded                date,
@@ -43,7 +44,7 @@ CREATE TABLE plate (
 );
 CREATE INDEX  ix_plate_barcode ON plate(barcode);
 
-DROP TABLE plate_acquisition;
+DROP TABLE IF EXISTS plate_acquisition CASCADE;
 CREATE TABLE plate_acquisition (
   barcode         text,
   imaged          date,
@@ -54,11 +55,8 @@ CREATE INDEX  ix_plate_acquisition_barcode ON plate_acquisition(barcode);
 CREATE INDEX  ix_plate_acquisition_channel_map ON plate_acquisition(channel_map);
 
 
-
-
-
 -- well
-DROP TABLE well;
+DROP TABLE IF EXISTS well CASCADE;
 CREATE TABLE well (
     plate_barcode         text,
     well_name      	      text,
@@ -75,7 +73,7 @@ CREATE INDEX  ix_well_id ON well(plate_barcode);
 CREATE INDEX  ix_well_position ON well(well_name);
 
 
-DROP TABLE compound;
+DROP TABLE IF EXISTS  compound CASCADE;
 CREATE TABLE compound (
   comp_id         text,
   batch_id        text,
@@ -88,7 +86,7 @@ CREATE INDEX  ix_compound_comp_id ON compound(comp_id);
 
 
 
-DROP TABLE channel_map;
+DROP TABLE IF EXISTS  channel_map CASCADE;
 CREATE TABLE channel_map (
   map_id       int,
   channel      int,
@@ -108,7 +106,7 @@ CREATE OR REPLACE VIEW images_all_view AS
   LEFT JOIN plate ON images.plate = plate.barcode
   LEFT JOIN well ON plate.barcode = well.plate_barcode AND images.well = well.well_name
   LEFT JOIN plate_acquisition on plate.barcode = plate_acquisition.barcode
-  LEFT JOIN channel_map ON plate_acquisition.channel_map = channel_map.map_id AND images.channel = channel_map.channel
+  LEFT JOIN channel_map ON plate_acquisition.channel_map = channel_map.map_id AND images.channel = channel_map.channel;
 
 CREATE OR REPLACE VIEW images_minimal_view AS
   SELECT
@@ -127,7 +125,7 @@ CREATE OR REPLACE VIEW images_minimal_view AS
   LEFT JOIN plate ON images.plate = plate.barcode
   LEFT JOIN well ON plate.barcode = well.plate_barcode AND images.well = well.well_name
   LEFT JOIN plate_acquisition ON plate.barcode = plate_acquisition.barcode
-  LEFT JOIN channel_map ON plate_acquisition.channel_map = channel_map.map_id AND images.channel = channel_map.channel
+  LEFT JOIN channel_map ON plate_acquisition.channel_map = channel_map.map_id AND images.channel = channel_map.channel;
 
 
 -- Other tables
