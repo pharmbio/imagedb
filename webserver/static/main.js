@@ -289,6 +289,11 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 
           updateToolbar();
 
+          setSelectedTimepoint(timepoint);
+          setWellSelection(well);
+          setSiteSelection(site);
+          setChannelSelection(channel);
+
           loadTimepointImagesIntoViewer(timepoint);
 
         })
@@ -331,7 +336,7 @@ function redrawPlateAndViewer(clearFirst = false) {
 
 function redrawImageViewer(clearFirst = true) {
 
-  console.log("inside redrawImageViewer, clear first=", clearFirst);
+  console.log("inside redrawImageViewer, clear first=", clearFirst)
 
   if (clearFirst) {
     viewer.world.removeAll();
