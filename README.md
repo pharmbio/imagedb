@@ -1,4 +1,5 @@
-# Pharmb.io image database
+# AROS image, project, data, metadata and lab automation system database.
+Currently this repo contains both the actual postgres database and the Web-GUI Image Viewer but will soon be split into two separate repos, one for the Database and one for the Web Interface.
 
 # Repo structure:
 
