@@ -220,6 +220,12 @@ CREATE OR REPLACE VIEW well_new_view AS
 
   SELECT * FROM "well_new_view" WHERE plate_barcode is not null LIMIT 50;
 
+UPDATE images
+SET project = substring(path FROM '/share/mikro/IMX/MDC_pharmbio/(.*?)/');
+
+UPDATE images
+SET plate = substring(path FROM '/share/mikro/IMX/MDC_pharmbio/.*?/(.*?)/');
+
 
 
 

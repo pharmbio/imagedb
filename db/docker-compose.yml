@@ -4,6 +4,10 @@ networks:
   image-db-net:
     driver: bridge
     name: image-db-net
+  traefik_web:
+    external:
+      name: traefik_web
+
 
 volumes:
   # Either use a docker-volume for database
@@ -33,13 +37,22 @@ services:
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     networks:
       - image-db-net
+      - traefik_web
 
-  adminer:
+  imagedbadminer:
     image: adminer
     restart: always
     cpus: 2
     mem_limit: 2g
     ports:
-      - 8088:8080
+      - 8084:8080
     networks:
       - image-db-net
+      - traefik_web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_web"
+      - "traefik.port=8084"
+      - "traefik.http.routers.imagedbadminer.rule=Host(`${TRAEFIK_FRONTEND_URL?You need to specify env TRAEFIK_FRONTEND_URL, e.g. TRAEFIK_FRONTEND_URL=name.my-domain.com}`)"
+      - "traefik.http.routers.imagedbadminer.entrypoints=websecure"
+      - "traefik.http.routers.imagedbadminer.tls.certresolver=myresolver"
