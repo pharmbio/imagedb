@@ -495,7 +495,10 @@
   <!-- Body inline script -->
   <script>
     // Set display error function
-    //window.onerror = displayModalJavaScriptError;
+    window.onerror = displayModalJavaScriptError;
+
+    // rewrite url to database
+    // imagedb-pg-postgresql.labinf.svc.cluster.local
 
     // Create an empty table to start with - just because it looks good!
     let table = createEmptyTable(8, 12);

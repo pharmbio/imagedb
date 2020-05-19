@@ -210,20 +210,27 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
     logging.info("exhaustive_initial_poll=" + str(exhaustive_initial_poll))
 
+    if(exhaustive_initial_poll):
+        exception_file_name = "exceptions-exhaustive_initial_poll.log"
+    else:
+        exception_file_name = "exceptions-last-limited_poll.log"
+
+    exception_file = os.path.join(imgdb_settings.ERROR_LOG_DIR, exception_file_name)
+
     while True:
 
         start_time = time.time()
-        logging.info("Staring new poll")
+        logging.info("Staring new poll: " + str(datetime.today()))
         logging.info("latest_filedate_last_poll=" + str(datetime.fromtimestamp(latest_filedate_last_poll)))
 
         # TODO maybe reimplement plate_filter
         # plate_filter = ""
 
         current_poll_latest_filedate = 0
-        for proj_root_dir_name in proj_root_dirs:
+        for proj_root_dir in proj_root_dirs:
 
             # Get all subdirs (these are the top plate dir)
-            proj_root_dir = os.path.join(imgdb_settings.IMAGES_ROOT_FOLDER, proj_root_dir_name)
+            #proj_root_dir = os.path.join(imgdb_settings.IMAGES_ROOT_FOLDER, proj_root_dir_name)
             logging.debug("proj_root_dir" + str(proj_root_dir))
             subdirs = get_subdirs_recursively_no_thumb_dir(proj_root_dir)
 
@@ -261,9 +268,9 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
                 except Exception as e:
                     logging.exception("Exception in plate dir")
-                    exception_file = os.path.join(imgdb_settings.ERROR_LOG_DIR, "exceptions.log")
                     with open(exception_file, 'a') as exc_file:
-                       exc_file.write("plate_dir:" + str(plate_dir))
+                       exc_file.write("Exception, time:" + str(datetime.today()) + "\n")
+                       exc_file.write("plate_dir:" + str(plate_dir) + "\n")
                        exc_file.write(traceback.format_exc())
 
         # Set latest file mod for all monitored dirs
