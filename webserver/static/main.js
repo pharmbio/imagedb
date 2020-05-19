@@ -143,18 +143,28 @@ function apiListPlates(event) {
   fetch('/api/list-plates', {
     method: 'POST',
     body: new FormData(document.getElementById('query-form'))})
-        .then(response => response.json())
-        .then(data => {
+     .then(function (response) {
 
-          console.log('data', data);
-
-          console.log('hiding spinner');
-          document.getElementById("left-sidebar-spinner").style.visibility = "hidden";
-
-          listPlatesQueryResultLoaded(data);
-
-        })
-        .catch(error => console.error('Error:', error));
+        if (response.status === 200) {
+          response.json().then(function (json) {
+  
+            console.log('data', json);
+            console.log('hiding spinner');
+            document.getElementById("left-sidebar-spinner").style.visibility = "hidden";
+            listPlatesQueryResultLoaded(json);
+  
+          });
+        }
+        else {
+          response.text().then(function (text) {
+            displayModalServerError(response.status, text);
+          });
+        }
+      })
+      .catch(function (error) {
+        console.log(error);
+        displayModalError(error);
+     });
 }
 
 function listPlatesQueryResultLoaded(data) {
@@ -253,24 +263,32 @@ function apiLoadPlate(plate_name) {
   document.getElementById("animate-cbx").checked = false;
 
   fetch('/api/plate/' + plate_name)
-        .then(response => response.json())
-        .then(data => {
+  .then(function (response) {
+    if (response.status === 200) {
+      response.json().then(function (json) {
 
-          console.log('plate data', data);
+        console.log('plate data', json);
+        window.loaded_plates = new Plates(json['data'].plates);
+        console.log(window.loaded_plates);
+        console.log("Plates loaded")
+        updateToolbar();
 
-          window.loaded_plates = new Plates(data['data'].plates);
-          console.log(window.loaded_plates);
+        redrawPlate(true);
+      });
+    }
+    else {
+      response.text().then(function (text) {
+        displayModalServerError(response.status, text);
+      });
+    }
+  })
 
-          console.log("Plates loaded")
+  .catch(function (error) {
+    console.log(error);
+    displayModalError(error);
+ });
 
-          updateToolbar();
 
-          redrawPlate(true);
-
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        })
 }
 
 function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
@@ -280,10 +298,12 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
   document.getElementById("animate-cbx").checked = false;
 
   fetch('/api/plate/' + plate_name)
-        .then(response => response.json())
-        .then(data => {
 
-          window.loaded_plates = new Plates(data['data'].plates);
+  .then(function (response) {
+    if (response.status === 200) {
+      response.json().then(function (json) {
+
+        window.loaded_plates = new Plates(json['data'].plates);
 
           console.log(window.loaded_plates);
 
@@ -296,10 +316,20 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 
           loadTimepointImagesIntoViewer(timepoint);
 
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        })
+      });
+    }
+    else {
+      response.text().then(function (text) {
+        displayModalServerError(response.status, text);
+      });
+    }
+
+  })
+  .catch(function (error) {
+    console.log(error);
+    displayModalError(error);
+  });
+
 }
 
 
@@ -938,4 +968,19 @@ function getRowIndexFrowWellName(name) {
 function getColIndexFrowWellName(name) {
   let colIndex = parseInt(name.substr(1), 10);
   return colIndex;
+}
+
+function displayModalServerError(status, text) {
+  displayModalError("Server error: " + status + ", Response: " + text);
+}
+
+function displayModalJavaScriptError(message, source, lineno, colno, error) {
+  console.log(error);
+  displayModalError("Javascript error:<br>" + message + "<br>" + error.stack);
+}
+
+function displayModalError(text) {
+  document.getElementById('errordiv').innerHTML = "<pre>" + text + "</pre>";
+  console.log("text", text);
+  $("#error-modal").modal();
 }

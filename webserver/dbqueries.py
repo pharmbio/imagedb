@@ -88,11 +88,12 @@ def get_plate(plate_name):
 
         return result_dict
 
-    except (Exception, psycopg2.DatabaseError) as error:
+    except (Exception, psycopg2.DatabaseError) as err:
         logging.exception("Message")
+        raise err
     finally:
         if conn is not None:
-            put_connection(conn)
+            conn.close()
 
 
 def list_all_plates():
@@ -129,8 +130,9 @@ def list_all_plates():
 
         return resultlist
 
-    except (Exception, psycopg2.DatabaseError) as error:
+    except (Exception, psycopg2.DatabaseError) as err:
         logging.exception("Message")
+        raise err
     finally:
         if conn is not None:
-            put_connection(conn)
+            conn.close()
