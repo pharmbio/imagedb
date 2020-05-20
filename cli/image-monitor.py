@@ -90,36 +90,49 @@ def make_thumb_path(image, thumbdir, image_root_dir):
 
 def insert_meta_into_db(img_meta):
 
-    insert_query = "INSERT INTO images(project, plate, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    insert_conn = get_connection()
-    insert_cursor = insert_conn.cursor()
-    insert_cursor.execute(insert_query, (img_meta['project'],
-                                         img_meta['plate'],
-                                         img_meta['timepoint'],
-                                         img_meta['well'],
-                                         img_meta['wellsample'],
-                                         img_meta['channel'],
-                                         img_meta['path'],
-                                         json.dumps(img_meta['file_meta']),
-                                         json.dumps(img_meta)
-                                         ))
-    insert_cursor.close()
-    insert_conn.commit()
-    put_connection(insert_conn)
+    conn = None
+    try:
+        insert_query = "INSERT INTO images(project, plate, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        conn = get_connection()
+        insert_cursor = conn.cursor()
+        insert_cursor.execute(insert_query, (img_meta['project'],
+                                            img_meta['plate'],
+                                            img_meta['timepoint'],
+                                            img_meta['well'],
+                                            img_meta['wellsample'],
+                                            img_meta['channel'],
+                                            img_meta['path'],
+                                            json.dumps(img_meta['file_meta']),
+                                            json.dumps(img_meta)
+                                            ))
+        insert_cursor.close()
+        conn.commit()
+    except Exception as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        put_connection(insert_conn)
+    
 
 def image_exists_in_db(image_path):
 
-    select_conn = get_connection()
-    select_cursor = select_conn.cursor()
+    conn = None
+    try:
+        conn = get_connection()
+        select_cursor = conn.cursor()
 
-    select_path_query = "SELECT * FROM images WHERE path = %s"
-    select_cursor.execute(select_path_query, (image_path,))
+        select_path_query = "SELECT * FROM images WHERE path = %s"
+        select_cursor.execute(select_path_query, (image_path,))
 
-    rowcount = select_cursor.rowcount
-    select_cursor.close()
-    put_connection(select_conn)
-
-    return rowcount > 0
+        rowcount = select_cursor.rowcount
+        select_cursor.close()
+        return rowcount > 0
+        
+    except Exception as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        put_connection(insert_conn)
 
 def add_plate_to_db(images, latest_filedate_to_test):
     logging.info("start add_plate_metadata to db")
