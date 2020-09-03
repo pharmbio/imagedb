@@ -18,6 +18,8 @@ CREATE DATABASE imagedb;
 
 DROP TABLE IF EXISTS images;
 CREATE TABLE images (
+    id          SERIAL,
+    plate_acquisition_id    int,
     project     text,
     plate       text,
     timepoint   int,
@@ -38,6 +40,7 @@ CREATE INDEX  ix_images_path ON images(path);
 
 DROP TABLE IF EXISTS plate CASCADE;
 CREATE TABLE plate (
+  id                    SERIAL,
   barcode               text,
   seeded                date,
   painted               date
@@ -46,6 +49,7 @@ CREATE INDEX  ix_plate_barcode ON plate(barcode);
 
 DROP TABLE IF EXISTS plate_acquisition CASCADE;
 CREATE TABLE plate_acquisition (
+  id              SERIAL,
   barcode         text,
   imaged          date,
   microscope      text,
@@ -58,6 +62,7 @@ CREATE INDEX  ix_plate_acquisition_channel_map ON plate_acquisition(channel_map)
 -- well
 DROP TABLE IF EXISTS well CASCADE;
 CREATE TABLE well (
+    id                    SERIAL,
     plate_barcode         text,
     well_name      	      text,
     well_role             text,
@@ -228,4 +233,21 @@ SET plate = substring(path FROM '/share/mikro/IMX/MDC_pharmbio/.*?/(.*?)/');
 
 
 
+DROP TABLE image_analyses;
+CREATE TABLE image_analyses(
+    id                    SERIAL,
+    plate_acquisition_id  int,
+    start               date,
+    finish              date,
+    error               date,
+    meta                jsonb,
+    depends_on_id       text, -- if the analysis depends on another analysis being done, otherwise null
+    result              jsonb 
+   
+
+);
+
+CREATE INDEX  ix_image_analyses_plate_acquisition_id ON image_analyses(plate_acquisition_id);
+CREATE INDEX  ix_image_analyses_start ON image_analyses(start);
+CREATE INDEX  ix_image_analyses_finish ON image_analyses(finish);
 
