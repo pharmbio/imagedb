@@ -227,5 +227,35 @@ UPDATE images
 SET plate = substring(path FROM '/share/mikro/IMX/MDC_pharmbio/.*?/(.*?)/');
 
 
+CREATE TABLE image_analyses (
+    path             text,
+    analysis_name    text,
+    analysis_date    date,
+    analysis_meta    jsonb,
+    result           jsonb
+);
+
+CREATE INDEX ix_image_analyses_path ON image_analyses(path);
+CREATE INDEX ix_image_analyses_name ON image_analyses(analysis_name);
+CREATE INDEX ix_image_analyses_date ON image_analyses(analysis_date);
+
+DROP VIEW image_analyses_v1;
+CREATE OR REPLACE VIEW image_analyses_v1 AS
+SELECT
+    images.path AS path,
+    images.plate AS plate,
+    image_analyses.analysis_name,
+    image_analyses.result
+  FROM
+      images
+  LEFT JOIN image_analyses ON images.path = image_analyses.path
+
+
+select COUNT(*)
+  FROM image_analyses_v1
+  WHERE path LIKE '%Polina%'
+
+
+
 
 

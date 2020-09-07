@@ -111,7 +111,7 @@ def insert_meta_into_db(img_meta):
         logging.exception("Message")
         raise err
     finally:
-        put_connection(insert_conn)
+        put_connection(conn)
     
 
 def image_exists_in_db(image_path):
@@ -127,12 +127,12 @@ def image_exists_in_db(image_path):
         rowcount = select_cursor.rowcount
         select_cursor.close()
         return rowcount > 0
-        
+
     except Exception as err:
         logging.exception("Message")
         raise err
     finally:
-        put_connection(insert_conn)
+        put_connection(conn)
 
 def add_plate_to_db(images, latest_filedate_to_test):
     logging.info("start add_plate_metadata to db")

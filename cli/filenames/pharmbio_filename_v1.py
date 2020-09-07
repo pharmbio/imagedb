@@ -12,13 +12,13 @@ __pattern_path_and_file   = re.compile('^'
                             + '(.*?)/' # plate (2)
                             + '([0-9]{4})-([0-9]{2})-([0-9]{2})' # date (yyyy, mm, dd) (3,4,5)
                             + '.*'        # Any
-                            + 'TimePoint_([^\/]+)' # Timepoint (4)
-                            + '\/([^-]+)' # cell-line-name (5)
-                            + '-([^-]+)'  # magnification (6)
-                            + '-([^_]+)'  # plate-short (7)
-                            + '_([^_]+)'  # well (8)
-                            + '_s([0-9])'  # wellsample (9) # OBS! Only 9 wellsamples
-                            + '(_w[0-9])?' # optional channel (10)
+                            + 'TimePoint_([^\/]+)' # Timepoint (6)
+                            + '\/([^-]+)' # cell-line-name (7)
+                            + '-([^-]+)'  # magnification (8)
+                            + '-([^_]+)'  # plate-short (9)
+                            + '_([^_]+)'  # well (10)
+                            + '_s([0-9])'  # wellsample (11) # OBS! Only 9 wellsamples
+                            + '(_w[0-9])?' # optional channel (12)
                             + '(_thumb)?'  # Thumbnail (11)
                             + '([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})'  # Image GUID [12]
                             + '(\.tiff?)?'  # Extension [13]
@@ -64,7 +64,7 @@ def parse_path_and_file(path):
 
 if __name__ == '__main__':
     # Testparse
-    retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/exp-TimeLapse/A549-20X-DB-HD-BpA-pilot1/2019-03-27/84/TimePoint_1/A549-20X-DB-HD-BpA-pilot1_B02_s1_thumb1E64F2F4-E1E8-410C-9891-A491D91FC73C.tif")
+    retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/exp-TimeLapse/A549-20X-DB-HD-BpA-pilot1/2019-03-27/84/TimePoint_1/A549-20X-DB-HD-BpA-pilot1_B02_s1_w1_thumb1E64F2F4-E1E8-410C-9891-A491D91FC73C.tif")
     print("retval = " + str(retval))
 
 
