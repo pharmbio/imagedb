@@ -619,11 +619,14 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
     img.className = 'wellThumbImg';
     img.id = 'wellThumbImg' + well_key;
 
+    // Get filter values
+    let brightness = getSelectedBrightnessValue() / 100;    
+
     //wellThumbImg
-
-
     img.onload = function () {
+      context.filter = 'brightness(' + brightness + ')'
       context.drawImage(img, 0, 0);
+      
     };
 
     // Create open Viewer click handlers
@@ -657,6 +660,12 @@ function getSelectedTimepointIndex() {
 
 function getSelectedZoomValue() {
   let elem = document.getElementById('zoom-select');
+  return parseInt(elem.options[elem.selectedIndex].value);
+}
+
+
+function getSelectedBrightnessValue() {
+  let elem = document.getElementById('brightness-select');
   return parseInt(elem.options[elem.selectedIndex].value);
 }
 
