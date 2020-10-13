@@ -9,8 +9,12 @@ WEBROOT=/home/anders/projekt/imagedb/webserver SHARE_IMAGEDB=/share/imagedb SHAR
 # Tunnel web
 
 
-# to minify javascript:
-npm install
-npm run minify
+# Build dockerfile
+docker build -t pharmbio/imagedb-webserver .
+
+# Push
+docker login
+docker push pharmbio/imagedb-webserver
+
 ```
 
