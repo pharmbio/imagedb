@@ -171,6 +171,25 @@
           </div>
           <select class="custom-select"  style="width: 75px;"id="channel-select" onchange="redrawImageViewer(); return false;">
           </select>
+        
+            <!-- Brightness selector -->
+            <div class="input-group-prepend ml-2">
+              <label class="input-group-text" for="brightness-select">Brightness</label>
+            </div>
+            <select class="custom-select" style="width: 60px;" id="brightness-select" onchange="redrawImageViewer(); return false;">
+              <option value="-255">-255</option>
+              <option value="-200">-200</option>
+              <option value="-150">-150</option>
+              <option value="-100">-100</option>
+              <option value="-50">-50 pixel intencity</option>
+              <option selected value="0">0 ()</option> 
+              <option value="50">+50 pixel intencity</option>
+              <option value="100">+100</option>
+              <option value="150">+150</option>
+              <option value="200">+200</option>
+              <option value="255">255</option> 
+            </select>
+
 
            <!-- Scalebar -->
           <div class="form-group form-check" style="margin-bottom: 0px;margin-left: 5px">
@@ -327,6 +346,9 @@
 <!-- openseadragon scalebar -->
 <script src="/static/openseadragon-scalebar/openseadragon-scalebar.js"></script>
 
+<!-- filters including brightness filter-->
+<script src="/static/openseadragon-filtering/openseadragon-filtering.js"></script>
+
 <!-- json-viewer -->
 <script src="/static/json-viewer/json-viewer.js"></script>
 
@@ -443,6 +465,13 @@
       backgroundColor: "rgba(255, 255, 255, 0.5)",
       fontSize: "small",
       barThickness: 2
+  });
+
+  viewer.setFilterOptions({
+    filters: {
+        processors: OpenSeadragon.Filters.BRIGHTNESS(0)
+    },
+    loadMode: 'sync'
   });
 
   updateShowScalebar();

@@ -383,6 +383,15 @@ function redrawImageViewer(clearFirst = true) {
   let channels = getLoadedPlate().getChannels(timepoint, well_name, site);
   let imgURL = createMergeImgURLFromChannels(channels);
 
+  // Set brightness
+  let brightness = getSelectedBrightnessValue();
+  viewer.setFilterOptions({
+    filters: {
+        processors: OpenSeadragon.Filters.BRIGHTNESS(brightness)
+    },
+    loadMode: 'sync'
+  });
+
   if (clearFirst) {
     // First load the selected timepoint
     addImageToViewer(timepoint, imgURL, 1);
