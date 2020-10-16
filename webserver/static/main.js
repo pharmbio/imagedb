@@ -385,12 +385,43 @@ function redrawImageViewer(clearFirst = true) {
 
   // Set brightness
   let brightness = getSelectedBrightnessValue();
+  // This Openseadragon Brightness is working like css if I use the Coontrast filter instead
+  let contrast = brightness/100;
   viewer.setFilterOptions({
     filters: {
-        processors: OpenSeadragon.Filters.BRIGHTNESS(brightness)
+        processors: OpenSeadragon.Filters.CONTRAST(contrast)
     },
-    loadMode: 'sync'
   });
+
+  
+  
+  //let brightness = getSelectedBrightnessValue();
+  //viewer.setFilterOptions({
+  //      filters: {
+  //          processors: function(context, callback) {
+  //                 context.filter = 'brightness(' + brightness + ')';
+  //                 // Do not forget to call this.render with the callback
+  //                 console.log('brightness' + brightness);
+  //                 callback();
+  //                 //this.render(callback);
+  //          }
+  //      }
+  // });
+
+  //let brightness = getSelectedBrightnessValue();
+  //viewer.setFilterOptions({
+  //  filters: {
+  //      processors: function(context, callback) {
+  //          Caman(context.canvas, function() {
+  //              this.exposure(brightness);
+  //              //this.vibrance(40);
+  //              // Do not forget to call this.render with the callback
+  //              this.render(callback);
+  //          });
+  //      }
+  //  }
+  //});
+
 
   if (clearFirst) {
     // First load the selected timepoint
