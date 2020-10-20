@@ -18,16 +18,16 @@ CREATE DATABASE imagedb;
 
 DROP TABLE IF EXISTS images;
 CREATE TABLE images (
-    id          SERIAL,
+    id                      SERIAL,
     plate_acquisition_id    int,
-    project     text,
-    plate       text,
-    timepoint   int,
-    well        text,
-    site        int,
-    channel     int,
-    path        text,
-    metadata    jsonb
+    project                 text,
+    plate                   text,
+    timepoint               int,
+    well                    text,
+    site                    int,
+    channel                 int,
+    path                    text,
+    metadata                jsonb
 );
 
 CREATE INDEX  ix_images_project ON images(project);
@@ -42,8 +42,8 @@ DROP TABLE IF EXISTS plate CASCADE;
 CREATE TABLE plate (
   id                    SERIAL,
   barcode               text,
-  seeded                date,
-  painted               date
+  seeded                timestamp,
+  painted               timestamp
 );
 CREATE INDEX  ix_plate_barcode ON plate(barcode);
 
@@ -51,9 +51,10 @@ DROP TABLE IF EXISTS plate_acquisition CASCADE;
 CREATE TABLE plate_acquisition (
   id              SERIAL,
   barcode         text,
-  imaged          date,
+  imaged          timestamp,
   microscope      text,
-  channel_map     int
+  channel_map_id  int,
+  timepoint       int
 );
 CREATE INDEX  ix_plate_acquisition_barcode ON plate_acquisition(barcode);
 CREATE INDEX  ix_plate_acquisition_channel_map ON plate_acquisition(channel_map);
@@ -111,7 +112,7 @@ CREATE OR REPLACE VIEW images_all_view AS
   LEFT JOIN plate ON images.plate = plate.barcode
   LEFT JOIN well ON plate.barcode = well.plate_barcode AND images.well = well.well_name
   LEFT JOIN plate_acquisition on plate.barcode = plate_acquisition.barcode
-  LEFT JOIN channel_map ON plate_acquisition.channel_map = channel_map.map_id AND images.channel = channel_map.channel;
+  LEFT JOIN channel_map ON plate_acquisition.channel_map_id = channel_map.map_id AND images.channel = channel_map.channel;
 
 CREATE OR REPLACE VIEW images_minimal_view AS
   SELECT
@@ -130,7 +131,9 @@ CREATE OR REPLACE VIEW images_minimal_view AS
   LEFT JOIN plate ON images.plate = plate.barcode
   LEFT JOIN well ON plate.barcode = well.plate_barcode AND images.well = well.well_name
   LEFT JOIN plate_acquisition ON plate.barcode = plate_acquisition.barcode
-  LEFT JOIN channel_map ON plate_acquisition.channel_map = channel_map.map_id AND images.channel = channel_map.channel;
+  LEFT JOIN channel_map ON plate_acquisition.channel_map_id = channel_map.map_id AND images.channel = channel_map.channel;
+
+
 
 
 -- Other tables
@@ -164,9 +167,9 @@ CREATE TABLE plateold (
   cell_line             text,
   cell_passage          text,
   cell_density_perwell  int,
-  seeded                date,
-  painted               date,
-  imaged                date
+  seeded                timestamp,
+  painted               timestamp,
+  imaged                timestamp
 );
 
 CREATE INDEX  ix_plateold_plate_map_id ON plateold(plate_map_id);
@@ -232,47 +235,18 @@ UPDATE images
 SET plate = substring(path FROM '/share/mikro/IMX/MDC_pharmbio/.*?/(.*?)/');
 
 
-CREATE TABLE image_analyses (
-    path             text,
-    analysis_name    text,
-    analysis_date    date,
-    analysis_meta    jsonb,
-    result           jsonb
-);
-
-CREATE INDEX ix_image_analyses_path ON image_analyses(path);
-CREATE INDEX ix_image_analyses_name ON image_analyses(analysis_name);
-CREATE INDEX ix_image_analyses_date ON image_analyses(analysis_date);
-
-DROP VIEW image_analyses_v1;
-CREATE OR REPLACE VIEW image_analyses_v1 AS
-SELECT
-    images.path AS path,
-    images.plate AS plate,
-    image_analyses.analysis_name,
-    image_analyses.result
-  FROM
-      images
-  LEFT JOIN image_analyses ON images.path = image_analyses.path
-
-
-select COUNT(*)
-  FROM image_analyses_v1
-  WHERE path LIKE '%Polina%'
-
-
-
 
 DROP TABLE image_analyses;
-CREATE TABLE image_analyses(
+CREATE TABLE image_analyses (
     id                    SERIAL,
     plate_acquisition_id  int,
-    start               date,
-    finish              date,
-    error               date,
-    meta                jsonb,
-    depends_on_id       text, -- if the analysis depends on another analysis being done, otherwise null
-    result              jsonb 
+    pipeline_id           int,
+    start                 timestamp,
+    finish                timestamp,
+    error                 timestamp,
+    meta                  jsonb,
+    depends_on_id         jsonb, -- if the analysis depends on another analysis being done, otherwise null
+    result                jsonb 
    
 
 );
@@ -281,3 +255,64 @@ CREATE INDEX  ix_image_analyses_plate_acquisition_id ON image_analyses(plate_acq
 CREATE INDEX  ix_image_analyses_start ON image_analyses(start);
 CREATE INDEX  ix_image_analyses_finish ON image_analyses(finish);
 
+
+
+
+DROP TABLE image_sub_analyses;
+CREATE TABLE image_sub_analyses (
+    sub_id                SERIAL,
+    analysis_id           int,
+    plate_acquisition_id  int,
+    start                 timestamp,
+    finish                timestamp,
+    error                 timestamp,
+    meta                  jsonb,
+    depends_on_sub_id     jsonb, -- if the analysis depends on another analysis being done, otherwise null
+    result                jsonb 
+   
+
+);
+
+CREATE INDEX  ix_image_sub_analyses_analysis_id ON image_sub_analyses(analysis_id);
+CREATE INDEX  ix_image_sub_analyses_start ON image_sub_analyses(start);
+CREATE INDEX  ix_image_sub_analyses_finish ON image_sub_analyses(finish);
+
+
+
+CREATE OR REPLACE VIEW image_analyses_V1 AS
+  SELECT
+        plate_acquisition.id AS plate_acquisition_id,
+        plate_acquisition.barcode AS barcode,
+        image_analyses.id AS image_analyses_id,
+        image_sub_analyses.sub_id AS image_sub_analyses_sub_id
+    FROM
+        plate_acquisition
+    RIGHT JOIN image_analyses ON image_analyses.plate_acquisition_id = plate_acquisition.id
+    RIGHT JOIN image_sub_analyses ON image_sub_analyses.analysis_id = image_analyses.id
+;
+
+
+
+
+DROP TABLE IF EXISTS analysis_pipelines;
+CREATE TABLE analysis_pipelines (
+    name        text PRIMARY KEY,
+    meta        jsonb
+);
+
+
+
+DROP TABLE IF EXISTS pipeline_automation;
+CREATE TABLE pipeline_automation (
+    id                SERIAL,
+    match_pattern     text,
+    pipeline          text
+);
+
+CREATE INDEX  ix_pipeline_automation_id ON pipeline_automation(id);
+
+
+--INSERT INTO "image_analyses" ("plate_acquisition_id", "start", "finish", "error", "meta", "depends_on_id", "result") VALUES ('3', NULL, NULL, NULL, NULL, NULL, NULL);
+
+
+-- INSERT INTO "image_sub_analyses" ("analysis_id", "plate_acquisition_id", "start", "finish", "error", "meta", "depends_on_sub_id", "result") VALUES ('1', '3', NULL, NULL, NULL, '{"cellprofiler": {"batching": 1, "pipeline": "/cpp_work/pipelines/debug.cppipe"}}', NULL, NULL);

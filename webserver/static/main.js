@@ -124,7 +124,6 @@ class Plate {
     meta += "reagent: " + this.plateObj.timepoints[timepoint].wells[well_name].id + "<br>";
     return meta;
   }
-
 }
 
 var loaded_plates = null;
