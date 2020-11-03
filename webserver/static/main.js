@@ -121,7 +121,8 @@ class Plate {
   getFormattedWellMeta(timepoint, well_name){
     let meta = '';
     meta += "Well: " + this.plateObj.timepoints[timepoint].wells[well_name].id + "<br>";
-    meta += "reagent: " + this.plateObj.timepoints[timepoint].wells[well_name].id + "<br>";
+    meta += "Plate_acq_id: " + this.plateObj.timepoints[timepoint].wells[well_name].sites["1"].channels["1"].image_meta["plate_acquisition_id"] + "<br>";
+    meta += "Plate_barcode: " + this.plateObj.timepoints[timepoint].wells[well_name].sites["1"].channels["1"].image_meta["plate_barcode"] + "<br>"; + "<br>";
     return meta;
   }
 }

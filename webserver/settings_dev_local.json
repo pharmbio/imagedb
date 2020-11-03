@@ -7,5 +7,5 @@
   "DB_PASS": "example",
   "DB_PORT": 5432,
   "DB_HOSTNAME": "imagedb",
-  "DB_NAME": "imagedb"
+  "DB_NAME": "imagedb_v2"
 }

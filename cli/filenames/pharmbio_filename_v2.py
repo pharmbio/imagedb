@@ -52,6 +52,8 @@ def parse_path_and_file(path):
     'guid': match.group(14),
     'extension': match.group(15),
     'timepoint': 1,
+    'channel_map_id': 1,
+    'microscope': "ImageXpress"
   }
 
   return metadata

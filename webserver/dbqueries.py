@@ -11,6 +11,7 @@ __connection_pool = None
 
 def get_connection():
 
+
     global __connection_pool
     if __connection_pool is None:
         __connection_pool = psycopg2.pool.SimpleConnectionPool(1, 20, user = imgdb_settings.DB_USER,
@@ -37,8 +38,9 @@ def get_plate(plate_name):
 
         conn = get_connection()
 
-        return_cols = ['plate',
+        return_cols = ['plate_barcode',
                        'project',
+                       'plate_acquisition_id',
                        'timepoint',
                        'path',
                        'well',
@@ -48,8 +50,8 @@ def get_plate(plate_name):
                        ]
 
         query = ("SELECT " + ",".join(return_cols) +
-                 " FROM images_all_view"
-                 " WHERE plate = %s"
+                 " FROM images_minimal_view"
+                 " WHERE plate_barcode = %s"
                  " ORDER BY well, site, channel")
 
         logging.debug("query" + query)
@@ -79,7 +81,7 @@ def get_plate(plate_name):
         # all sites, and then channels with the image path
         plates_dict = {}
         for image in resultlist:
-            plate_id = image['plate']
+            plate_id = image['plate_barcode']
             # get or create a new object with this key
             plate = plates_dict.setdefault(plate_id, platemodel.Plate(plate_id))
             plate.add_data(image)
@@ -105,9 +107,9 @@ def list_all_plates():
 
         conn = get_connection()
 
-        query = ("SELECT DISTINCT plate, project "
+        query = ("SELECT DISTINCT plate_barcode, project "
                  " FROM images "
-                 " ORDER BY project, plate")
+                 " ORDER BY project, plate_barcode")
 
         logging.debug("query" + str(query))
 

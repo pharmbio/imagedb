@@ -78,6 +78,8 @@ def parse_path_and_file(path):
       'guid': 'no-guid',
       'extension': ".tif",
       'timepoint': 1,
+      'channel_map_id': 1,
+      'microscope': 'ImageXpress'
     }
 
     return metadata

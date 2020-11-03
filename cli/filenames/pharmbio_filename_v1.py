@@ -58,6 +58,8 @@ def parse_path_and_file(path):
     'is_thumbnail': match.group(13) is not None,
     'guid': match.group(14),
     'extension': match.group(15),
+    'channel_map_id': 1,
+    'microscope': "ImageXpress"
   }
 
   return metadata

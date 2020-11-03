@@ -72,7 +72,7 @@ def get_all_image_files(path):
             absolute_file = os.path.join(path, file)
             all_files.append(absolute_file)
 
-    logging.info("found files" + str(all_files))
+    # logging.info("found files" + str(all_files))
 
     return all_files
 
@@ -87,15 +87,24 @@ def make_thumb_path(image, thumbdir, image_root_dir):
     thumb_path = os.path.join(thumbdir, subpath)
     return thumb_path
 
-
 def insert_meta_into_db(img_meta):
+
+    # First select plate acquisition id, or insert it if not there
+    plate_acq_id = select_or_insert_plate_acq(img_meta)
+    # Insert into images table
+    insert_meta_into_table_images(img_meta, plate_acq_id)
+
+
+def insert_meta_into_table_images(img_meta, plate_acq_id):
 
     conn = None
     try:
-        insert_query = "INSERT INTO images(project, plate, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        
+        insert_query = "INSERT INTO images(project, plate_acquisition_id, plate_barcode, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         conn = get_connection()
         insert_cursor = conn.cursor()
         insert_cursor.execute(insert_query, (img_meta['project'],
+                                            plate_acq_id,
                                             img_meta['plate'],
                                             img_meta['timepoint'],
                                             img_meta['well'],
@@ -107,6 +116,76 @@ def insert_meta_into_db(img_meta):
                                             ))
         insert_cursor.close()
         conn.commit()
+    except Exception as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        put_connection(conn)
+
+def select_or_insert_plate_acq(img_meta):
+
+    # First select to see if plate_acq already exists
+    plate_acq_id = select_plate_acq_id(img_meta)
+
+    if plate_acq_id is None:
+        plate_acq_id = insert_plate_acq(img_meta)
+    
+    return plate_acq_id
+
+def select_plate_acq_id(img_meta):
+
+    conn = None
+    
+    try:
+        
+        query = ("SELECT id "
+                        "FROM plate_acquisition "
+                        "WHERE plate_barcode = %s "
+                        "AND timepoint = %s "
+                        "AND microscope = %s")
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(query, (img_meta['plate'],
+                               img_meta['timepoint'],
+                               img_meta['microscope']
+                              ))
+        plate_acq_id = cursor.fetchone()
+        cursor.close()
+        
+        return plate_acq_id
+
+    except Exception as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        put_connection(conn)
+
+
+
+def insert_plate_acq(img_meta):
+
+    conn = None
+    try:
+
+        imaged_timepoint = datetime(int(img_meta['date_year']), int(img_meta['date_month']), int(img_meta['date_day_of_month']))
+        
+        query = "INSERT INTO plate_acquisition(plate_barcode, imaged, microscope, channel_map_id, timepoint) VALUES(%s, %s, %s, %s, %s) RETURNING id"
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(query, (img_meta['plate'],
+                               imaged_timepoint,
+                               img_meta['microscope'],
+                               img_meta['channel_map_id'],
+                               img_meta['timepoint']
+                               ))
+
+        plate_acq_id = cursor.fetchone()[0]
+        cursor.close()
+        conn.commit()
+
+        return plate_acq_id
+
     except Exception as err:
         logging.exception("Message")
         raise err
