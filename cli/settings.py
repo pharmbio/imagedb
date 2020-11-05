@@ -17,7 +17,7 @@ with open(conf_file) as json_file:
   DB_HOSTNAME = os.getenv("DB_HOSTNAME", js_conf["DB_HOSTNAME"])
 
   # Get env and set false as default value, convert to python boolean by lowercase string comparison
-  EXHAUSTIVE_INITIAL_POLL = os.getenv('EXHAUSTIVE_INITIAL_POLL', js_conf["EXHAUSTIVE_INITIAL_POLL"])
+  EXHAUSTIVE_INITIAL_POLL = os.getenv('EXHAUSTIVE_INITIAL_POLL', js_conf["EXHAUSTIVE_INITIAL_POLL"]).lower() == 'true'
   POLL_DIRS_MARGIN_DAYS = os.getenv('POLL_DIRS_MARGIN_DAYS', js_conf["POLL_DIRS_MARGIN_DAYS"])
   POLL_INTERVAL = os.getenv('POLL_INTERVAL', js_conf["POLL_INTERVAL"]) # sec
   LATEST_FILE_CHANGE_MARGIN = os.getenv('LATEST_FILE_CHANGE_MARGIN', js_conf["LATEST_FILE_CHANGE_MARGIN"]) # sec (always try insert images within this time from latest_filedate_last_poll)

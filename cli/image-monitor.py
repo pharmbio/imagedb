@@ -340,11 +340,19 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
                     date_delta = datetime.today() - datetime.fromtimestamp(dir_last_modified)
 
+                    logging.info(exhaustive_initial_poll)
+                    logging.info(is_initial_poll)
+                    logging.info("(exhaustive_initial_poll and is_initial_poll)" + str((exhaustive_initial_poll and is_initial_poll)))
+                    logging.info("timedelta(days=poll_dirs_margin_days)" + str(timedelta(days=poll_dirs_margin_days)))
+                    logging.info("date_delta" + str(date_delta))
+
+
+
                     # poll images in directories more recent than today + poll_dirs_date_margin_days
                     if date_delta <= timedelta(days=poll_dirs_margin_days) or \
                              (exhaustive_initial_poll and is_initial_poll):
 
-                        logging.debug("Image folder is more recent")
+                        logging.info("Image folder is more recent")
 
                         # set file date to test inserting into db to last poll latest file minus margin
                         latest_filedate_last_poll_with_margin = latest_filedate_last_poll - latest_file_change_margin
