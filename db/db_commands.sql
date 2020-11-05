@@ -203,11 +203,11 @@ CREATE INDEX  ix_plate_map_id ON plate_map(id);
 CREATE INDEX  ix_plate_map_well_position ON plate_map(well_position);
 
 
-DROP TABLE IF EXISTS image_analyses;
+DROP TABLE IF EXISTS image_analyses CASCADE;
 CREATE TABLE image_analyses (
     id                    serial,
     plate_acquisition_id  serial,
-    pipeline_id           int,
+    pipeline_name         text,
     start                 timestamp,
     finish                timestamp,
     error                 timestamp,
@@ -244,10 +244,35 @@ CREATE INDEX  ix_image_sub_analyses_finish ON image_sub_analyses(finish);
 
 CREATE OR REPLACE VIEW image_analyses_V1 AS
   SELECT
+        image_analyses.id AS id,
+        image_analyses.pipeline_name AS pipeline_name,
         plate_acquisition.id AS plate_acquisition_id,
         plate_acquisition.plate_barcode AS plate_barcode,
-        image_analyses.id AS image_analyses_id,
-        image_sub_analyses.sub_id AS image_sub_analyses_sub_id
+        image_analyses.start AS start,
+        image_analyses.finish AS finish,
+        image_analyses.error AS error,
+        image_analyses.meta AS meta,
+        image_analyses.depends_on_id AS depends_on_id,
+        image_analyses.result AS result
+    FROM
+        plate_acquisition
+    RIGHT JOIN image_analyses ON image_analyses.plate_acquisition_id = plate_acquisition.id
+;
+
+
+CREATE OR REPLACE VIEW image_sub_analyses_V1 AS
+  SELECT
+        image_sub_analyses.sub_id AS sub_id,
+        image_analyses.id AS analyses_id,
+        image_analyses.pipeline_name AS pipeline_name,
+        plate_acquisition.id AS plate_acquisition_id,
+        plate_acquisition.plate_barcode AS plate_barcode,
+        image_sub_analyses.start AS start,
+        image_sub_analyses.finish AS finish,
+        image_sub_analyses.error AS error,
+        image_sub_analyses.meta AS meta,
+        image_sub_analyses.depends_on_sub_id AS depends_on_sub_id,
+        image_sub_analyses.result AS result
     FROM
         plate_acquisition
     RIGHT JOIN image_analyses ON image_analyses.plate_acquisition_id = plate_acquisition.id
