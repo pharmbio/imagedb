@@ -102,16 +102,41 @@ DROP TABLE IF EXISTS  channel_map CASCADE;
 CREATE TABLE channel_map (
   map_id       int,
   channel      int,
-  dye          text
+  dye          text,
+  name         text
 );
-CREATE INDEX  ix_channel_map_map_id ON channel_map(map_id);
+CREATE INDEX  ix_channel_map_id ON channel_map(map_id);
+CREATE INDEX  ix_channel_map_name ON channel_map(name);
 
-INSERT INTO "channel_map" ("map_id", "channel", "dye") VALUES
-(1,	1,	'HOECHST'),
-(1,	2,	'MITO'),
-(1,	3,	'PHALLOIDINandWGA'),
-(1,	4,	'SYTO'),
-(1,	5,	'CONCANAVALIN');
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES	
+(1,	1,	'HOECHST',			'channel_map_1'),		
+(1,	2,	'CONCANAVALIN',		'channel_map_1'),		
+(1,	3,	'SYTO', 			'channel_map_1'),		
+(1,	4,	'MITO', 			'channel_map_1'),		
+(1,	5,	'PHALLOIDINandWGA', 'channel_map_1');		
+				
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
+(2,	1,	'HOECHST', 			'channel_map_2'),		
+(2,	2,	'MITO', 			'channel_map_2'),		
+(2,	3,	'PHALLOIDINandWGA', 'channel_map_2'),		
+(2,	4,	'SYTO', 			'channel_map_2'),		
+(2,	5,	'CONCANAVALIN', 	'channel_map_2');	
+
+DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
+CREATE TABLE channel_map_mapping (
+  plate_barcode  text,
+  channel_map     int
+);
+CREATE INDEX  ix_channel_map_mapping_plate_barcode ON channel_map_mapping(plate_barcode);
+CREATE INDEX  ix_channel_map_mapping_channel_map ON channel_map_mapping(channel_map);
+
+
+---> Import channel-map map
+---> Then Update:
+UPDATE plate_acquisition
+   SET channel_map_id = channel_map_mapping.channel_map 
+   FROM channel_map_mapping WHERE plate_acquisition.plate_barcode = channel_map_mapping.plate_barcode;
+
 
 
 CREATE OR REPLACE VIEW images_all_view AS

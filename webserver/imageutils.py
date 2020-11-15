@@ -14,13 +14,13 @@ def tif2png(channels, outdir, overwrite_existing=False):
 
 def tif2png_opencv(channels, outdir, overwrite_existing=False):
 
-    logging.debug(channels)
+    #logging.debug(channels)
 
     tiff_path = channels.get('1')
 
     png_path = create_pngconverted_filepath(outdir, tiff_path)
 
-    logging.debug('merged_file=' + str(png_path))
+    #logging.debug('merged_file=' + str(png_path))
 
 
     # Check if file exists already
@@ -37,13 +37,13 @@ def tif2png_opencv(channels, outdir, overwrite_existing=False):
 
 def tif2png_pillow(channels, outdir, overwrite_existing=False):
 
-    logging.debug(channels)
+    #logging.debug(channels)
 
     tiff_path = channels.get('1')
 
     png_path = create_pngconverted_filepath(outdir, tiff_path)
 
-    logging.debug('merged_file=' + str(png_path))
+    #logging.debug('merged_file=' + str(png_path))
 
 
     # Check if file exists already
@@ -61,11 +61,11 @@ def tif2png_pillow(channels, outdir, overwrite_existing=False):
 
 async def merge_channels(channels, outdir, overwrite_existing=False):
 
-    logging.info("Inside async merge")
+    #logging.info("Inside async merge")
 
-    for k, v in channels.items():
-      logging.debug("key" + str(k))
-      logging.debug("value" + str(v))
+ #   for k, v in channels.items():
+ #     logging.debug("key" + str(k))
+ #     logging.debug("value" + str(v))
 
     # TODO change this to more generalized merge than three channels
     paths = [channels.get('1')]
@@ -76,7 +76,7 @@ async def merge_channels(channels, outdir, overwrite_existing=False):
 
     merged_file = create_merged_filepath(outdir, paths)
 
-    logging.debug('merged_file=' + str(merged_file))
+    #logging.debug('merged_file=' + str(merged_file))
 
     # Check if file exists already
     if overwrite_existing or not os.path.isfile(merged_file):

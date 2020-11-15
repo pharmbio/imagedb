@@ -130,14 +130,31 @@ class Plate {
 var loaded_plates = null;
 var animation = null;
 
+function initMainWindow(plateBarcode, acquisitionID){
+
+  apiListPlates();
+
+  console.log("plateBarcode", plateBarcode);
+
+  if(plateBarcode == "" && acquisitionID == ""){
+    console.log("Do nothing");
+    // Do nothing
+  }else if(acquisitionID != ""){
+    apiLoadAcquisitionID(acquisitionID);
+  }else{
+    apiLoadPlateBarcode(plateBarcode);
+  }
+
+
+}
+
 function getLoadedPlate() {
   // return first (and only) plate
   return loaded_plates.getFirstPlate();
 }
 
-function apiListPlates(event) {
-  event.preventDefault();
-
+function apiListPlates() {
+  
   document.getElementById("left-sidebar-spinner").style.visibility = "visible";
 
   fetch('/api/list-plates', {
@@ -152,7 +169,7 @@ function apiListPlates(event) {
             console.log('hiding spinner');
             document.getElementById("left-sidebar-spinner").style.visibility = "hidden";
             listPlatesQueryResultLoaded(json);
-  
+            
           });
         }
         else {
@@ -254,6 +271,11 @@ function drawPlatesListSidebar(queryResults){
     boundary: 'window'
   });
 
+}
+
+function apiLoadPlateBarcode(barcode) {
+  console.log("Inside apiLoadPlateBarcode: ", barcode);
+  apiLoadPlate(barcode);
 }
 
 function apiLoadPlate(plate_name) {
@@ -544,6 +566,13 @@ function redrawPlate(clearFirst = false) {
   let site = getSelectedSiteIndex();
 
   drawPlate(plateObj, timepoint, site, clearFirst);
+
+  drawImageAnalysisTableFiltered(plateObj)
+}
+
+function drawImageAnalysisTableFiltered(plateObj) {
+  plate_barcode = plateObj.getName();
+  apiCreateImageAnalysesTable(plate_barcode)
 }
 
 function createEmptyTable(rows, cols) {
@@ -1032,4 +1061,152 @@ function displayModalError(text) {
   document.getElementById('errordiv').innerHTML = "<pre>" + text + "</pre>";
   console.log("text", text);
   $("#error-modal").modal();
+}
+
+/*
+  Code from pipelinegui
+*/
+
+function apiCreateImageAnalysesTable(plate_barcode) {
+
+  let limit = 1000;
+  let sortOrder = "ASCENDING"
+  // let plate_barcode = ""
+  let plate_acq_id = ""
+
+  fetch('/api/list/image_analyses/' + limit + "/" + sortOrder + "/" + plate_barcode)
+
+    .then(function (response) {
+      if (response.status === 200) {
+        response.json().then(function (json) {
+
+          console.log('result', json);
+          drawImageAnalysisTable(json['result']);
+
+        });
+      }
+      else {
+        response.text().then(function (text) {
+          displayModalServerError(response.status, text);
+        });
+      }
+    })
+
+    .catch(function (error) {
+      console.log(error);
+      displayModalError(error);
+    });
+
+}
+
+function drawImageAnalysisTable(rows){
+
+
+  // Before drawing table add ("View in notebook")
+  rows = addNotebookLinkColumn(rows)
+
+  // Before drawing table add ("File-Links")
+  //rows = addFileLinksColumn(rows, 9)
+
+  drawTable(rows, "image_analyses-table-div");
+
+}
+
+function addNotebookLinkColumn(rows){
+
+  console.log("Inside Add NotebokLinkColumn");
+
+  // Define which column in result contains the id
+  let result_col_index = 9;
+
+  // Add new column header to end of header row
+  let cols = rows[0];
+  cols.push("Jupyter Link")
+  
+  let name_col_index = 0;
+  let base_url = "https://cpp-notebook-nogpu.k8s-prod.pharmb.io" + "/lab/tree" + "/mnt/cpp-pvc/";
+  
+  // Start from row 1 (0 is headers)
+  for (let nRow = 1; nRow < rows.length; nRow++) {
+
+    let result = rows[nRow][result_col_index];
+    console.log("result_list", result);
+
+    let cell_contents = "";
+   
+    if(result && result.job_folder){
+
+      let link_url = base_url + result.job_folder
+
+
+       // results/384-P000014-helgi-U2OS-24h-L1-copy2/60/15
+ 
+       cell_contents = "<a target='notebook' href='" + link_url + "'>Link</a>"
+
+    }
+    
+    rows[nRow].push(cell_contents);
+  
+  }
+
+  return rows;
+
+}
+
+function drawTable(rows, divname) {
+
+  console.log("rows", rows);
+  console.log("divname", divname);
+
+  let container = document.getElementById(divname);
+
+  // Create Table
+  let table = document.createElement('table');
+  table.id = divname + "-table";
+  table.className = 'table text-xsmall';
+
+  // First add header row
+  let headerRow = document.createElement('tr');
+
+  // First row in rows is header
+  let cols = rows[0];
+
+  for (let col = 0; col < cols.length; col++) {
+
+    let header_cell = document.createElement('th');
+    header_cell.innerHTML = cols[col];
+    //header_cell.className = 'headerCell';
+    headerRow.appendChild(header_cell);
+  }
+  table.appendChild(headerRow);
+
+  // Now add rows (start from 1 since 0 is headers)
+  for (let row = 1; row < rows.length; row++) {
+    let rowElement = document.createElement('tr');
+    for (let col = 0; col < cols.length; col++) {
+
+      let cell = document.createElement('td');
+      let content = rows[row][col];
+      if(typeof content == 'object'){
+        content = JSON.stringify(content);
+      }
+
+      if(content === "null"){
+        content = "";
+      }
+      
+      cell.innerHTML = content;
+      
+      //cell.className = 'tableCell';
+      rowElement.appendChild(cell);
+    }
+
+    table.appendChild(rowElement);
+  }
+
+  removeChildren(container);
+  container.append(table)
+
+  console.log("drawTable finished")
+
 }

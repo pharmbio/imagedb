@@ -138,3 +138,91 @@ def list_all_plates():
     finally:
         if conn is not None:
             conn.close()
+
+
+###
+### From pipelinegui
+###
+
+def list_plate_acquisitions():
+
+    query = ("SELECT * "
+             "FROM plate_acquisition "
+             "ORDER BY id DESC "
+             "LIMIT 1000")
+
+    return select_from_db(query)
+
+def list_image_analyses(plate_barcode="", plate_acq_id=""):
+
+    logging.info("plate_barcode=" + plate_barcode) 
+
+    barcode_filter = ""
+    if plate_barcode != "":
+      barcode_filter = " WHERE plate_barcode = '" + plate_barcode + "' "
+
+    plate_acq_id_filter = ""
+    if plate_acq_id != "":
+      plate_acq_id_filter = " WHERE plate_acquisition_id = " + plate_acq_id + " "
+
+
+    query = ("SELECT * "
+             "FROM image_analyses_v1 " + 
+             barcode_filter + 
+             plate_acq_id_filter + 
+             "ORDER BY id DESC "
+             "LIMIT 1000")
+
+    return select_from_db(query)
+    
+
+def list_image_sub_analyses():
+
+    query = ("SELECT * "
+             "FROM image_sub_analyses_v1 "
+             "ORDER BY sub_id DESC "
+             "LIMIT 1000")
+
+    return select_from_db(query)
+
+
+def select_from_db(query):
+
+    logging.debug("Inside select from query")
+    logging.info("query=" + str(query))
+
+    conn = None
+    try:
+
+        conn = get_connection()
+
+        cursor = conn.cursor()
+        cursor.execute(query)
+
+        colnames = [desc[0] for desc in cursor.description]
+
+        rows = cursor.fetchall()
+
+        cursor.close()
+
+        resultlist = []
+
+        # Add column headers
+        resultlist = [colnames] + rows
+
+        # First dump to string (This is because datetime cant be converted to string without the default=str function)
+        result_jsonstring = json.dumps(resultlist, indent=2, default=str)
+
+        # Then reload into json
+        result = json.loads(result_jsonstring)
+
+        # logging.debug(json.dumps(result, indent=2, default=str))
+
+        return result
+
+    except (Exception, psycopg2.DatabaseError) as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        if conn is not None:
+            conn.close()

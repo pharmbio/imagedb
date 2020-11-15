@@ -180,7 +180,7 @@
       <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
 
         <!-- Search form -->
-        <form id='query-form' onsubmit='apiListPlates(event);return false;'>
+        <form id='query-form' onsubmit='apiListPlates();return false;'>
           <div class="input-group">
 
             <input type="text" class="form-control input-sm" maxlength="" placeholder="Search" />
@@ -387,6 +387,18 @@
 
       </div>
 
+      <!-- image_analyses table-->
+      <div class="container-fluid flex-fill overflow-auto">
+        <br>
+        <h4>image_analyses</h4>
+        <a target="adminer"
+          href="https://adminer-imagedb.devserver.pharmb.io/?pgsql=imagedb&username=postgres&db=imagedb&ns=public&select=image_analyses">
+          view image_analyses in database
+        </a>
+      </div>
+      <div id="image_analyses-table-div" class="container-fluid flex-fill overflow-auto">
+      </div>
+
       <!-- Meta data div -->
       <div id="meta-div" class="container-fluid flex-fill mt-2">
 
@@ -402,6 +414,7 @@
         </div>
 
         <div id="meta-div-json"></div>
+
       </div>
 
     </div>
@@ -560,7 +573,10 @@
       $(".splitpane").SplitterBar();
 
       // Submit empty search to load all plates into start page
-      $("#query-form").submit();
+      // $("#query-form").submit();
+      let plateBarcode = '{{ barcode }}';
+      let acquisitionID = '{{ acqid }}'
+      initMainWindow(plateBarcode, acquisitionID);
     });
 
   </script>

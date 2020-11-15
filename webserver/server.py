@@ -8,7 +8,10 @@ import logging
 import tornado
 import tornado.web
 
-from handlers.query_handlers import ListAllPlatesQueryHandler, GetPlateQueryHandler
+from handlers.query_handlers import (ListAllPlatesQueryHandler,
+                                     GetPlateQueryHandler,
+                                     ListImageAnalysesHandler)
+
 from handlers.image_handlers import (ImageViewerHandler,
                                      ImageMergeHandler,
                                      ThumbImageMergeHandler)
@@ -39,21 +42,25 @@ class IndexTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
     """
     This is the main handler of the application, which serves the index.html template
     """
-    def get(self):
+    def get(self, barcode='', acqid=''):
 
-        self.render('index.html')
+        barcode = self.get_argument("barcode", '')
+        acqid = self.get_argument("acqid", '')
+
+
+        self.render('index.html', barcode=barcode, acqid=acqid)
 
 
 ROUTES = [
           (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), 'static')}),
           (r'/api/list-plates', ListAllPlatesQueryHandler),
+          (r'/api/list/image_analyses/(?P<limit>.+)/(?P<sortorder>.+)/(?P<plate_barcode>.+)', ListImageAnalysesHandler),
           (r'/api/plate/(?P<plate>.+)', GetPlateQueryHandler),
           (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ImageMergeHandler),
           (r'/api/image-merge-thumb/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ThumbImageMergeHandler),
           (r'/image-viewer/(?P<plate>.+)/tp/(?P<timepoint>.+)/well/(?P<well>.+)/site/(?P<site>.+)/ch/(?P<channel>.+)/url/(?P<imageurl>.+)', ImageViewerHandler),
           (r'/bstest.html', DefaultTemplateHandler),
-          (r'/index.html', DefaultTemplateHandler),
-          (r'/old-index.html', DefaultTemplateHandler),
+          (r'/index.html', IndexTemplateHandler),
           (r'/', IndexTemplateHandler),
          ]
 

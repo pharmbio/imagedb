@@ -10,7 +10,7 @@ import logging
 
 import tornado.web
 
-from dbqueries import list_all_plates, get_plate
+from dbqueries import list_all_plates, get_plate, list_image_analyses
 
 
 def make_totally_real_query(data):
@@ -68,3 +68,25 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
         json_string = json.dumps(data, default=lambda x: x.__dict__).replace("</", "<\\/")
 
         self.write(json_string)
+
+
+#####
+#####  From pipelinegui
+#####
+
+class ListImageAnalysesHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
+
+    def prepare(self):
+        header = "Content-Type"
+        body = "application/json"
+        self.set_header(header, body)
+
+    def get(self, limit, sortorder, plate_barcode):
+        """Handles GET requests.
+        """
+        logging.info("inside ListImageAnalysesHandler, limit=" + str(limit))
+
+        result = list_image_analyses(plate_barcode)
+
+        logging.debug(result)
+        self.finish({'result':result})
