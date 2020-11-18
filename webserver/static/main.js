@@ -217,7 +217,7 @@ function drawPlatesListSidebar(queryResults){
     // Create a list item for the plate
     let plate_item = document.createElement('li');
     let link = document.createElement('a');
-    let linktext = plate + ;
+    let linktext = plate;
     link.className = "text-info";
     link.href = "";
 
