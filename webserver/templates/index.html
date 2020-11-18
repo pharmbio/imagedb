@@ -8,7 +8,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>Imagedb-Pharmb.io</title>
+  <title>Imagedb-pharmb.io</title>
 
   <link rel="shortcut icon" href="/static/pharmbio_logo_square_64x64.png" type="image/x-icon">
 
@@ -291,9 +291,11 @@
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 Admin
               </a>
-              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownAdminer">
+              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownPipelinegui">
                 <a class="dropdown-item"
-                  href="{{adminer_url}}">Adminer</a>
+                  target="pipelinegui" href="{{pipelinegui_url}}">Pipelinegui</a>
+                <a class="dropdown-item"
+                  target="adminer" href="{{adminer_url}}">Adminer</a>
               </div>
             </li>
 
@@ -397,7 +399,13 @@
         <br>
         <h5>image_analyses</h5>
         <div class="row">
-          <div class="col-md-12 text-md-right">
+          <div class="col-md-6 text-md-left">
+            <a target="pipelinegui"
+              href="">
+              Run new analysis on this plate_acquisitionID
+            </a>
+          </div>
+          <div class="col-md-6 text-md-right">
             <a target="adminer"
               href="{{adminer_url}}&select=image_analyses">
               link to database
