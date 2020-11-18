@@ -8,7 +8,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>ImageDB-Pharmb.io</title>
+  <title>Imagedb-Pharmb.io</title>
 
   <link rel="shortcut icon" href="/static/pharmbio_logo_square_64x64.png" type="image/x-icon">
 
@@ -133,6 +133,13 @@
     html {
       font-size: 14px;
     }
+
+    td {
+      white-space: normal !important; 
+      word-wrap: break-word;
+      max-width: 300px;
+    }
+
   </style>
 
 </head>
@@ -286,7 +293,7 @@
               </a>
               <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownAdminer">
                 <a class="dropdown-item"
-                  href="https://adminer-imagedb.devserver.pharmb.io/?pgsql=imagedb&username=postgres&db=imagedb&ns=public">Adminer</a>
+                  href="{{adminer_url}}">Adminer</a>
               </div>
             </li>
 
@@ -383,39 +390,24 @@
 
       <!-- Table div -->
       <div id="table-div" class="container-fluid flex-fill">
-
-
       </div>
 
       <!-- image_analyses table-->
       <div class="container-fluid flex-fill overflow-auto">
         <br>
-        <h4>image_analyses</h4>
-        <a target="adminer"
-          href="https://adminer-imagedb.devserver.pharmb.io/?pgsql=imagedb&username=postgres&db=imagedb&ns=public&select=image_analyses">
-          view image_analyses in database
-        </a>
+        <h5>image_analyses</h5>
+        <div class="row">
+          <div class="col-md-12 text-md-right">
+            <a target="adminer"
+              href="{{adminer_url}}&select=image_analyses">
+              link to database
+            </a>
+          </div>
+        </div>
       </div>
       <div id="image_analyses-table-div" class="container-fluid flex-fill overflow-auto">
       </div>
 
-      <!-- Meta data div -->
-      <div id="meta-div" class="container-fluid flex-fill mt-2">
-
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <label class="input-group-text" for="add-field-button">Plate metadata</label>
-          </div>
-          <button type="button" id="add-field-button" class="btn btn-info btn-sm ml-2" data-toggle="modal"
-            data-target="#add-datafield">Add field</button>
-          <!--<button type="button" class="btn btn-primary" data-toggle="modal">Button label</button>-->
-          <button type="button" id="delete-field-button" class="btn btn-info btn-sm ml-2" data-toggle="modal"
-            data-target="#delete-datafield">Delete field</button>
-        </div>
-
-        <div id="meta-div-json"></div>
-
-      </div>
 
     </div>
   </div>
@@ -539,8 +531,9 @@
     // Set display error function
     window.onerror = displayModalJavaScriptError;
 
-    // rewrite url to database
-    // imagedb-pg-postgresql.labinf.svc.cluster.local
+    // Declare global vars
+    window.PIPELINEGUI_URL = '{{pipelinegui_url}}'
+    window.PIPELINEGUI_STATIC_RESULTS_DIR = '{{pipelinegui_static_results_dir}}'
 
     // Create an empty table to start with - just because it looks good!
     let table = createEmptyTable(8, 12);
@@ -572,10 +565,9 @@
       // Enable Pane-splitter
       $(".splitpane").SplitterBar();
 
-      // Submit empty search to load all plates into start page
-      // $("#query-form").submit();
-      let plateBarcode = '{{ barcode }}';
-      let acquisitionID = '{{ acqid }}'
+      // Call init window javascript function
+      let plateBarcode = '{{barcode}}';
+      let acquisitionID = '{{acqid}}'
       initMainWindow(plateBarcode, acquisitionID);
     });
 

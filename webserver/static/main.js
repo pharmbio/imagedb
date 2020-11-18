@@ -1106,7 +1106,7 @@ function drawImageAnalysisTable(rows){
   rows = addNotebookLinkColumn(rows)
 
   // Before drawing table add ("File-Links")
-  //rows = addFileLinksColumn(rows, 9)
+  rows = addFileLinksColumn(rows)
 
   drawTable(rows, "image_analyses-table-div");
 
@@ -1153,6 +1153,56 @@ function addNotebookLinkColumn(rows){
 
 }
 
+function addFileLinksColumn(rows){
+  console.log("Inside addFileLinksColumn");
+
+  BASE_URL = window.PIPELINEGUI_URL + "/";
+
+  // Add header to new cell 
+  let cols = rows[0];
+  result_col_index = cols.indexOf("result");
+
+  cols.splice(result_col_index + 1, 0, "file_list-links");
+  console.log("rows.length", rows.length);
+  
+  // Create new cell in all rows
+  for (let nRow = 1; nRow < rows.length; nRow++) {
+
+    console.log("nRow:", nRow);
+
+    let result = rows[nRow][result_col_index];
+    console.log("result:)", result);
+
+    let cell_contents = "";
+
+    if(result != null){
+      console.log("result.file_list", result.file_list);
+      for(var file_path of result.file_list){
+        console.log("file_path", file_path);
+        if(file_path.endsWith(".pdf") || file_path.endsWith(".csv")){
+          console.log("file_path", file_path);
+
+          link_text = basename(file_path);
+
+          let linkified_file_path = "<a href='" + BASE_URL + file_path + "'>" + link_text + "</a>";
+          cell_contents += linkified_file_path + ", "
+        }
+      }
+    }
+
+    // Add result column result with new result content
+    rows[nRow].splice(result_col_index + 1,0,cell_contents);
+
+  }
+  
+  return rows;
+}
+
+function basename(str) {
+  let separator = "/";
+  return str.substr(str.lastIndexOf(separator) + 1);
+}
+
 function drawTable(rows, divname) {
 
   console.log("rows", rows);
@@ -1163,7 +1213,7 @@ function drawTable(rows, divname) {
   // Create Table
   let table = document.createElement('table');
   table.id = divname + "-table";
-  table.className = 'table text-xsmall';
+  table.className = 'table text-xsmall table-bordered';
 
   // First add header row
   let headerRow = document.createElement('tr');
@@ -1193,6 +1243,13 @@ function drawTable(rows, divname) {
 
       if(content === "null"){
         content = "";
+      }
+
+      // Truncate large content
+      TRUNCATE_LEN = 1000;
+      if(content != null && content.length > TRUNCATE_LEN){
+        content = content.substring(0, TRUNCATE_LEN);
+        content += "....."
       }
       
       cell.innerHTML = content;

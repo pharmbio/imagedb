@@ -169,7 +169,7 @@ CREATE OR REPLACE VIEW images_all_view AS
       images
   LEFT JOIN plate ON images.plate_barcode = plate.barcode
   LEFT JOIN well ON plate.barcode = well.plate_barcode AND images.well = well.well_name
-  LEFT JOIN plate_acquisition on plate.barcode = plate_acquisition.plate_barcode
+  LEFT JOIN plate_acquisition on images.plate_barcode = plate_acquisition.plate_barcode
   LEFT JOIN channel_map ON plate_acquisition.channel_map_id = channel_map.map_id AND images.channel = channel_map.channel;
 
 CREATE OR REPLACE VIEW images_minimal_view AS
@@ -200,7 +200,7 @@ CREATE OR REPLACE VIEW images_minimal_view AS
       images
   LEFT JOIN plate ON images.plate_barcode = plate.barcode
   LEFT JOIN well ON plate.barcode = well.plate_barcode AND images.well = well.well_name
-  LEFT JOIN plate_acquisition on plate.barcode = plate_acquisition.plate_barcode
+  LEFT JOIN plate_acquisition on images.plate_barcode = plate_acquisition.plate_barcode
   LEFT JOIN channel_map ON plate_acquisition.channel_map_id = channel_map.map_id AND images.channel = channel_map.channel;
 
 

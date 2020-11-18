@@ -46,9 +46,13 @@ class IndexTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
 
         barcode = self.get_argument("barcode", '')
         acqid = self.get_argument("acqid", '')
+        pipelinegui_url = imgdb_settings.PIPELINEGUI_URL
+        pipelinegui_static_results_dir = imgdb_settings.PIPELINEGUI_STATIC_RESULTS_DIR
+        adminer_url = imgdb_settings.ADMINER_URL
 
-
-        self.render('index.html', barcode=barcode, acqid=acqid)
+        self.render('index.html', barcode=barcode, acqid=acqid, pipelinegui_url=pipelinegui_url,
+                                  pipelinegui_static_results_dir=pipelinegui_static_results_dir,
+                                  adminer_url=adminer_url)
 
 
 ROUTES = [

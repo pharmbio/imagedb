@@ -1,6 +1,7 @@
 import os
 import json
 
+# conf file location can be overridden by ENV-VAR
 conf_file = os.getenv("CONF_FILE", "settings_dev_local.json")
 with open(conf_file) as json_file:
   js_conf = json.load(json_file)
@@ -15,3 +16,8 @@ with open(conf_file) as json_file:
   DB_PORT = os.getenv("DB_PORT", js_conf["DB_PORT"])
   DB_NAME = os.getenv("DB_NAME", js_conf["DB_NAME"])
   DB_HOSTNAME = os.getenv("DB_HOSTNAME", js_conf["DB_HOSTNAME"])
+
+  ADMINER_URL = os.getenv("ADMINER_URL", js_conf["ADMINER_URL"])
+
+  PIPELINEGUI_URL = os.getenv("PIPELINEGUI_URL", js_conf["PIPELINEGUI_URL"])
+  PIPELINEGUI_STATIC_RESULTS_DIR = os.getenv("PIPELINEGUI_STATIC_RESULTS_DIR", js_conf["PIPELINEGUI_STATIC_RESULTS_DIR"])
