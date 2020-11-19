@@ -96,6 +96,7 @@ def get_plate(plate_name):
     finally:
         if conn is not None:
             conn.close()
+            put_connection(conn)
 
 
 def list_all_plates():
@@ -138,6 +139,7 @@ def list_all_plates():
     finally:
         if conn is not None:
             conn.close()
+            put_connection(conn)
 
 
 ###
@@ -203,7 +205,10 @@ def select_from_db(query):
 
         rows = cursor.fetchall()
 
+        # Close/Release connection
         cursor.close()
+        put_connection(conn)
+        conn = None
 
         resultlist = []
 
@@ -226,3 +231,4 @@ def select_from_db(query):
     finally:
         if conn is not None:
             conn.close()
+            put_connection(conn)
