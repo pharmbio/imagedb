@@ -144,8 +144,6 @@ function initMainWindow(plateBarcode, acquisitionID){
   }else{
     apiLoadPlateBarcode(plateBarcode);
   }
-
-
 }
 
 function getLoadedPlate() {
@@ -554,7 +552,11 @@ function openViewerInMainDiv(imageURL) {
 
 }
 
+function zoomToolChanged(){
+  redrawPlate();
+}
 
+// Redraws currently 
 function redrawPlate(clearFirst = false) {
   // get plate to draw
   let plateObj = getLoadedPlate();

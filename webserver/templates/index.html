@@ -200,7 +200,7 @@
 
 
         <!-- Zoom form -->
-        <form id='zoom-tool-form' onsubmit='redrawPlate(); return false;'>
+        <form id='zoom-tool-form' onsubmit='zoomToolChanged(); return false;'>
 
           <div class="input-group align-bottom align-content-lg-end">
 
@@ -208,7 +208,7 @@
             <div class="input-group-prepend ml-2">
               <label class="input-group-text" for="zoom-select">Zoom</label>
             </div>
-            <select class="custom-select" style="width: 60px;" id="zoom-select" onchange="redrawPlate(); return false;">
+            <select class="custom-select" style="width: 60px;" id="zoom-select" onchange="zoomToolChanged(); return false;">
               <option value="10>10%</option>
             <option value=" 20">20%</option>
               <option value="30">30%</option>
