@@ -356,7 +356,6 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 function updateToolbar() {
 
   updatePlateNameLabel(getLoadedPlate().getName());
-  updateMetaData(getLoadedPlate());
   updateTimepointSelect(getLoadedPlate());
   updateTimepointSlider(getLoadedPlate());
 
@@ -365,7 +364,6 @@ function updateToolbar() {
   updateWellSelect(getLoadedPlate());
   updateSiteSelect(getLoadedPlate());
   updateChannelSelect(getLoadedPlate());
-  updateMetaData(getLoadedPlate());
 
   // Enable Animate checkbox
   if (getLoadedPlate().countTimepoints() > 1){
@@ -550,10 +548,6 @@ function openViewerInMainDiv(imageURL) {
     }
   });
 
-}
-
-function zoomToolChanged(){
-  redrawPlate();
 }
 
 // Redraws currently 
@@ -868,6 +862,9 @@ function startAnimation() {
   }, delay);
 }
 
+/*
+* Update animation speed by restarting animation
+*/
 function updateAnimationSpeed() {
   // Only update if running
   if (window.animation) {
@@ -941,18 +938,6 @@ function updatePlateNameLabel(plate_name) {
   document.getElementById('plate-name-label').innerHTML = "Plate: " + plate_name;
   document.getElementById('plate-name-label').title = "Plate: " + plate_name;
 }
-
-function updateMetaData(plateObj) {
-  /*
-  // Clear first
-  document.getElementById('meta-div-json').innerHTML = "";
-
-  let jsonViewer = new JSONViewer("");
-  document.querySelector("#meta-div-json").appendChild(jsonViewer.getContainer());
-  jsonViewer.showJSON(plateObj, null, 2);
-  */
-}
-
 
 function updateChannelSelect(plateObj) {
   let elemSelect = document.getElementById('channel-select');
@@ -1064,6 +1049,41 @@ function displayModalError(text) {
   console.log("text", text);
   $("#error-modal").modal();
 }
+
+/*
+*
+* Tool event handlers
+*
+*/
+function zoomSelectChanged(){
+  redrawPlate();
+}
+
+function brightnessSelectChanged(){
+  redrawPlate();
+}
+
+function timepointSelectChanged(){
+  redrawPlate();
+}
+
+function siteSelectChanged(){
+  redrawPlate();
+}
+
+function channelSelectChanged(){
+  redrawPlate();
+}
+
+function animationSpeedSelectChanged(){
+  updateAnimationSpeed();
+}
+
+function animateCbxChanged(){
+  toggleAnimation();
+}
+
+
 
 /*
   Code from pipelinegui
