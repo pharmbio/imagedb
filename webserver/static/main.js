@@ -118,12 +118,30 @@ class Plate {
     return nCount;
   }
 
+  getPlateAcquisitionID(timepoint){
+    let image_meta = this.getTimepointImageMeta(timepoint);
+    let plate_acq_id = image_meta["plate_acquisition_id"]
+    return plate_acq_id;
+  }
+
+
+  getTimepointImageMeta(timepoint){
+    let firstWellKey = Object.keys(this.plateObj.timepoints[timepoint].wells)[0];
+    return this.getWellImageMeta(timepoint, firstWellKey);
+  }
+
+  getWellImageMeta(timepoint, well_name){
+    let imageMeta = this.plateObj.timepoints[timepoint].wells[well_name].sites["1"].channels["1"].image_meta;
+    return imageMeta;
+  }
+
   getFormattedWellMeta(timepoint, well_name){
-    let meta = '';
-    meta += "Well: " + this.plateObj.timepoints[timepoint].wells[well_name].id + "<br>";
-    meta += "Plate_acq_id: " + this.plateObj.timepoints[timepoint].wells[well_name].sites["1"].channels["1"].image_meta["plate_acquisition_id"] + "<br>";
-    meta += "Plate_barcode: " + this.plateObj.timepoints[timepoint].wells[well_name].sites["1"].channels["1"].image_meta["plate_barcode"] + "<br>"; + "<br>";
-    return meta;
+    let well_image_meta = this.getWellImageMeta(timepoint, well_name);
+    let formatted_meta = '';
+    formatted_meta += "Well: " + this.plateObj.timepoints[timepoint].wells[well_name].id + "<br>";
+    formatted_meta += "Plate_acq_id: " + well_image_meta["plate_acquisition_id"] + "<br>";
+    formatted_meta += "Plate_barcode: " + well_image_meta["plate_barcode"] + "<br>"; + "<br>";
+    return formatted_meta;
   }
 }
 
@@ -137,7 +155,7 @@ function initMainWindow(plateBarcode, acquisitionID){
   console.log("plateBarcode", plateBarcode);
 
   if(plateBarcode == "" && acquisitionID == ""){
-    console.log("Do nothing");
+    console.log("plateBarcode == '' && acquisitionID == '', Do nothing");
     // Do nothing
   }else if(acquisitionID != ""){
     apiLoadAcquisitionID(acquisitionID);
@@ -291,7 +309,7 @@ function apiLoadPlate(plate_name) {
         window.loaded_plates = new Plates(json['data'].plates);
         console.log(window.loaded_plates);
         console.log("Plates loaded")
-        updateToolbar();
+        updateToolbarWithNewPlate();
 
         redrawPlate(true);
       });
@@ -327,7 +345,7 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 
           console.log(window.loaded_plates);
 
-          updateToolbar();
+          updateToolbarWithNewPlate();
 
           setSelectedTimepoint(timepoint);
           setWellSelection(well);
@@ -353,9 +371,8 @@ function loadPlateFromViewer(plate_name, timepoint, well, site, channel){
 }
 
 
-function updateToolbar() {
+function updateToolbarWithNewPlate() {
 
-  updatePlateNameLabel(getLoadedPlate().getName());
   updateTimepointSelect(getLoadedPlate());
   updateTimepointSlider(getLoadedPlate());
 
@@ -364,6 +381,9 @@ function updateToolbar() {
   updateWellSelect(getLoadedPlate());
   updateSiteSelect(getLoadedPlate());
   updateChannelSelect(getLoadedPlate());
+
+  updatePlateNameLabel(getLoadedPlate().getName());
+  updatePlateAcqLabel(getLoadedPlate());
 
   // Enable Animate checkbox
   if (getLoadedPlate().countTimepoints() > 1){
@@ -939,6 +959,15 @@ function updatePlateNameLabel(plate_name) {
   document.getElementById('plate-name-label').title = "Plate: " + plate_name;
 }
 
+function updatePlateAcqLabel(plateObj) {
+
+  let selectedTimepoint = getSelectedTimepointIndex();
+  let plate_acq_id = plateObj.getPlateAcquisitionID(selectedTimepoint);
+
+  document.getElementById('plate-acq-label').innerHTML = "Acq-id: " + plate_acq_id;
+  document.getElementById('plate-acq-label').title = "Acq-id: " + plate_acq_id;
+}
+
 function updateChannelSelect(plateObj) {
   let elemSelect = document.getElementById('channel-select');
 
@@ -1064,6 +1093,7 @@ function brightnessSelectChanged(){
 }
 
 function timepointSelectChanged(){
+  updatePlateAcqLabel(getPlate());
   redrawPlate();
 }
 
@@ -1129,6 +1159,9 @@ function drawImageAnalysisTable(rows){
 
   // Before drawing table add ("File-Links")
   rows = addFileLinksColumn(rows)
+
+  // Truncate "result" column 
+  rows = truncateColumn(rows, "result", 100);
 
   drawTable(rows, "image_analyses-table-div");
 
@@ -1225,6 +1258,34 @@ function basename(str) {
   return str.substr(str.lastIndexOf(separator) + 1);
 }
 
+function truncateColumn(rows, column_name, trunc_length){
+  let cols = rows[0];
+  column_index = cols.indexOf(column_name);
+
+  for (let nRow = 1; nRow < rows.length; nRow++) {
+    console.log("nRow:", nRow);
+    
+    let content = rows[nRow][column_index];
+    if(typeof content == 'object'){
+      content = JSON.stringify(content);
+    }
+
+    if(content === "null"){
+      content = "";
+    }
+
+    if(content != null && content.length > trunc_length){
+      content = content.substring(0, trunc_length);
+      content += "....."
+    }
+
+    rows[nRow][column_index] = content;
+  }
+
+  return rows;
+
+}
+
 function drawTable(rows, divname) {
 
   console.log("rows", rows);
@@ -1240,7 +1301,7 @@ function drawTable(rows, divname) {
   // First add header row
   let headerRow = document.createElement('tr');
 
-  // First row in rows is header
+  // First row in rows is headers
   let cols = rows[0];
 
   for (let col = 0; col < cols.length; col++) {
@@ -1265,13 +1326,6 @@ function drawTable(rows, divname) {
 
       if(content === "null"){
         content = "";
-      }
-
-      // Truncate large content
-      TRUNCATE_LEN = 1000;
-      if(content != null && content.length > TRUNCATE_LEN){
-        content = content.substring(0, TRUNCATE_LEN);
-        content += "....."
       }
       
       cell.innerHTML = content;

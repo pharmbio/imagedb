@@ -325,6 +325,12 @@
               Plate:
             </label>
 
+            <!-- Plate acq label -->
+            <label id="plate-acq-label" class="input-group-text"
+              style="width: 100px;overflow: hidden;text-overflow: ellipsis; white-space: nowrap;">
+              Acq-id:
+            </label>
+
             <!-- Timepoint selector -->
             <div class="input-group-prepend ml-2">
               <label class="input-group-text" for="timepoint-select">Timepoint</label>
@@ -391,8 +397,8 @@
         <h5>image_analyses</h5>
         <div class="row">
           <div class="col-md-6 text-md-left">
-            <a target="pipelinegui" href="">
-              Run new analysis on this plate_acquisitionID
+            <a target="Pipelinegui" href="{{pipelinegui_url}}">
+              Link to pipelinegui
             </a>
           </div>
           <div class="col-md-6 text-md-right">

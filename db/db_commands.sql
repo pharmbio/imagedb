@@ -109,18 +109,18 @@ CREATE INDEX  ix_channel_map_id ON channel_map(map_id);
 CREATE INDEX  ix_channel_map_name ON channel_map(name);
 
 INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES	
-(1,	1,	'HOECHST',			'channel_map_1'),		
-(1,	2,	'CONCANAVALIN',		'channel_map_1'),		
+(1,	1,	'HOECHST',		'channel_map_1'),		
+(1,	2,	'CONC',	     	'channel_map_1'),		
 (1,	3,	'SYTO', 			'channel_map_1'),		
 (1,	4,	'MITO', 			'channel_map_1'),		
-(1,	5,	'PHALLOIDINandWGA', 'channel_map_1');		
+(1,	5,	'PHAandWGA',  'channel_map_1');		
 				
-INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
-(2,	1,	'HOECHST', 			'channel_map_2'),		
-(2,	2,	'MITO', 			'channel_map_2'),		
-(2,	3,	'PHALLOIDINandWGA', 'channel_map_2'),		
-(2,	4,	'SYTO', 			'channel_map_2'),		
-(2,	5,	'CONCANAVALIN', 	'channel_map_2');	
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES	
+(2,	1,	'HOECHST',		'channel_map_2'),		
+(2,	2,	'CONC',	     	'channel_map_2'),		
+(2,	3,	'SYTO', 			'channel_map_2'),		
+(2,	4,	'MITO', 			'channel_map_2'),		
+(2,	5,	'PHAandWGA',  'channel_map_2');		
 
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
 CREATE TABLE channel_map_mapping (
