@@ -198,20 +198,21 @@ def image_exists_in_db(image_path):
     conn = None
     try:
         conn = get_connection()
-        select_cursor = conn.cursor()
+        cursor = conn.cursor()
 
-        select_path_query = "SELECT * FROM images WHERE path = %s"
-        select_cursor.execute(select_path_query, (image_path,))
-
-        rowcount = select_cursor.rowcount
-        select_cursor.close()
-        return rowcount > 0
+        exists_path_query = "SELECT EXISTS (SELECT 1 FROM images WHERE path = %s)"
+        cursor.execute(exists_path_query, (image_path,))
+       
+        path_exists = cursor.fetchone()[0]
+        cursor.close()
+        return path_exists
 
     except Exception as err:
         logging.exception("Message")
         raise err
     finally:
         put_connection(conn)
+
 
 def add_plate_to_db(images, latest_filedate_to_test):
     logging.info("start add_plate_metadata to db")
@@ -248,7 +249,15 @@ def add_plate_to_db(images, latest_filedate_to_test):
                 if image_exists == False:
 
                     # read tiff-meta-tags
-                    tiff_meta = read_tiff_info(img_meta['path'])
+                    # make inside try-catch so a corrupted image doesn't stop it all
+                    tiff_meta = ""
+                    try:
+                        tiff_meta = read_tiff_info(img_meta['path'])
+                    except Exception as e:
+                        logging.error("Exception reading tiff meta: %s", e)
+                        logging.error("image: " + str(image))
+                        logging.error("Continuing since we don't want to break on a single bad image")
+                    
                     img_meta['file_meta'] = tiff_meta
 
                     # insert into db
@@ -261,8 +270,15 @@ def add_plate_to_db(images, latest_filedate_to_test):
                     logging.debug(thumb_path)
 
                     # Only create thumb if not exists already
+                    # make inside try-catch so a corrupted image doesn't stop it all
                     if not os.path.exists(thumb_path):
-                      makeThumb(image, thumb_path, False)
+                        try:
+                            makeThumb(image, thumb_path, False)
+                        except Exception as e:
+                            logging.error("Exception making thumb image: %s", e)
+                            logging.error("image: " + str(image))
+                            logging.error("thumb_path: " + str(thumb_path))
+                            logging.error("Continuing since we don't want to break on a single bad image")
 
                 else:
                     logging.debug("doc exists already")
