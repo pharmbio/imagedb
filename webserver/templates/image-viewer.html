@@ -31,7 +31,8 @@
   <link href="/static/theme/css/simple-sidebar.css" rel="stylesheet">
 
   <!-- range-slider Plugin CSS file with desired skin-->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/css/ion.rangeSlider.min.css"/>
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/css/ion.rangeSlider.min.css" />
 
   <!-- this imagedb -->
   <link rel='stylesheet' href='/static/main.css'>
@@ -44,34 +45,36 @@
 
   <!-- Custom inline css override -->
   <style type="text/css">
-
-
     /* Overrides color on range-slider */
     .irs--flat .irs-from,
     .irs--flat .irs-to,
     .irs--flat .irs-single {
-      background-color:#17a2b8;
+      background-color: #17a2b8;
     }
-    .irs--flat .irs-bar{
-      background-color:#17a2b8;
+
+    .irs--flat .irs-bar {
+      background-color: #17a2b8;
     }
+
     .irs--flat .irs-from:before,
     .irs--flat .irs-to:before,
     .irs--flat .irs-single:before {
-      border-top-color:#17a2b8;
+      border-top-color: #17a2b8;
     }
-    .irs--flat .irs-handle>i:first-child {
-      background-color:#17a2b8
-    }
-    /* -- end range-slider */
 
+    .irs--flat .irs-handle>i:first-child {
+      background-color: #17a2b8
+    }
+
+    /* -- end range-slider */
   </style>
 
 
 
   <!-- This is mainly for openseadragon -->
   <style type="text/css">
-    html, body {
+    html,
+    body {
       height: 100%;
       width: 100%;
       margin: 0px;
@@ -84,8 +87,7 @@
     html {
       font-size: 14px;
     }
-
-    </style>
+  </style>
 
 </head>
 
@@ -94,375 +96,395 @@
 
 <body>
 
-<div class="d-flex" id="wrapper">
+  <div class="d-flex" id="wrapper">
 
-  <!-- Page Content -->
-  <div id="page-content-wrapper">
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+      <!-- Navbar -->
+      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
 
-    <!-- Toolbar -->
-    <div id="plate-tool-div" class="container-fluid mt-2 mb-2">
+        <!-- Toolbar -->
+        <div id="plate-tool-div" class="container-fluid mt-2 mb-2">
 
-      <!-- Toolbar form -->
-      <form id='plate-tool-form' onsubmit='redrawImageViewer(); return false;'>
+          <!-- Toolbar form -->
+          <form id='plate-tool-form' onsubmit='redrawImageViewer(); return false;'>
 
-        <div class="input-group">
+            <div class="input-group">
 
-          <!-- Plate label -->
-          <label id="plate-name-label" class="input-group-text" style="width: 170px;overflow: hidden;text-overflow: ellipsis; white-space: nowrap;">
-            Plate:
-          </label>
+              <!-- Plate label -->
+              <label id="plate-name-label" class="input-group-text"
+                style="width: 170px;overflow: hidden;text-overflow: ellipsis; white-space: nowrap;">
+                Plate:
+              </label>
 
-          <!-- Well selector -->
-          <div class="input-group-prepend ml-2">
-            <label class="input-group-text" for="well-select">Well</label>
-          </div>
-          <select class="custom-select" style="width: 75px;" id="well-select" onchange="redrawImageViewer(); return false;">
-          </select>
+              <!-- Plate acq label -->
+              <label id="plate-acq-label" class="input-group-text"
+                style="width: 100px;overflow: hidden;text-overflow: ellipsis; white-space: nowrap;">
+                Acq-id:
+              </label>
 
-          <!-- Timepoint selector -->
-          <div class="input-group-prepend ml-2">
-            <label class="input-group-text" for="timepoint-select">Timepoint</label>
-          </div>
-          <select class="custom-select" style="width: 60px;" id="timepoint-select" onchange="return redrawImageViewer(false);">
-          </select>
+              <!-- Well selector -->
+              <div class="input-group-prepend ml-2">
+                <label class="input-group-text" for="well-select">Well</label>
+              </div>
+              <select class="custom-select" style="width: 75px;" id="well-select"
+                onchange="redrawImageViewer(); return false;">
+              </select>
 
-          <!-- Timepoint slider -->
-          <div id="slider" class="ml-2" style="width:100px;height:20px;hidden:true;">
-            <input type="text" id="timepoint-slider" name="" value="" style="width:0px;" />
-          </div>
+              <!-- Timepoint selector -->
+              <div class="input-group-prepend ml-2">
+                <label class="input-group-text" for="timepoint-select">Timepoint</label>
+              </div>
+              <select class="custom-select" style="width: 60px;" id="timepoint-select"
+                onchange="return redrawImageViewer(false);">
+              </select>
 
-          <!-- Timepoint animation -->
-          <div class="form-group form-check" style="margin-bottom: 0px;">
-            <div class="col-md-4">
-              <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" disabled onchange="toggleAnimation(); return false;">
-              <label class="form-check-label" style="margin-top:0.8rem;" for="animate-cbx">Animate</label>
+              <!-- Timepoint slider -->
+              <div id="slider" class="ml-2" style="width:100px;height:20px;hidden:true;">
+                <input type="text" id="timepoint-slider" name="" value="" style="width:0px;" />
+              </div>
+
+              <!-- Timepoint animation -->
+              <div class="form-group form-check" style="margin-bottom: 0px;">
+                <div class="col-md-4">
+                  <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" disabled
+                    onchange="toggleAnimation(); return false;">
+                  <label class="form-check-label" style="margin-top:0.8rem;" for="animate-cbx">Animate</label>
+                </div>
+              </div>
+
+              <!-- Animation speed selector -->
+              <div class="input-group-prepend ml-2">
+                <label class="input-group-text" for="animation-speed-select">Anim. speed</label>
+              </div>
+              <select class="custom-select" style="width: 50px;" id="animation-speed-select"
+                onchange="updateAnimationSpeed(); return false;">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option selected value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+              </select>
+
+              <!-- Site selector -->
+              <div class="input-group-prepend ml-2">
+                <label class="input-group-text" for="site-select">Site</label>
+              </div>
+              <select class="custom-select" style="width: 50px;" id="site-select"
+                onchange="redrawImageViewer(); return false;">
+              </select>
+
+              <!-- Channel selector -->
+              <div class="input-group-prepend ml-2 ">
+                <label class="input-group-text" for="channel-select">Channel</label>
+              </div>
+              <select class="custom-select" style="width: 75px;" id="channel-select"
+                onchange="redrawImageViewer(); return false;">
+              </select>
+
+              <!-- Brightness selector -->
+              <div class="input-group-prepend ml-2">
+                <label class="input-group-text" for="brightness-select">Brightness</label>
+              </div>
+              <select class="custom-select" style="width: 60px;" id="brightness-select"
+                onchange="redrawImageViewer(); return false;">
+                <option value="10">10%</option>
+                <option value="50">50%</option>
+                <option selected value="100">100%</option>
+                <option value="150">150%</option>
+                <option value="200">200%</option>
+                <option value="250">250%</option>
+                <option value="300">300%</option>
+                <option value="350">350%</option>
+                <option value="400">400%</option>
+                <option value="450">450%</option>
+                <option value="500">500%</option>
+                <option value="600">600%</option>
+                <option value="700">700%</option>
+                <option value="800">800%</option>
+                <option value="900">900%</option>
+                <option value="1000">1000%</option>
+                <option value="2000">2000%</option>
+                <option value="5000">5000%</option>
+              </select>
+
+
+              <!-- Scalebar -->
+              <div class="form-group form-check" style="margin-bottom: 0px;margin-left: 5px">
+                <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="scalebar-cbx"
+                  onchange="updateShowScalebar(); return false;">
+                <label class="form-check-label" style="margin-top:0.8rem;" for="scalebar-cbx">Scalebar</label>
+              </div>
+
             </div>
-          </div>
 
-          <!-- Animation speed selector -->
-          <div class="input-group-prepend ml-2">
-            <label class="input-group-text" for="animation-speed-select">Anim. speed</label>
-          </div>
-          <select class="custom-select" style="width: 50px;" id="animation-speed-select" onchange="updateAnimationSpeed(); return false;">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-            <option selected value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-          </select>
-
-          <!-- Site selector -->
-          <div class="input-group-prepend ml-2">
-            <label class="input-group-text" for="site-select">Site</label>
-          </div>
-          <select class="custom-select" style="width: 50px;" id="site-select" onchange="redrawImageViewer(); return false;">
-          </select>
-
-          <!-- Channel selector -->
-          <div class="input-group-prepend ml-2 ">
-            <label class="input-group-text" for="channel-select">Channel</label>
-          </div>
-          <select class="custom-select"  style="width: 75px;"id="channel-select" onchange="redrawImageViewer(); return false;">
-          </select>
-        
-            <!-- Brightness selector -->
-            <div class="input-group-prepend ml-2">
-              <label class="input-group-text" for="brightness-select">Brightness</label>
-            </div>
-            <select class="custom-select" style="width: 60px;" id="brightness-select" onchange="redrawImageViewer(); return false;">
-              <option value="10">10%</option>
-              <option value="50">50%</option>
-              <option selected value="100">100%</option>
-              <option value="150">150%</option>
-              <option value="200">200%</option>
-              <option value="250">250%</option>
-              <option value="300">300%</option>
-              <option value="350">350%</option>
-              <option value="400">400%</option>
-              <option value="450">450%</option>
-              <option value="500">500%</option>
-              <option value="600">600%</option>
-              <option value="700">700%</option>
-              <option value="800">800%</option>
-              <option value="900">900%</option>
-              <option value="1000">1000%</option>
-              <option value="2000">2000%</option>
-              <option value="5000">5000%</option>
-            </select>
+          </form>
+        </div>
+        <!-- end Toolbar -->
 
 
-           <!-- Scalebar -->
-          <div class="form-group form-check" style="margin-bottom: 0px;margin-left: 5px">
-              <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="scalebar-cbx" onchange="updateShowScalebar(); return false;">
-              <label class="form-check-label" style="margin-top:0.8rem;" for="scalebar-cbx">Scalebar</label>
-            </div>
+        <!-- Navbar menues -->
 
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+
+            <button type="button" id="openmeta-button" class="btn btn-info" data-toggle="modal"
+              data-target="#metadata-datafield">Metadata</button>
+
+          </ul>
         </div>
 
-      </form>
+
+      </nav>
+
     </div>
-    <!-- end Toolbar -->
+    <!-- /#page-content-wrapper -->
 
-
-      <!-- Navbar menues -->
-
-
-      <div class="collapse navbar-collapse" id="navbarSupportedContent" >
-        <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
-
-          <button type="button" id="openmeta-button" class="btn btn-info" data-toggle="modal" data-target="#metadata-datafield">Metadata</button>
-
-        </ul>
-      </div>
-
-
-    </nav>
 
   </div>
-  <!-- /#page-content-wrapper -->
+  <!-- /#wrapper -->
 
-
-</div>
-<!-- /#wrapper -->
-
-<!-- Main div -->
-<div id="viewer-div" class="flex-grow-1" style="width:100%;height:92%;">
-</div>
-
-<!-- Modal dialog "Metadata" -->
-<div class="modal fade" id="metadata-datafield" tabindex="-1" role="dialog" aria-labelledby="metadata-datafieldLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog modal-dialog-scrollable" style="width: 75%;"> <!-- width not working here...:( -->
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="metadata-datafieldLabel">Plate/Image metadata</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="input-group">
-        <button type="button" id="add-field-button" class="btn btn-info btn-sm ml-2" data-toggle="modal" data-target="#add-datafield">Add field</button>
-        <button type="button" id="delete-field-button" class="btn btn-info btn-sm ml-2" data-toggle="modal" data-target="#delete-datafield">Delete field</button>
-
-      </div>
-
-      <div id="meta-div-json"></div>
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-    </div>
+  <!-- Main div -->
+  <div id="viewer-div" class="flex-grow-1" style="width:100%;height:92%;">
   </div>
-</div>
 
-<!-- Modal dialog "Add database field ...." -->
-<div class="modal fade" id="add-datafield" tabindex="-1" role="dialog" aria-labelledby="add-datafieldLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="add-datafieldLabel">Add database field to this plate</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form>
-          <div class="form-group">
-            <label for="add-field-name" class="col-form-label">Field to add:</label>
-            <input type="text" class="form-control" id="add-field-name">
+  <!-- Modal dialog "Metadata" -->
+  <div class="modal fade" id="metadata-datafield" tabindex="-1" role="dialog" aria-labelledby="metadata-datafieldLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog modal-dialog-scrollable" style="width: 75%;">
+      <!-- width not working here...:( -->
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="metadata-datafieldLabel">Plate/Image metadata</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="input-group">
+            <button type="button" id="add-field-button" class="btn btn-info btn-sm ml-2" data-toggle="modal"
+              data-target="#add-datafield">Add field</button>
+            <button type="button" id="delete-field-button" class="btn btn-info btn-sm ml-2" data-toggle="modal"
+              data-target="#delete-datafield">Delete field</button>
+
           </div>
-          <div class="form-group">
-            <label for="add-field-text" class="col-form-label">Field data:</label>
-            <textarea class="form-control" rows="10" style="height:100%;" id="add-field-text"></textarea>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary">Add field to plate</button>
+
+          <div id="meta-div-json"></div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Modal dialog "Delete database field ...." -->
-<div class="modal" id="delete-datafield" tabindex="-1" role="dialog" aria-labelledby="delete-datafieldLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="delete-datafieldLabel">Delete database field from this plate</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form>
-          <div class="form-group">
-            <label for="delete-field-name" class="col-form-label">Field to delete:</label>
-            <select class="custom-select" id="delete-field-name" onchange="return false;">
-              <option value="Select...">Select...</option>
-              <option value="Reagents">Reagents</option>
-              <option value="Another field">Another field</option>
-            </select>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary">Delete field from plate</button>
-      </div>
-    </div>
-  </div>
-</div>
-
- <!-- Modal dialog "Errormessage.." -->
- <div class="modal" id="error-modal" tabindex="1" role="dialog" aria-labelledby="errormodalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="errormodalLabel">Error</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div id="errordiv" class="modal-body"></div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+  <!-- Modal dialog "Add database field ...." -->
+  <div class="modal fade" id="add-datafield" tabindex="-1" role="dialog" aria-labelledby="add-datafieldLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="add-datafieldLabel">Add database field to this plate</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="form-group">
+              <label for="add-field-name" class="col-form-label">Field to add:</label>
+              <input type="text" class="form-control" id="add-field-name">
+            </div>
+            <div class="form-group">
+              <label for="add-field-text" class="col-form-label">Field data:</label>
+              <textarea class="form-control" rows="10" style="height:100%;" id="add-field-text"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary">Add field to plate</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- end Modal dialogs -->
+  <!-- Modal dialog "Delete database field ...." -->
+  <div class="modal" id="delete-datafield" tabindex="-1" role="dialog" aria-labelledby="delete-datafieldLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="delete-datafieldLabel">Delete database field from this plate</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="form-group">
+              <label for="delete-field-name" class="col-form-label">Field to delete:</label>
+              <select class="custom-select" id="delete-field-name" onchange="return false;">
+                <option value="Select...">Select...</option>
+                <option value="Reagents">Reagents</option>
+                <option value="Another field">Another field</option>
+              </select>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary">Delete field from plate</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<!-- Bootstrap core JavaScript -->
-<script src="/static/theme/vendor/jquery/jquery.min.js"></script>
-<script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <!-- Modal dialog "Errormessage.." -->
+  <div class="modal" id="error-modal" tabindex="1" role="dialog" aria-labelledby="errormodalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="errormodalLabel">Error</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div id="errordiv" class="modal-body"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<!-- caman image filters - used in openseadragon -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
+  <!-- end Modal dialogs -->
 
-<!-- openseadragon image-viewer -->
-<script src="/static/openseadragon/openseadragon.min.js"></script>
+  <!-- Bootstrap core JavaScript -->
+  <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
+  <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-<!-- openseadragon scalebar -->
-<script src="/static/openseadragon-scalebar/openseadragon-scalebar.js"></script>
+  <!-- caman image filters - used in openseadragon -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
 
-<!-- filters including brightness filter-->
-<script src="/static/openseadragon-filtering/openseadragon-filtering.js"></script>
+  <!-- openseadragon image-viewer -->
+  <script src="/static/openseadragon/openseadragon.min.js"></script>
 
-<!-- json-viewer -->
-<script src="/static/json-viewer/json-viewer.js"></script>
+  <!-- openseadragon scalebar -->
+  <script src="/static/openseadragon-scalebar/openseadragon-scalebar.js"></script>
 
-<!-- jquery-bonzai -->
-<script src="/static/jquery-bonzai/jquery.bonsai.js"></script>
+  <!-- filters including brightness filter-->
+  <script src="/static/openseadragon-filtering/openseadragon-filtering.js"></script>
 
-<!-- range-slider jquery plugin-->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/js/ion.rangeSlider.min.js"></script>
+  <!-- json-viewer -->
+  <script src="/static/json-viewer/json-viewer.js"></script>
 
-<!-- this imagedb -->
-<script src='/static/main.js'></script>
+  <!-- jquery-bonzai -->
+  <script src="/static/jquery-bonzai/jquery.bonsai.js"></script>
+
+  <!-- range-slider jquery plugin-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/js/ion.rangeSlider.min.js"></script>
+
+  <!-- this imagedb -->
+  <script src='/static/main.js'></script>
 
 
-<!-- Body inline script -->
-<script>
+  <!-- Body inline script -->
+  <script>
+    // jQuery init methods
+    $(document).ready(function () {
 
-  // jQuery init methods
-  $(document).ready(function(){
+      // Create disabled slider to be updated later
+      $("#timepoint-slider").ionRangeSlider({
+        //skin: "modern",
+        type: "single",
+        min: 1,
+        max: 1,
+        from: 1,
+        disable: true,
+        onChange: function (data) {
+          elem = document.getElementById('timepoint-select');
+          let newVal = data.from - 1;
+          // Check first to avoid recursion
+          if (elem.selectedIndex != newVal) {
+            elem.selectedIndex = data.from - 1;
+            elem.onchange();
+          }
+        }
+      });
 
-    // Create disabled slider to be updated later
-    $("#timepoint-slider").ionRangeSlider({
-      //skin: "modern",
-      type: "single",
-      min: 1,
-      max: 1,
-      from: 1,
-      disable: true,
-      onChange: function (data) {
-        elem = document.getElementById('timepoint-select');
-        let newVal = data.from - 1;
-        // Check first to avoid recursion
-        if(elem.selectedIndex != newVal){
-          elem.selectedIndex = data.from - 1;
-          elem.onchange();
+    });
+  </script>
+
+  <!-- Init openseadragon -->
+  <script>
+    const viewer = OpenSeadragon({
+      id: "viewer-div",
+      prefixUrl: "/static/openseadragon/images/",
+      animationTime: 0.8, // default 1.2
+      zoomPerSecond: 1, // default: 1
+      zoomPerScroll: 1.7, // default: 1.2
+      minZoomImageRatio: 0.65, // default: 0.8
+      maxZoomPixelRatio: 10, // deault: 2
+      homeFillsViewer: true,
+      showNavigator: true, // deault: 2
+
+      tileSources: {
+        opacity: 1,
+        preload: true,
+        type: 'image',
+        url: '{{ image_url }}',
+        buildPyramid: false,
+        sequenceMode: true,
+        success: function (event) {
+          console.log("image-loaded from image-viewer.html");
+          console.log(viewer.world.getItemCount());
         }
       }
     });
 
-  });
+    /*
+      const viewer = OpenSeadragon({
+        id: "viewer-div",
+        prefixUrl: "/static/openseadragon/images/",
+        animationTime: 0.8, // default 1.2
+        zoomPerSecond: 1, // default: 1
+        zoomPerScroll: 1.7, // default: 1.2
+        minZoomImageRatio: 0.65, // default: 0.8
+        maxZoomPixelRatio: 10,  // deault: 2
+        homeFillsViewer: true,
+        showNavigator: true,  // deault: 2
+       // preserveViewport: true,
+        sequenceMode: true,
+        preload: true,
+        tileSources: [
+              {
+                  type: 'image',
+                  url:  '{{ image_url }}',
+                  buildPyramid: false
+              },
+              {
+                  type: 'image',
+                  url:  '{{ image_url }}',
+                  buildPyramid: false
+              },
+              {
+                  type: 'image',
+                  url:  '{{ image_url }}',
+                  buildPyramid: false
+              },
+        ]
+      });
+     */
 
-</script>
-
-<!-- Init openseadragon -->
-<script>
-  const viewer = OpenSeadragon({
-    id: "viewer-div",
-    prefixUrl: "/static/openseadragon/images/",
-    animationTime: 0.8, // default 1.2
-    zoomPerSecond: 1, // default: 1
-    zoomPerScroll: 1.7, // default: 1.2
-    minZoomImageRatio: 0.65, // default: 0.8
-    maxZoomPixelRatio: 10,  // deault: 2
-    homeFillsViewer: true,
-    showNavigator: true,  // deault: 2
-
-    tileSources: {
-      opacity: 1,
-      preload: true,
-      type: 'image',
-      url: '{{ image_url }}',
-      buildPyramid: false,
-      sequenceMode: true,
-      success: function (event) {
-        console.log("image-loaded from image-viewer.html");
-        console.log(viewer.world.getItemCount());
-      }
-    }
-  });
-
-/*
-  const viewer = OpenSeadragon({
-    id: "viewer-div",
-    prefixUrl: "/static/openseadragon/images/",
-    animationTime: 0.8, // default 1.2
-    zoomPerSecond: 1, // default: 1
-    zoomPerScroll: 1.7, // default: 1.2
-    minZoomImageRatio: 0.65, // default: 0.8
-    maxZoomPixelRatio: 10,  // deault: 2
-    homeFillsViewer: true,
-    showNavigator: true,  // deault: 2
-   // preserveViewport: true,
-    sequenceMode: true,
-    preload: true,
-    tileSources: [
-          {
-              type: 'image',
-              url:  '{{ image_url }}',
-              buildPyramid: false
-          },
-          {
-              type: 'image',
-              url:  '{{ image_url }}',
-              buildPyramid: false
-          },
-          {
-              type: 'image',
-              url:  '{{ image_url }}',
-              buildPyramid: false
-          },
-    ]
-  });
- */
-
-  viewer.scalebar({
+    viewer.scalebar({
       type: OpenSeadragon.ScalebarType.MICROSCOPY,
       pixelsPerMeter: 0, // Setting to 0 disables it
       minWidth: "75px",
@@ -475,27 +497,25 @@
       backgroundColor: "rgba(255, 255, 255, 0.5)",
       fontSize: "small",
       barThickness: 2
-  });
+    });
 
-  updateShowScalebar();
-
-
-  // Prevent Caman from caching the canvas because without this:
-  // 1. We have a memory leak
-  // 2. Non-caman filters in between 2 camans filters get ignored.
-  var caman = Caman;
-  caman.Store.put = function() {};
+    updateShowScalebar();
 
 
-  let plate = '{{ plate }}';
-  let timepoint = '{{ timepoint }}';
-  let well = '{{ well }}';
-  let site = '{{ site }}';
-  let channel = '{{ channel }}';
-  loadPlateFromViewer(plate, timepoint, well, site, channel);
+    // Prevent Caman from caching the canvas because without this:
+    // 1. We have a memory leak
+    // 2. Non-caman filters in between 2 camans filters get ignored.
+    var caman = Caman;
+    caman.Store.put = function () {};
 
 
-</script>
+    let plate = '{{ plate }}';
+    let timepoint = '{{ timepoint }}';
+    let well = '{{ well }}';
+    let site = '{{ site }}';
+    let channel = '{{ channel }}';
+    loadPlateFromViewer(plate, timepoint, well, site, channel);
+  </script>
 
 </body>
 
