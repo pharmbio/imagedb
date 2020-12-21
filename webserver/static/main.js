@@ -655,7 +655,6 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
   }
 
   // first create a new plate consisting of empty well-div's
-  // TODO fix for other plate sizes
   if (document.getElementById('plateTable') == null) {
     let plateLayout = plateObj.getPlateLayout();
     let table = createEmptyTable(plateLayout.rows, plateLayout.cols);
@@ -711,7 +710,6 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
     img.onload = function () {
       context.filter = 'brightness(' + brightness + ')'
       context.drawImage(img, 0, 0);
-      
     };
 
     // Create open Viewer click handlers

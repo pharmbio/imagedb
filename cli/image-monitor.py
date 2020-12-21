@@ -169,6 +169,11 @@ def insert_plate_acq(img_meta):
     try:
 
         imaged_timepoint = datetime(int(img_meta['date_year']), int(img_meta['date_month']), int(img_meta['date_day_of_month']))
+
+        # Set default channel_map_id and change it to new one if after a certain date
+        channel_map_id = 1
+        if imaged_timepoint >= datetime(2020,9,1):
+            channel_map_id = 2
         
         query = "INSERT INTO plate_acquisition(plate_barcode, imaged, microscope, channel_map_id, timepoint) VALUES(%s, %s, %s, %s, %s) RETURNING id"
         conn = get_connection()
@@ -176,7 +181,7 @@ def insert_plate_acq(img_meta):
         cursor.execute(query, (img_meta['plate'],
                                imaged_timepoint,
                                img_meta['microscope'],
-                               img_meta['channel_map_id'],
+                               channel_map_id,
                                img_meta['timepoint']
                                ))
 
