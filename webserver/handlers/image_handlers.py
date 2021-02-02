@@ -112,23 +112,4 @@ class ImageMergeHandlerGetURL(tornado.web.RequestHandler): #pylint: disable=abst
         self.finish({'results':'nothing here says anderd'})
 
 
-class ImageViewerHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
-
-    def get(self, plate, timepoint, well, site, channel, imageurl):
-
-        logging.debug('plate' + str(plate))
-        logging.debug('timepoint' + str(timepoint))
-        logging.debug('well' + str(well))
-        logging.debug('site' + str(site))
-        logging.debug('channel' + str(channel))
-        logging.debug(self.request.body_arguments)
-
-        self.render('image-viewer.html',
-                     image_url=imageurl,
-                     plate=plate,
-                     timepoint=timepoint,
-                     well=well,
-                     site=site,
-                     channel=channel)
-
 

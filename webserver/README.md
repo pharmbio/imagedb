@@ -2,9 +2,8 @@
 
 ```
 # Run with docker-compose
-
-# server devel
-WEBROOT=/home/anders/projekt/imagedb/webserver SHARE_IMAGEDB=/share/imagedb SHARE_MIKRO=/share/mikro docker-compose up
+# Development settings are in .env
+docker-compose up
 
 # Tunnel web
 

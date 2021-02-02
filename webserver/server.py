@@ -12,8 +12,7 @@ from handlers.query_handlers import (ListAllPlatesQueryHandler,
                                      GetPlateQueryHandler,
                                      ListImageAnalysesHandler)
 
-from handlers.image_handlers import (ImageViewerHandler,
-                                     ImageMergeHandler,
+from handlers.image_handlers import (ImageMergeHandler,
                                      ThumbImageMergeHandler)
 import settings as imgdb_settings
 
@@ -54,6 +53,25 @@ class IndexTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
                                   pipelinegui_static_results_dir=pipelinegui_static_results_dir,
                                   adminer_url=adminer_url)
 
+class ImageViewerTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
+
+    def get(self, plate, timepoint, well, site, channel, imageurl):
+
+        logging.debug('plate' + str(plate))
+        logging.debug('timepoint' + str(timepoint))
+        logging.debug('well' + str(well))
+        logging.debug('site' + str(site))
+        logging.debug('channel' + str(channel))
+        logging.debug(self.request.body_arguments)
+
+        self.render('image-viewer.html',
+                     image_url=imageurl,
+                     plate=plate,
+                     timepoint=timepoint,
+                     well=well,
+                     site=site,
+                     channel=channel)
+
 
 ROUTES = [
           (r'/static/(.*)', tornado.web.StaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), 'static')}),
@@ -62,7 +80,7 @@ ROUTES = [
           (r'/api/plate/(?P<plate>.+)', GetPlateQueryHandler),
           (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ImageMergeHandler),
           (r'/api/image-merge-thumb/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ThumbImageMergeHandler),
-          (r'/image-viewer/(?P<plate>.+)/tp/(?P<timepoint>.+)/well/(?P<well>.+)/site/(?P<site>.+)/ch/(?P<channel>.+)/url/(?P<imageurl>.+)', ImageViewerHandler),
+          (r'/image-viewer/(?P<plate>.+)/tp/(?P<timepoint>.+)/well/(?P<well>.+)/site/(?P<site>.+)/ch/(?P<channel>.+)/url/(?P<imageurl>.+)', ImageViewerTemplateHandler),
           (r'/bstest.html', DefaultTemplateHandler),
           (r'/index.html', IndexTemplateHandler),
           (r'/', IndexTemplateHandler),
