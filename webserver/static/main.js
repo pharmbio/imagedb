@@ -397,7 +397,7 @@ function redrawPlateAndViewer(clearFirst = false) {
   if (document.getElementById('viewer-div')) {
     redrawImageViewer(clearFirst);
   }
-  if (document.getElementById('table-div')) {
+  if (document.getElementById('plate-div')) {
     redrawPlate(clearFirst);
   }
 }
@@ -549,27 +549,6 @@ function openViewer(well_name) {
 
 }
 
-function openViewerInMainDiv(imageURL) {
-  let container = document.getElementById('table-div');
-  removeChildren(container);
-
-  var viewer = OpenSeadragon({
-    id: "table-div",
-    prefixUrl: "/static/openseadragon/images/",
-    animationTime: 0.5, // default 1.2
-    zoomPerSecond: 1, // default: 1
-    zoomPerScroll: 1.4, // default: 1.2
-    minZoomImageRatio: 0.9, // default: 0.8
-    maxZoomPixelRatio: 10,  // deault: 2
-    tileSources: {
-      type: 'image',
-      url: imageURL,
-      buildPyramid: false
-    }
-  });
-
-}
-
 // Redraws currently 
 function redrawPlate(clearFirst = false) {
   // get plate to draw
@@ -645,7 +624,7 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
 
   console.log("plateObj", plateObj);
 
-  let container = document.getElementById('table-div');
+  let container = document.getElementById('plate-div');
 
   // If for example a new plate have been selected
   // all old well_images should be removed since plate layout might change
@@ -728,7 +707,7 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
   })
 
   // Activate tooltips (all that have tooltip attribute within the resultlist)
-  $('#table-div [data-toggle="tooltip"]').tooltip({
+  $('#plate-div [data-toggle="tooltip"]').tooltip({
     trigger : 'hover',
     boundary: 'window',
     // onBeforeShow: getWellMeta()
