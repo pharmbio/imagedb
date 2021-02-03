@@ -1113,6 +1113,40 @@ function animateCbxChanged(){
 
 
 
+function viewerBrightnessSelectChanged(){
+  redrawImageViewer();
+}
+
+function viewerTimepointSelectChanged(){
+  updatePlateAcqLabel(getPlate());
+  redrawImageViewer(false);
+}
+
+function viewerSiteSelectChanged(){
+  redrawImageViewer();
+}
+
+function viewerChannelSelectChanged(){
+  redrawImageViewer();
+}
+
+function viewerWellSelectChanged(){
+  redrawImageViewer();
+}
+
+function viewerAnimationSpeedSelectChanged(){
+  updateAnimationSpeed();
+}
+
+function viewerAnimateCbxChanged(){
+  toggleAnimation();
+}
+
+function viewerScalebarCbxChanged(){
+  updateShowScalebar();
+}
+
+
 /*
   Code from pipelinegui
 */

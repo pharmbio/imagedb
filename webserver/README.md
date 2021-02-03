@@ -5,8 +5,7 @@
 # Development settings are in .env
 docker-compose up
 
-# Tunnel web
-
+https://imagedb.devserver.pharm.io
 
 # Build dockerfile
 docker build -t pharmbio/imagedb-webserver .

@@ -108,7 +108,7 @@
         <div id="plate-tool-div" class="container-fluid mt-2 mb-2">
 
           <!-- Toolbar form -->
-          <form id='plate-tool-form' onsubmit='redrawImageViewer(); return false;'>
+          <form id='viewer-tool-form'>
 
             <div class="input-group">
 
@@ -128,16 +128,14 @@
               <div class="input-group-prepend ml-2">
                 <label class="input-group-text" for="well-select">Well</label>
               </div>
-              <select class="custom-select" style="width: 75px;" id="well-select"
-                onchange="redrawImageViewer(); return false;">
+              <select class="custom-select" style="width: 75px;" id="well-select">
               </select>
 
               <!-- Timepoint selector -->
               <div class="input-group-prepend ml-2">
                 <label class="input-group-text" for="timepoint-select">Timepoint</label>
               </div>
-              <select class="custom-select" style="width: 60px;" id="timepoint-select"
-                onchange="return redrawImageViewer(false);">
+              <select class="custom-select" style="width: 60px;" id="timepoint-select">
               </select>
 
               <!-- Timepoint slider -->
@@ -148,8 +146,7 @@
               <!-- Timepoint animation -->
               <div class="form-group form-check" style="margin-bottom: 0px;">
                 <div class="col-md-4">
-                  <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" disabled
-                    onchange="toggleAnimation(); return false;">
+                  <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" disabled>
                   <label class="form-check-label" style="margin-top:0.8rem;" for="animate-cbx">Animate</label>
                 </div>
               </div>
@@ -158,8 +155,7 @@
               <div class="input-group-prepend ml-2">
                 <label class="input-group-text" for="animation-speed-select">Anim. speed</label>
               </div>
-              <select class="custom-select" style="width: 50px;" id="animation-speed-select"
-                onchange="updateAnimationSpeed(); return false;">
+              <select class="custom-select" style="width: 50px;" id="animation-speed-select">
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="3">3</option>
@@ -175,24 +171,21 @@
               <div class="input-group-prepend ml-2">
                 <label class="input-group-text" for="site-select">Site</label>
               </div>
-              <select class="custom-select" style="width: 50px;" id="site-select"
-                onchange="redrawImageViewer(); return false;">
+              <select class="custom-select" style="width: 50px;" id="site-select">
               </select>
 
               <!-- Channel selector -->
               <div class="input-group-prepend ml-2 ">
                 <label class="input-group-text" for="channel-select">Channel</label>
               </div>
-              <select class="custom-select" style="width: 75px;" id="channel-select"
-                onchange="redrawImageViewer(); return false;">
+              <select class="custom-select" style="width: 75px;" id="channel-select">
               </select>
 
               <!-- Brightness selector -->
               <div class="input-group-prepend ml-2">
                 <label class="input-group-text" for="brightness-select">Brightness</label>
               </div>
-              <select class="custom-select" style="width: 60px;" id="brightness-select"
-                onchange="redrawImageViewer(); return false;">
+              <select class="custom-select" style="width: 60px;" id="brightness-select">
                 <option value="10">10%</option>
                 <option value="50">50%</option>
                 <option selected value="100">100%</option>
@@ -213,11 +206,9 @@
                 <option value="5000">5000%</option>
               </select>
 
-
               <!-- Scalebar -->
               <div class="form-group form-check" style="margin-bottom: 0px;margin-left: 5px">
-                <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="scalebar-cbx"
-                  onchange="updateShowScalebar(); return false;">
+                <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="scalebar-cbx">
                 <label class="form-check-label" style="margin-top:0.8rem;" for="scalebar-cbx">Scalebar</label>
               </div>
 
@@ -231,16 +222,6 @@
         <!-- Navbar menues -->
 
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
-
-            <button type="button" id="openmeta-button" class="btn btn-info" data-toggle="modal"
-              data-target="#metadata-datafield">Metadata</button>
-
-          </ul>
-        </div>
-
-
       </nav>
 
     </div>
@@ -252,98 +233,6 @@
 
   <!-- Main div -->
   <div id="viewer-div" class="flex-grow-1" style="width:100%;height:92%;">
-  </div>
-
-  <!-- Modal dialog "Metadata" -->
-  <div class="modal fade" id="metadata-datafield" tabindex="-1" role="dialog" aria-labelledby="metadata-datafieldLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-dialog modal-dialog-scrollable" style="width: 75%;">
-      <!-- width not working here...:( -->
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="metadata-datafieldLabel">Plate/Image metadata</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="input-group">
-            <button type="button" id="add-field-button" class="btn btn-info btn-sm ml-2" data-toggle="modal"
-              data-target="#add-datafield">Add field</button>
-            <button type="button" id="delete-field-button" class="btn btn-info btn-sm ml-2" data-toggle="modal"
-              data-target="#delete-datafield">Delete field</button>
-
-          </div>
-
-          <div id="meta-div-json"></div>
-
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal dialog "Add database field ...." -->
-  <div class="modal fade" id="add-datafield" tabindex="-1" role="dialog" aria-labelledby="add-datafieldLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="add-datafieldLabel">Add database field to this plate</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <form>
-            <div class="form-group">
-              <label for="add-field-name" class="col-form-label">Field to add:</label>
-              <input type="text" class="form-control" id="add-field-name">
-            </div>
-            <div class="form-group">
-              <label for="add-field-text" class="col-form-label">Field data:</label>
-              <textarea class="form-control" rows="10" style="height:100%;" id="add-field-text"></textarea>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary">Add field to plate</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal dialog "Delete database field ...." -->
-  <div class="modal" id="delete-datafield" tabindex="-1" role="dialog" aria-labelledby="delete-datafieldLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="delete-datafieldLabel">Delete database field from this plate</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <form>
-            <div class="form-group">
-              <label for="delete-field-name" class="col-form-label">Field to delete:</label>
-              <select class="custom-select" id="delete-field-name" onchange="return false;">
-                <option value="Select...">Select...</option>
-                <option value="Reagents">Reagents</option>
-                <option value="Another field">Another field</option>
-              </select>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary">Delete field from plate</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Modal dialog "Errormessage.." -->
@@ -401,6 +290,16 @@
     // jQuery init methods
     $(document).ready(function () {
 
+      // Add event listeners
+      $("#brightness-select").change(viewerBrightnessSelectChanged);
+      $("#timepoint-select").change(viewerTimepointSelectChanged);
+      $("#site-select").change(viewerSiteSelectChanged);
+      $("#channel-select").change(viewerChannelSelectChanged);
+      $("#well-select").change(viewerWellSelectChanged);
+      $("#animation-speed-select").change(viewerAnimationSpeedSelectChanged);
+      $("#animate-cbx").change(viewerAnimateCbxChanged);
+      $("#scalebar-cbx").change(viewerScalebarCbxChanged);
+
       // Create disabled slider to be updated later
       $("#timepoint-slider").ionRangeSlider({
         //skin: "modern",
@@ -410,7 +309,7 @@
         from: 1,
         disable: true,
         onChange: function (data) {
-          elem = document.getElementById('timepoint-select');
+          elem = document.getElementById('viewer-timepoint-select');
           let newVal = data.from - 1;
           // Check first to avoid recursion
           if (elem.selectedIndex != newVal) {
@@ -421,10 +320,8 @@
       });
 
     });
-  </script>
 
-  <!-- Init openseadragon -->
-  <script>
+    // Init openseadragon
     const viewer = OpenSeadragon({
       id: "viewer-div",
       prefixUrl: "/static/openseadragon/images/",
@@ -499,6 +396,7 @@
       barThickness: 2
     });
 
+    // Update scalebar size etc
     updateShowScalebar();
 
 
