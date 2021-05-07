@@ -714,6 +714,150 @@ function drawPlate(plateObj, timepoint, site, clearFirst) {
   });
 }
 
+function old_createEmptyTable(rows, cols) {
+  let table = document.createElement('table');
+  table.id = 'plateTable';
+  table.className = 'plateTable';
+
+  // First add header row
+  let headerRow = document.createElement('tr');
+  for (let col = 1; col <= cols; col++) {
+    // If first col then add empty cell before (to match column headers)
+    if (col === 1) {
+      let empty_cell = document.createElement('td');
+      empty_cell.innerHTML = "";
+      empty_cell.className = 'headerCell';
+      headerRow.appendChild(empty_cell);
+    }
+    let row = 0;
+    let well_name = getWellName(row, col);
+    let header_cell = document.createElement('td');
+    header_cell.innerHTML = well_name.substring(1);
+    header_cell.className = 'headerCell';
+    headerRow.appendChild(header_cell);
+  }
+  table.appendChild(headerRow);
+
+  // Now add rows and columns
+  for (let row = 0; row < rows; row++) {
+    let rowElement = document.createElement('tr');
+    for (let col = 1; col <= cols; col++) {
+
+      let well_name = getWellName(row, col);
+
+      // Add column header before first column cell
+      if (col === 1) {
+        let header_cell = document.createElement('td');
+        header_cell.innerHTML = well_name.charAt(0);
+        header_cell.className = 'headerCell';
+        rowElement.appendChild(header_cell);
+      }
+
+      let well_cell = document.createElement('td');
+      well_cell.id = well_name;
+      well_cell.className = 'wellCell';
+      rowElement.appendChild(well_cell);
+    }
+    table.appendChild(rowElement);
+  }
+
+  return table;
+}
+
+function old_drawPlate(plateObj, timepoint, site, clearFirst) {
+
+  console.log("plateObj", plateObj);
+
+  let container = document.getElementById('plate-div');
+
+  // If for example a new plate have been selected
+  // all old well_images should be removed since plate layout might change
+  // But will not get cleared first if it is an animation
+  if (clearFirst) {
+    removeChildren(container);
+  }
+
+  // first create a new plate consisting of empty well-div's
+  if (document.getElementById('plateTable') == null) {
+    let plateLayout = plateObj.getPlateLayout();
+    let table = createEmptyTable(plateLayout.rows, plateLayout.cols);
+    container.appendChild(table);
+  }
+
+  console.log(container);
+  console.log('done create div');
+
+  // now populate well-div's with the wells of the plateobj
+  let wells = plateObj.getWells(timepoint);
+  Object.keys(wells).forEach(well_key => {
+
+    let well = wells[well_key];
+    let channels = plateObj.getChannels(timepoint, well_key, site);
+    let well_cell = document.getElementById(well_key);
+
+    // Try to get existing canvas - if it doesn't exist create it
+    // this way we are only drawing images on top of existing images
+    // and animation becomes smooth
+    let wellCanvas = document.getElementById('wellCanvas' + well_key);
+    if (wellCanvas == null) {
+
+      wellCanvas = document.createElement('canvas');
+      wellCanvas.className = 'wellCanvas';
+      wellCanvas.id = 'wellCanvas' + well_key;
+
+      // TODO fix resizing of canvas
+      // Canvas size should not be set with css-style
+      wellCanvas.width = 100;
+      wellCanvas.height = 100;
+      // wellCanvas.style.border = "2px solid #cfcfcf";
+
+      well_cell.appendChild(wellCanvas);
+    }
+    let zoom = getSelectedZoomValue();
+    let scale = zoom/100;
+
+    wellCanvas.width = 100 * scale;
+    wellCanvas.height = 100 * scale;
+
+    let context = wellCanvas.getContext('2d');
+    let url = createMergeThumbImgURLFromChannels(channels);
+    let img = document.createElement('img');
+    img.src = url;
+    img.className = 'wellThumbImg';
+    img.id = 'wellThumbImg' + well_key;
+
+    // Get filter values
+    let brightness = getSelectedBrightnessValue() / 100;    
+
+    //wellThumbImg
+    img.onload = function () {
+      context.filter = 'brightness(' + brightness + ')'
+      context.drawImage(img, 0, 0);
+    };
+
+    // Create open Viewer click handlers
+    wellCanvas.onclick = function () {
+      openViewer(well_key);
+    }
+
+    // Add tooltip when hoovering an image
+    wellCanvas.setAttribute("data-toggle", "tooltip");
+    wellCanvas.setAttribute("data-placement", "right"); // Placement has to be off element otherwise flicker
+    wellCanvas.setAttribute("data-delay", "0");
+    wellCanvas.setAttribute("data-animation", false);
+    wellCanvas.setAttribute("data-html", true);
+    wellCanvas.title = plateObj.getFormattedWellMeta(timepoint, well_key);
+
+  })
+
+  // Activate tooltips (all that have tooltip attribute within the resultlist)
+  $('#plate-div [data-toggle="tooltip"]').tooltip({
+    trigger : 'hover',
+    boundary: 'window',
+    // onBeforeShow: getWellMeta()
+  });
+}
+
 
 function getSelectedTimepointIndex() {
   let elem = document.getElementById('timepoint-select');
