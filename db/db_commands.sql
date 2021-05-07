@@ -60,10 +60,13 @@ CREATE TABLE plate_acquisition (
   imaged          timestamp,
   microscope      text,
   channel_map_id  int,
-  timepoint       int
+  timepoint       int,
+  folder          text
 );
 CREATE INDEX ix_plate_acquisition_plate_barcode ON plate_acquisition(plate_barcode);
 CREATE INDEX ix_plate_acquisition_channel_map_id ON plate_acquisition(channel_map_id);
+CREATE INDEX ix_plate_acquisition_microscope ON plate_acquisition(microscope);
+CREATE INDEX ix_plate_acquisition_folder ON plate_acquisition(folder);
 
 
 -- well
