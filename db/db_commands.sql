@@ -39,6 +39,7 @@ CREATE INDEX  ix_images_well ON images(well);
 CREATE INDEX  ix_images_site ON images(site);
 CREATE INDEX  ix_images_channel ON images(channel);
 CREATE INDEX  ix_images_path ON images(path);
+CREATE INDEX  ix_images_project_plate_barcode ON images(project, plate_barcode);
 
 DROP TABLE IF EXISTS plate CASCADE;
 CREATE TABLE plate (
