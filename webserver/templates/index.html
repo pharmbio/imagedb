@@ -325,25 +325,19 @@
               Plate:
             </label>
 
-            <!-- Plate acq label -->
-            <label id="plate-acq-label" class="input-group-text"
-              style="width: 100px;overflow: hidden;text-overflow: ellipsis; white-space: nowrap;">
-              Acq-id:
-            </label>
-
-            <!-- Timepoint selector -->
+            <!-- Acquisition selector -->
             <div class="input-group-prepend ml-2">
-              <label class="input-group-text" for="timepoint-select">Timepoint</label>
+              <label class="input-group-text" for="acquisition-select">Acq-id:</label>
             </div>
-            <select class="custom-select" style="width: 60px;" id="timepoint-select">
+            <select class="custom-select" style="width: 60px;" id="acquisition-select">
             </select>
 
-            <!-- Timepoint slider -->
+            <!-- Acquisition slider -->
             <div id="slider" class="ml-2" style="width:100px;height:20px;hidden:true;">
-              <input type="text" id="timepoint-slider" name="" value="" style="width:0px;" />
+              <input type="text" id="acquisition-slider" name="" value="" style="width:0px;" />
             </div>
 
-            <!-- Timepoint animation -->
+            <!-- Acquisition animation -->
             <div class="form-group form-check" style="margin-bottom: 0px;">
               <div class="col-md-4">
                 <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" disabled">
@@ -478,7 +472,7 @@
     window.PIPELINEGUI_STATIC_RESULTS_DIR = '{{pipelinegui_static_results_dir}}'
 
     // Create an empty table to start with - just because it looks good!
-    let table = createEmptyTable(8, 12);
+    let table = createEmptyTable(8, 12, [1, 2, 3, 4]);
     let container = document.getElementById('plate-div');
     container.appendChild(table);
 
@@ -486,20 +480,20 @@
     $(document).ready(function () {
 
       // Create disabled slider to be updated later
-      $("#timepoint-slider").ionRangeSlider({
+      $("#acquisition-slider").ionRangeSlider({
         //skin: "modern",
         type: "single",
-        min: 1,
-        max: 1,
-        from: 1,
+        min: 0,
+        max: 0,
+        from: 0,
         disable: true,
         onChange: function (data) {
-          elem = document.getElementById('timepoint-select');
+          elem = document.getElementById('acquisition-select');
           let newVal = data.from - 1;
           // Check first to avoid recursion
           if (elem.selectedIndex != newVal) {
             elem.selectedIndex = data.from - 1;
-            elem.onchange();
+            //elem.onchange();
           }
         }
       });
@@ -510,7 +504,7 @@
       // Add event listeners
       $("#zoom-select").change(zoomSelectChanged);
       $("#brightness-select").change(brightnessSelectChanged);
-      $("#timepoint-select").change(timepointSelectChanged);
+      $("#acquisition-select").change(acquisitionSelectChanged);
       $("#site-select").change(siteSelectChanged);
       $("#channel-select").change(channelSelectChanged);
       $("#animation-speed-select").change(animationSpeedSelectChanged);

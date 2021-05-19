@@ -77,7 +77,7 @@ def get_plate(plate_name):
                     image.update( {'path': new_value})
 
         # create a nested json object of all images.
-        # A plate object containing all timepoints. The timpoints containing all wells and then
+        # A plate object containing all plate_acquisitions. The plate_acquisitions containing all wells and then
         # all sites, and then channels with the image path
         plates_dict = {}
         for image in resultlist:

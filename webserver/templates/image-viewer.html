@@ -118,12 +118,6 @@
                 Plate:
               </label>
 
-              <!-- Plate acq label -->
-              <label id="plate-acq-label" class="input-group-text"
-                style="width: 100px;overflow: hidden;text-overflow: ellipsis; white-space: nowrap;">
-                Acq-id:
-              </label>
-
               <!-- Well selector -->
               <div class="input-group-prepend ml-2">
                 <label class="input-group-text" for="well-select">Well</label>
@@ -131,19 +125,19 @@
               <select class="custom-select" style="width: 75px;" id="well-select">
               </select>
 
-              <!-- Timepoint selector -->
+              <!-- Acquisition selector -->
               <div class="input-group-prepend ml-2">
-                <label class="input-group-text" for="timepoint-select">Timepoint</label>
+                <label class="input-group-text" for="acquisition-select">Acq-id:</label>
               </div>
-              <select class="custom-select" style="width: 60px;" id="timepoint-select">
+              <select class="custom-select" style="width: 60px;" id="acquisition-select">
               </select>
 
-              <!-- Timepoint slider -->
+              <!-- Acquisition slider -->
               <div id="slider" class="ml-2" style="width:100px;height:20px;hidden:true;">
-                <input type="text" id="timepoint-slider" name="" value="" style="width:0px;" />
+                <input type="text" id="acquisition-slider" name="" value="" style="width:0px;" />
               </div>
 
-              <!-- Timepoint animation -->
+              <!-- Acquisition animation -->
               <div class="form-group form-check" style="margin-bottom: 0px;">
                 <div class="col-md-4">
                   <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" disabled>
@@ -292,7 +286,7 @@
 
       // Add event listeners
       $("#brightness-select").change(viewerBrightnessSelectChanged);
-      $("#timepoint-select").change(viewerTimepointSelectChanged);
+      $("#acquisition-select").change(viewerAcquisitionSelectChanged);
       $("#site-select").change(viewerSiteSelectChanged);
       $("#channel-select").change(viewerChannelSelectChanged);
       $("#well-select").change(viewerWellSelectChanged);
@@ -301,7 +295,7 @@
       $("#scalebar-cbx").change(viewerScalebarCbxChanged);
 
       // Create disabled slider to be updated later
-      $("#timepoint-slider").ionRangeSlider({
+      $("#acquisition-slider").ionRangeSlider({
         //skin: "modern",
         type: "single",
         min: 1,
@@ -309,7 +303,7 @@
         from: 1,
         disable: true,
         onChange: function (data) {
-          elem = document.getElementById('viewer-timepoint-select');
+          elem = document.getElementById('viewer-acquisition-select');
           let newVal = data.from - 1;
           // Check first to avoid recursion
           if (elem.selectedIndex != newVal) {
@@ -408,11 +402,11 @@
 
 
     let plate = '{{ plate }}';
-    let timepoint = '{{ timepoint }}';
+    let acquisition = '{{ acquisition }}';
     let well = '{{ well }}';
     let site = '{{ site }}';
     let channel = '{{ channel }}';
-    loadPlateFromViewer(plate, timepoint, well, site, channel);
+    loadPlateFromViewer(plate, acquisition, well, site, channel);
   </script>
 
 </body>

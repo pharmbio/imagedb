@@ -5,16 +5,16 @@ class Plate:
 
     def __init__(self, id):
         self.id = id
-        self.timepoints = dict()
+        self.acquisitions = dict()
 
     def add_data(self, image_meta):
-        timepoint_id = image_meta['timepoint']
+        plate_acquisition_id = image_meta['plate_acquisition_id']
         # get or create a new object with this key
-        timepoint = self.timepoints.setdefault(timepoint_id, Timepoint(timepoint_id))
-        timepoint.add_data(image_meta)
+        plate_acquisition = self.acquisitions.setdefault(plate_acquisition_id, PlateAcquisition(plate_acquisition_id))
+        plate_acquisition.add_data(image_meta)
 
 
-class Timepoint:
+class PlateAcquisition:
 
     def __init__(self, id):
         self.id = id
