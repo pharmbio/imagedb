@@ -76,7 +76,12 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
 
         # rewrite paths to thumbs
         for (key, value) in channels.items():
+            logging.debug(value)
+            logging.debug(str(value))
+            logging.debug(str(value).strip(".tif"))
+            logging.debug(str(value).strip(".tif") + ".png")
             new_value = imgdb_settings.IMAGES_THUMB_FOLDER + "/" + str(value).strip(".tif") + ".png"
+            logging.debug(new_value)
             channels.update({key: new_value})
 
         logging.debug(channels)
