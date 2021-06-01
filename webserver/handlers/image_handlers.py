@@ -62,6 +62,10 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
         """Handles GET requests.
         """
 
+        logging.debug(ch1)
+        logging.debug(ch2)
+        logging.debug(ch3)
+
         channels = {'1': ch1}
 
         if not ch2 == 'undefined':
