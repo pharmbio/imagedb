@@ -62,10 +62,6 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
         """Handles GET requests.
         """
 
-        logging.debug(ch1)
-        logging.debug(ch2)
-        logging.debug(ch3)
-
         channels = {'1': ch1}
 
         if not ch2 == 'undefined':
@@ -76,12 +72,13 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
 
         # rewrite paths to thumbs
         for (key, value) in channels.items():
-            logging.debug(value)
-            logging.debug(str(value))
-            logging.debug(str(value).strip(".tif"))
-            logging.debug(str(value).strip(".tif") + ".png")
-            new_value = imgdb_settings.IMAGES_THUMB_FOLDER + "/" + str(value).strip(".tif") + ".png"
-            logging.debug(new_value)
+ 
+            # To be replaced with "removesuffix in python 3.9"
+            if value.endswith('.tif'):
+                value = value[:-(len(('.tif'))]
+                value = value + ".png"
+
+            new_value = imgdb_settings.IMAGES_THUMB_FOLDER + "/" + value
             channels.update({key: new_value})
 
         logging.debug(channels)
