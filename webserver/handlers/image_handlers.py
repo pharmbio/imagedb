@@ -75,7 +75,7 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
  
             # To be replaced with "removesuffix in python 3.9"
             if value.endswith('.tif'):
-                value = value[:-(len('.tif'))]
+                value = value[:-4)]
                 value = value + ".png"
 
             new_value = imgdb_settings.IMAGES_THUMB_FOLDER + "/" + value
