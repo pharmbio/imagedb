@@ -25,7 +25,7 @@ class Plate {
     return this.plateObj.id;
   }
 
-  getPlateLayout() {
+  getPlateLayout(siteNames) {
     // Get last well and see if size is within 96 plate limit
     // if not return 384 size specs
     let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0];
@@ -34,7 +34,7 @@ class Plate {
     let lastWellName = lastWell.id;
     let rowCount = getRowIndexFrowWellName(lastWellName);
     let colCount = getColIndexFrowWellName(lastWellName);
-    let siteNames = this.getAvailableSites();
+    //let siteNames = this.getAvailableSites();
 
     if (rowCount > 8 || colCount > 12) {
       return { "rows": 16, "cols": 24, "sites": siteNames };
@@ -423,7 +423,10 @@ function redrawImageViewer(clearFirst = true) {
   let acquisitionIndex = getSelectedAcquisitionIndex();
   let acquisition = getSelectedAcquisition();
   console.log("acquisition", acquisition);
-  let site = getSelectedSiteIndex();
+  
+  // Image viewer hack since it only takes a single site
+  let site = getSelectedSite()[0];
+
   console.log("site", site);
   let well_name = getSelectedWell();
   console.log("well_name", well_name);
@@ -500,9 +503,13 @@ function redrawImageViewer(clearFirst = true) {
 function loadAcquisitionImagesIntoViewer(skipIndex) {
 
   // get what to redraw
-  let site = getSelectedSiteIndex();
   let well_name = getSelectedWell();
   let tpCount = getLoadedPlate().countAcquisitions();
+
+  // Image viewer hack since it only takes a single site
+  let site = getSelectedSite()[0];
+
+
 
   // First odd ones
   for (let acquisitionIndex = 0; acquisitionIndex < tpCount; acquisitionIndex = acquisitionIndex + 1) {
@@ -569,7 +576,7 @@ function redrawPlate(clearFirst = false) {
   let acquisition = getSelectedAcquisition();
 
   // get site to draw
-  let site = getSelectedSiteIndex();
+  let site = getSelectedSite();
 
   drawPlate(plateObj, acquisition, site, clearFirst);
 
@@ -723,7 +730,7 @@ function createEmptyTable_old(rows, cols) {
   return table;
 }
 
-function drawPlate(plateObj, acquisition, singleSite, clearFirst) {
+function drawPlate(plateObj, acquisition, sites, clearFirst) {
 
   console.log("plateObj", plateObj);
   console.log("clearFirst", clearFirst);
@@ -733,19 +740,25 @@ function drawPlate(plateObj, acquisition, singleSite, clearFirst) {
   // If for example a new plate have been selected
   // all old well_images should be removed since plate layout might change
   // But will not get cleared first if it is an animation
+  
+  // TODO change this hack for smoother animation
+  clearFirst = true;
   if (clearFirst) {
     removeChildren(container);
   }
 
+  let siteNames = sites; // plateObj.getAvailableSites();
+
   // first create a new plate consisting of empty well-div's
   if (document.getElementById('plateTable') == null) {
-    let plateLayout = plateObj.getPlateLayout();
+    let plateLayout = plateObj.getPlateLayout(siteNames);
     let table = createEmptyTable(plateLayout.rows, plateLayout.cols, plateLayout.sites);
     container.appendChild(table);
+    console.log('done create div');
   }
 
   console.log(container);
-  console.log('done create div');
+  
   console.log("acquisition", acquisition);
 
   // now populate well-div's with the wells of the plateobj
@@ -753,9 +766,6 @@ function drawPlate(plateObj, acquisition, singleSite, clearFirst) {
   Object.keys(wells).forEach(well_key => {
     let well = wells[well_key];
     
-
-    let siteNames = plateObj.getAvailableSites();
-
     let nSites = siteNames.length;
 
     for (let nSite = 0; nSite < nSites; nSite++) {
@@ -764,7 +774,8 @@ function drawPlate(plateObj, acquisition, singleSite, clearFirst) {
       let site_key = well_key + "_s" + site_name;
       let site_cell = document.getElementById(site_key);
 
-
+        console.log("siteNames", siteNames);
+        console.log("site_name", site_name);
         let channels = plateObj.getChannels(acquisition, well_key, site_name);
 
         // Try to get existing canvas - if it doesn't exist create it
@@ -1059,6 +1070,11 @@ function getSelectedSiteIndex() {
   return parseInt(elem.options[elem.selectedIndex].value);
 }
 
+function getSelectedSite() {
+  let elem = document.getElementById('site-select');
+  return JSON.parse(elem.options[elem.selectedIndex].value);
+}
+
 function getSelectedWell() {
   let elem = document.getElementById('well-select');
   return elem.options[elem.selectedIndex].value;
@@ -1222,7 +1238,7 @@ function setWellSelection(well) {
 
 function setSiteSelection(site) {
   let elemSelect = document.getElementById('site-select');
-  elemSelect.selectedIndex = site - 1;
+  elemSelect.selectedIndex = getSelectIndexFromSelectValue(elemSelect, site);
 }
 
 function setChannelSelection(channel) {
@@ -1253,8 +1269,16 @@ function updateSiteSelect(plateObj) {
 
   // Loop through the siteNames array
   for (let name of siteNames) {
-    elemSelect.add(new Option(name, name));
+    option_json = "[" + name + "]";
+    elemSelect.add(new Option(option_json, option_json));
   }
+
+  // finally add an "all" option
+  let allOption = JSON.stringify(siteNames)
+  elemSelect.add(new Option(allOption, allOption));
+
+
+
 }
 
 function updatePlateNameLabel(plate_name) {
