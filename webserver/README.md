@@ -1,4 +1,4 @@
-# webserver - imagedb
+# webserver/GUI - imagedb
 
 ## Features
 - The main purpose of the Image database GUI component is to easily inspect and get an overview of plate images.
