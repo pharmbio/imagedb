@@ -68,7 +68,7 @@ def get_all_image_files(path):
 
     all_files = []
     for file in os.listdir(path):
-        if file.lower().endswith(".tif") or file.lower().endswith(".tiff"):
+        if file.lower().endswith(".tif") or file.lower().endswith(".png") or file.lower().endswith(".tiff"):
             absolute_file = os.path.join(path, file)
             all_files.append(absolute_file)
 
@@ -80,11 +80,10 @@ def get_all_image_files(path):
 def get_last_modified(path):
     return
 
-def make_thumb_path(image, thumbdir, image_root_dir):
-    subpath = str(image).replace(image_root_dir, "")
-    # Need to strip / otherwise can not join as subpath
-    subpath = subpath.strip("/")
-    thumb_path = os.path.join(thumbdir, subpath)
+def make_thumb_path(image, thumbdir):
+    # need to strip / otherwise path can not be joined
+    image_subpath = image.strip("/")
+    thumb_path = os.path.join(thumbdir, image_subpath)
     return thumb_path
 
 def insert_meta_into_db(img_meta):
@@ -269,8 +268,7 @@ def add_plate_to_db(images, latest_filedate_to_test):
 
                     # create thumb image
                     thumb_path = make_thumb_path(image,
-                                                 imgdb_settings.IMAGES_THUMB_FOLDER,
-                                                 imgdb_settings.IMAGES_ROOT_FOLDER)
+                                                 imgdb_settings.IMAGES_THUMB_FOLDER)
                     logging.debug(thumb_path)
 
                     # Only create thumb if not exists already
@@ -342,7 +340,6 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
         for proj_root_dir in proj_root_dirs:
 
             # Get all subdirs (these are the top plate dir)
-            #proj_root_dir = os.path.join(imgdb_settings.IMAGES_ROOT_FOLDER, proj_root_dir_name)
             logging.debug("proj_root_dir" + str(proj_root_dir))
             subdirs = get_subdirs_recursively_no_thumb_dir(proj_root_dir)
 

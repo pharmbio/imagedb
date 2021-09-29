@@ -69,13 +69,6 @@ def get_plate(plate_name):
 
         logging.debug(str(resultlist))
 
-        # Before returning (to web) delete the for user hidden "root part" IMAGES_ROOT_FOLDER part, e.g. /share/mikro/IMX.....
-        for image in resultlist:
-            for key, value in image.items():
-                if key == "path":
-                    new_value = str(value).replace( imgdb_settings.IMAGES_ROOT_FOLDER , "")
-                    image.update( {'path': new_value})
-
         # create a nested json object of all images.
         # A plate object containing all plate_acquisitions. The plate_acquisitions containing all wells and then
         # all sites, and then channels with the image path

@@ -16,6 +16,13 @@ volumes:
       type: none
       device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro}
       o: bind
+  # this is microimages r-o share
+  externalimages-bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${SHARE_EXTERNAL?You need to specify env SHARE_EXTERNAL, e.g. SHARE_EXTERNAL=/share/data/external-datasets}
+      o: bind
   # this is thumbnail volume
   imagedb-bind:
     driver: local

@@ -141,13 +141,6 @@ CREATE INDEX  ix_channel_map_mapping_plate_barcode ON channel_map_mapping(plate_
 CREATE INDEX  ix_channel_map_mapping_channel_map ON channel_map_mapping(channel_map);
 
 
----> Import channel-map map
----> Then Update:
-UPDATE plate_acquisition
-   SET channel_map_id = channel_map_mapping.channel_map 
-   FROM channel_map_mapping WHERE plate_acquisition.plate_barcode = channel_map_mapping.plate_barcode;
-
-
 
 CREATE OR REPLACE VIEW images_all_view AS
   SELECT
@@ -277,7 +270,7 @@ CREATE INDEX  ix_image_sub_analyses_finish ON image_sub_analyses(finish);
 
 
 
-CREATE OR REPLACE VIEW image_analyses_V1 AS
+CREATE OR REPLACE VIEW image_analyses_v1 AS
   SELECT
         image_analyses.id AS id,
         image_analyses.pipeline_name AS pipeline_name,
@@ -295,7 +288,7 @@ CREATE OR REPLACE VIEW image_analyses_V1 AS
 ;
 
 
-CREATE OR REPLACE VIEW image_sub_analyses_V1 AS
+CREATE OR REPLACE VIEW image_sub_analyses_v1 AS
   SELECT
         image_sub_analyses.sub_id AS sub_id,
         image_analyses.id AS analyses_id,
@@ -352,4 +345,39 @@ INSERT INTO "images" ("project", "plate_barcode", "timepoint", "well", "site", "
 INSERT INTO "plate_acquisition" ("id", "plate_barcode", "imaged", "microscope", "channel_map_id", "timepoint") VALUES
 (-1,	'debug_plate_001',	'1970-01-01',	'ImageXpress',	1,	1);
 
+
+-- labdesign-tables
+DROP TABLE IF EXISTS plate_layout CASCADE;
+CREATE TABLE plate_layout (
+    id                      bigserial PRIMARY KEY,
+    layout_id               text,
+    well_id                 text,
+    cmpd_id                 text,
+    batch_no                text,
+    cmpd_name               text,
+    concentration           text,
+    DMSO_conc               text,
+    CODE                    text
+);
+
+CREATE INDEX  ix_plate_layout_layout_id ON plate_layout(layout_id);
+CREATE INDEX  ix_plate_layout_well_id ON plate_layout(well_id);
+CREATE INDEX  ix_plate_layout_cmpd_id ON plate_layout(cmpd_id);
+CREATE INDEX  ix_plate_layout_batch_no ON plate_layout(batch_no);
+CREATE INDEX  ix_plate_layout_cmpd_name ON plate_layout(cmpd_name);
+CREATE INDEX  ix_plate_layout_concentration ON plate_layout(concentration);
+CREATE INDEX  ix_plate_layout_DMSO_conc ON plate_layout(DMSO_conc);
+CREATE INDEX  ix_plate_layout_CODE ON plate_layout(CODE);
+
+
+
+
+
+-- Some misc commands
+
+---> Import channel-map map
+---> Then Update:
+UPDATE plate_acquisition
+   SET channel_map_id = channel_map_mapping.channel_map 
+   FROM channel_map_mapping WHERE plate_acquisition.plate_barcode = channel_map_mapping.plate_barcode;
 

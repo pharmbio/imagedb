@@ -13,6 +13,20 @@ volumes:
       type: none
       device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro}
       o: bind
+  # this is microimages r-o share
+  externalimages-bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${SHARE_EXTERNAL?You need to specify env SHARE_EXTERNAL, e.g. SHARE_EXTERNAL=/share/data/external-datasets}
+      o: bind
+  # this is microimages r-o share
+  resultimages-bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${SHARE_RESULT?You need to specify env SHARE_RESULT, e.g. SHARE_RESULT=/share/data/cellprofiler}
+      o: bind
   # this is thumbnail volume
   imagedb-bind:
     driver: local
@@ -44,6 +58,8 @@ services:
       DB_PORT: 5432
     volumes:
       - mikroimages-bind:/share/mikro
+      - externalimages-bind:/share/data/external-datasets
+      - resultimages-bind:/share/data/cellprofiler
       - imagedb-bind:/share/imagedb
       - approot-bind:/app
     networks:

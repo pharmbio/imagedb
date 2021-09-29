@@ -31,6 +31,8 @@ __pattern_path_and_file   = re.compile('^'
                             re.IGNORECASE)  # Windows has case-insensitive filenames
 
 def parse_path_and_file(path):
+ # If something errors (file not parsable with this parser, then exception and return None)
+ try:
   match = re.search(__pattern_path_and_file, path)
 
   if match is None:
@@ -57,6 +59,9 @@ def parse_path_and_file(path):
   }
 
   return metadata
+ except:
+    logging.debug("could not parse filename with this parser")
+    return None
 
 if __name__ == '__main__':
     # Testparse

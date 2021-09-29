@@ -85,11 +85,12 @@ def parse_path_and_file(path):
     return metadata
 
   except:
-    logging.exception("could not parse")
+    logging.debug("could not parse filename with this parser")
     return None
 
 
 if __name__ == '__main__':
     # Testparse
     retval = parse_path_and_file("/share/mikro/Schayan/Cell number validation screen/U2OS 384 BD Falcon 10x Cy5_500 cells seeded_1/E - 09(wv DAPI - DAPI).tif")
+    #retval = parse_path_and_file("/share/data/cellprofiler/jonne/cpoutput/combchem/Caco2-masks/p000032/P000032-combchem-v3-CACO2-48h-L1-copy2_A19_s5_w6_cp_masks.png")
     print(str(retval))
