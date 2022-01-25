@@ -28,7 +28,8 @@ CREATE TABLE images (
     channel                 int,
     path                    text,
     file_meta               jsonb,
-    metadata                jsonb
+    metadata                jsonb,
+    plate_acquisition_name  text
 );
 
 CREATE INDEX  ix_images_plate_acquisition_id ON images(plate_acquisition_id);
@@ -40,65 +41,43 @@ CREATE INDEX  ix_images_site ON images(site);
 CREATE INDEX  ix_images_channel ON images(channel);
 CREATE INDEX  ix_images_path ON images(path);
 CREATE INDEX  ix_images_project_plate_barcode ON images(project, plate_barcode);
+CREATE INDEX  ix_images_plate_acquisition_name ON images(plate_acquisition_name);
+CREATE INDEX  ix_images_plate_barcode_textsearch ON images USING GIN (to_tsvector('english', plate_barcode));
+CREATE INDEX  ix_images_plate_acquisition_name_textsearch ON images USING GIN (to_tsvector('english', plate_acquisition_name));
 
-DROP TABLE IF EXISTS plate CASCADE;
-CREATE TABLE plate (
-  barcode               text PRIMARY KEY,
-  seeded                timestamp,
-  painted               timestamp,
-  size                  text,
-  plate_map_id          int         
-);
-CREATE INDEX  ix_plate_barcode ON plate(barcode);
-CREATE INDEX  ix_plate_seeded ON plate(seeded);
-CREATE INDEX  ix_plate_painted ON plate(painted);
-CREATE INDEX  ix_plate_size ON plate(size);
+-- ALTER TABLE images ADD COLUMN plate_acquisition_name text;
+-- UPDATE images SET plate_acquisition_name=plate_barcode;
+
 
 DROP TABLE IF EXISTS plate_acquisition CASCADE;
 CREATE TABLE plate_acquisition (
-  id              serial PRIMARY KEY,
-  plate_barcode   text,
-  imaged          timestamp,
-  microscope      text,
-  channel_map_id  int,
-  timepoint       int,
-  folder          text
+  id                serial PRIMARY KEY,
+  plate_barcode     text,
+  imaged            timestamp,
+  microscope        text,
+  channel_map_id    int,
+  timepoint         int,
+  folder            text,
+  acquisition_name  text,
+  project           text
 );
 CREATE INDEX ix_plate_acquisition_plate_barcode ON plate_acquisition(plate_barcode);
 CREATE INDEX ix_plate_acquisition_channel_map_id ON plate_acquisition(channel_map_id);
 CREATE INDEX ix_plate_acquisition_microscope ON plate_acquisition(microscope);
 CREATE INDEX ix_plate_acquisition_folder ON plate_acquisition(folder);
+CREATE INDEX ix_plate_acquisition_name ON plate_acquisition(name);
+CREATE INDEX ix_plate_acquisition_project ON plate_acquisition(project);
+
+-- ALTER TABLE plate_acquisition ADD COLUMN name text;
+-- UPDATE plate_acquisition SET name=plate_barcode;
+
+-- ALTER TABLE plate_acquisition ADD COLUMN project text;
+-- UPDATE plate_acquisition
+-- SET project = images.project
+-- FROM images
+-- WHERE plate_acquisition.id = images.plate_acquisition_id;
 
 
--- well
-DROP TABLE IF EXISTS well CASCADE;
-CREATE TABLE well (
-    id                    serial UNIQUE,
-    plate_barcode         text,
-    well_name      	      text,
-    well_role             text,
-    comp_id               text,
-    comp_conc_um          int,
-    tot_well_vol_ul       int,
-    cell_line             text,
-    cell_passage          text,
-    cell_density_perwell  int,
-    treatment_h           int,
-    PRIMARY KEY(plate_barcode, well_name)
-);
-CREATE INDEX  ix_well_plate_barcode ON well(plate_barcode);
-
-
-DROP TABLE IF EXISTS  compound CASCADE;
-CREATE TABLE compound (
-  comp_id         text,
-  batch_id        text,
-  annotation      text,
-  cmpd_form       text,
-  stock_conc_mm   int,
-  stock_vol_nl    int
-);
-CREATE INDEX  ix_compound_comp_id ON compound(comp_id);
 
 
 
@@ -141,7 +120,6 @@ CREATE INDEX  ix_channel_map_mapping_plate_barcode ON channel_map_mapping(plate_
 CREATE INDEX  ix_channel_map_mapping_channel_map ON channel_map_mapping(channel_map);
 
 
-
 CREATE OR REPLACE VIEW images_all_view AS
   SELECT
     images.id as id,
@@ -154,11 +132,7 @@ CREATE OR REPLACE VIEW images_all_view AS
     images.channel,
     images.path,
     images.metadata,
-    well.well_name,
-    well.well_role,
-    well.comp_id,
-    well.comp_conc_um,
-    well.tot_well_vol_ul,
+    well.well_id,
     well.cell_line,
     well.cell_passage,
     well.cell_density_perwell,
@@ -171,7 +145,7 @@ CREATE OR REPLACE VIEW images_all_view AS
   FROM
       images
   LEFT JOIN plate ON images.plate_barcode = plate.barcode
-  LEFT JOIN well ON plate.barcode = well.plate_barcode AND images.well = well.well_name
+  LEFT JOIN well ON plate.barcode = well.plate_barcode AND images.well = well.well_id
   LEFT JOIN plate_acquisition on images.plate_barcode = plate_acquisition.plate_barcode
   LEFT JOIN channel_map ON plate_acquisition.channel_map_id = channel_map.map_id AND images.channel = channel_map.channel;
 
@@ -186,7 +160,6 @@ CREATE OR REPLACE VIEW images_minimal_view AS
     images.site,
     images.channel,
     images.path,
-    well.well_role,
     well.comp_id,
     well.comp_conc_um,
     well.tot_well_vol_ul,
@@ -208,28 +181,6 @@ CREATE OR REPLACE VIEW images_minimal_view AS
 
 
 -- Other tables
-
-DROP TABLE IF EXISTS plate_map;
-CREATE TABLE plate_map (
-    id              serial PRIMARY KEY,
-    well_position   text,
-    well_letter     text,
-    well_num        int,
-    well_role       text,
-    cmpd_id         text,
-    batch_id        text,
-    annotation      text,
-    cmpd_form       text,
-    stock_conc_mm   int,
-    stock_vol_nl    int,
-    cmpd_conc_um    int,
-    tot_well_vol_ul int,
-    treatment_h     int
-);
-
-CREATE INDEX  ix_plate_map_id ON plate_map(id);
-CREATE INDEX  ix_plate_map_well_position ON plate_map(well_position);
-
 
 DROP TABLE IF EXISTS image_analyses CASCADE;
 CREATE TABLE image_analyses (
@@ -276,9 +227,9 @@ CREATE OR REPLACE VIEW image_analyses_v1 AS
         image_analyses.pipeline_name AS pipeline_name,
         plate_acquisition.id AS plate_acquisition_id,
         plate_acquisition.plate_barcode AS plate_barcode,
-        image_analyses.start AS start,
-        image_analyses.finish AS finish,
-        image_analyses.error AS error,
+        image_analyses.start at time zone 'utc' at time zone 'cet' AS start,
+        image_analyses.finish at time zone 'utc' at time zone 'cet' AS finish,
+        image_analyses.error at time zone 'utc' at time zone 'cet' AS error,
         image_analyses.meta AS meta,
         image_analyses.depends_on_id AS depends_on_id,
         image_analyses.result AS result
@@ -295,9 +246,9 @@ CREATE OR REPLACE VIEW image_sub_analyses_v1 AS
         image_analyses.pipeline_name AS pipeline_name,
         plate_acquisition.id AS plate_acquisition_id,
         plate_acquisition.plate_barcode AS plate_barcode,
-        image_sub_analyses.start AS start,
-        image_sub_analyses.finish AS finish,
-        image_sub_analyses.error AS error,
+        image_sub_analyses.start at time zone 'utc' at time zone 'cet' AS start,
+        image_sub_analyses.finish at time zone 'utc' at time zone 'cet' AS finish,
+        image_sub_analyses.error at time zone 'utc' at time zone 'cet' AS error,
         image_sub_analyses.meta AS meta,
         image_sub_analyses.depends_on_sub_id AS depends_on_sub_id,
         image_sub_analyses.result AS result
@@ -342,35 +293,192 @@ INSERT INTO "images" ("project", "plate_barcode", "timepoint", "well", "site", "
 ('debug-proj',	'debug_plate_001',	1,	'C02',	2,	2,	'/share/mikro/IMX/MDC_pharmbio/exp-combTox-new/BJ-48hr-1/2019-07-22/119/BJ-48hr-1_C02_s2_w2DBFB0A4C-99F6-49C3-AF77-BDF6FCB67774.tif',	'{"Gain": "16-bit (low noise & high well capacity)", "Region": "2160 x 2160, offset at (200, 0)", "Binning": "1 x 1", "Shading": "Off", "Exposure": "120 ms", "Software": "MetaMorph 5.3.0.5", "Subtract": "Off", "Cooler On": "1", "Digitizer": "560 MHz - fastest readout", "FillOrder": "msb-to-lsb", "Tag 33628": "0,1,1,0,2,65535,3,1,4,9349414,5,9349422,6,9349430,7,9349439,8,0,9,255,11,128,12,64,13,0,14,65535,15,25,16,9349447,17,9349455,19,4,20,0,21,9349463,22,9349463,23,9349463,24,9349471,26,0,27,593", "cell line": "BJ", "Resolution": "72, 72 pixels/inch", "Rows/Strip": "1", "Bits/Sample": "16", "Temperature": "-0.44", "Subfile Type": "(0 = 0x0)", "Trigger Mode": "Normal (TIMED)", "Samples/Pixel": "1", "Experiment set": "exp-combTox-new", "Deconvolution NA": "0.45", "Deconvolution RI": "1", "Frames to Average": "1", "Compression Scheme": "None", "Electronic Shutter": "Rolling", "Planar Configuration": "single image plane", "Baseline Clamp Enabled": "Yes", "Photometric Interpretation": "min-is-black", "Deconvolution X Image Spacing": "0.334", "Deconvolution Y Image Spacing": "0.334", "Deconvolution Emissive Wavelength": "593", "Deconvolution Spherical Aberration": "0", "Deconvolution Wiener Filter KValue": "0.01"}',	'{"guid": "DBFB0A4C-99F6-49C3-AF77-BDF6FCB67774", "path": "/share/mikro/IMX/MDC_pharmbio/exp-combTox-new/BJ-48hr-1/2019-07-22/119/BJ-48hr-1_C02_s2_w2DBFB0A4C-99F6-49C3-AF77-BDF6FCB67774.tif", "well": "C02", "plate": "BJ-48hr-1", "channel": 2, "project": "exp-combTox-new", "filename": "BJ-48hr-1_C02_s2_w2DBFB0A4C-99F6-49C3-AF77-BDF6FCB67774.tif", "date_year": 2019, "extension": ".tif", "file_meta": {"Gain": "16-bit (low noise & high well capacity)", "Region": "2160 x 2160, offset at (200, 0)", "Binning": "1 x 1", "Shading": "Off", "Exposure": "120 ms", "Software": "MetaMorph 5.3.0.5", "Subtract": "Off", "Cooler On": "1", "Digitizer": "560 MHz - fastest readout", "FillOrder": "msb-to-lsb", "Tag 33628": "0,1,1,0,2,65535,3,1,4,9349414,5,9349422,6,9349430,7,9349439,8,0,9,255,11,128,12,64,13,0,14,65535,15,25,16,9349447,17,9349455,19,4,20,0,21,9349463,22,9349463,23,9349463,24,9349471,26,0,27,593", "cell line": "BJ", "Resolution": "72, 72 pixels/inch", "Rows/Strip": "1", "Bits/Sample": "16", "Temperature": "-0.44", "Subfile Type": "(0 = 0x0)", "Trigger Mode": "Normal (TIMED)", "Samples/Pixel": "1", "Experiment set": "exp-combTox-new", "Deconvolution NA": "0.45", "Deconvolution RI": "1", "Frames to Average": "1", "Compression Scheme": "None", "Electronic Shutter": "Rolling", "Planar Configuration": "single image plane", "Baseline Clamp Enabled": "Yes", "Photometric Interpretation": "min-is-black", "Deconvolution X Image Spacing": "0.334", "Deconvolution Y Image Spacing": "0.334", "Deconvolution Emissive Wavelength": "593", "Deconvolution Spherical Aberration": "0", "Deconvolution Wiener Filter KValue": "0.01"}, "timepoint": 1, "date_month": 7, "wellsample": "2", "is_thumbnail": false, "magnification": "48hr", "date_day_of_month": 22}',	-1),
 ('debug-proj',	'debug_plate_001',	1,	'C02',	1,	2,	'/share/mikro/IMX/MDC_pharmbio/exp-combTox-new/BJ-48hr-1/2019-07-22/119/BJ-48hr-1_C02_s1_w28259B8B5-D257-4F22-9395-56018B680C25.tif',	'{"Gain": "16-bit (low noise & high well capacity)", "Region": "2160 x 2160, offset at (200, 0)", "Binning": "1 x 1", "Shading": "Off", "Exposure": "120 ms", "Software": "MetaMorph 5.3.0.5", "Subtract": "Off", "Cooler On": "1", "Digitizer": "560 MHz - fastest readout", "FillOrder": "msb-to-lsb", "Tag 33628": "0,1,1,0,2,65535,3,1,4,9349414,5,9349422,6,9349430,7,9349439,8,0,9,255,11,128,12,64,13,0,14,65535,15,25,16,9349447,17,9349455,19,4,20,0,21,9349463,22,9349463,23,9349463,24,9349471,26,0,27,593", "cell line": "BJ", "Resolution": "72, 72 pixels/inch", "Rows/Strip": "1", "Bits/Sample": "16", "Temperature": "-0.44", "Subfile Type": "(0 = 0x0)", "Trigger Mode": "Normal (TIMED)", "Samples/Pixel": "1", "Experiment set": "exp-combTox-new", "Deconvolution NA": "0.45", "Deconvolution RI": "1", "Frames to Average": "1", "Compression Scheme": "None", "Electronic Shutter": "Rolling", "Planar Configuration": "single image plane", "Baseline Clamp Enabled": "Yes", "Photometric Interpretation": "min-is-black", "Deconvolution X Image Spacing": "0.334", "Deconvolution Y Image Spacing": "0.334", "Deconvolution Emissive Wavelength": "593", "Deconvolution Spherical Aberration": "0", "Deconvolution Wiener Filter KValue": "0.01"}',	'{"guid": "8259B8B5-D257-4F22-9395-56018B680C25", "path": "/share/mikro/IMX/MDC_pharmbio/exp-combTox-new/BJ-48hr-1/2019-07-22/119/BJ-48hr-1_C02_s1_w28259B8B5-D257-4F22-9395-56018B680C25.tif", "well": "C02", "plate": "BJ-48hr-1", "channel": 2, "project": "exp-combTox-new", "filename": "BJ-48hr-1_C02_s1_w28259B8B5-D257-4F22-9395-56018B680C25.tif", "date_year": 2019, "extension": ".tif", "file_meta": {"Gain": "16-bit (low noise & high well capacity)", "Region": "2160 x 2160, offset at (200, 0)", "Binning": "1 x 1", "Shading": "Off", "Exposure": "120 ms", "Software": "MetaMorph 5.3.0.5", "Subtract": "Off", "Cooler On": "1", "Digitizer": "560 MHz - fastest readout", "FillOrder": "msb-to-lsb", "Tag 33628": "0,1,1,0,2,65535,3,1,4,9349414,5,9349422,6,9349430,7,9349439,8,0,9,255,11,128,12,64,13,0,14,65535,15,25,16,9349447,17,9349455,19,4,20,0,21,9349463,22,9349463,23,9349463,24,9349471,26,0,27,593", "cell line": "BJ", "Resolution": "72, 72 pixels/inch", "Rows/Strip": "1", "Bits/Sample": "16", "Temperature": "-0.44", "Subfile Type": "(0 = 0x0)", "Trigger Mode": "Normal (TIMED)", "Samples/Pixel": "1", "Experiment set": "exp-combTox-new", "Deconvolution NA": "0.45", "Deconvolution RI": "1", "Frames to Average": "1", "Compression Scheme": "None", "Electronic Shutter": "Rolling", "Planar Configuration": "single image plane", "Baseline Clamp Enabled": "Yes", "Photometric Interpretation": "min-is-black", "Deconvolution X Image Spacing": "0.334", "Deconvolution Y Image Spacing": "0.334", "Deconvolution Emissive Wavelength": "593", "Deconvolution Spherical Aberration": "0", "Deconvolution Wiener Filter KValue": "0.01"}, "timepoint": 1, "date_month": 7, "wellsample": "1", "is_thumbnail": false, "magnification": "48hr", "date_day_of_month": 22}',	-1);
 
-INSERT INTO "plate_acquisition" ("id", "plate_barcode", "imaged", "microscope", "channel_map_id", "timepoint") VALUES
-(-1,	'debug_plate_001',	'1970-01-01',	'ImageXpress',	1,	1);
+INSERT INTO "plate_acquisition" ("id", "plate_barcode", "imaged", "microscope", "channel_map_id", "timepoint", "folder") VALUES
+(-1,	'debug_plate_001',	'1970-01-01',	'ImageXpress',	1,	1, '/share/mikro/IMX/MDC_pharmbio/exp-combTox-new/BJ-48hr-1/');
 
 
 -- labdesign-tables
+
 DROP TABLE IF EXISTS plate_layout CASCADE;
 CREATE TABLE plate_layout (
-    id                      bigserial PRIMARY KEY,
     layout_id               text,
     well_id                 text,
-    cmpd_id                 text,
-    batch_no                text,
-    cmpd_name               text,
-    concentration           text,
-    DMSO_conc               text,
-    CODE                    text
+    batch_id                text,
+    solvent                 text,
+    stock_conc              decimal,
+    stock_conc_unit         text,
+    cmpd_vol                decimal,
+    cmpd_vol_unit           text,
+    well_vol                decimal,
+    well_vol_unit           text,
+    pert_type               text,
+    cmpd_conc               decimal,
+    cmpd_conc_unit          text
 );
 
 CREATE INDEX  ix_plate_layout_layout_id ON plate_layout(layout_id);
 CREATE INDEX  ix_plate_layout_well_id ON plate_layout(well_id);
-CREATE INDEX  ix_plate_layout_cmpd_id ON plate_layout(cmpd_id);
-CREATE INDEX  ix_plate_layout_batch_no ON plate_layout(batch_no);
-CREATE INDEX  ix_plate_layout_cmpd_name ON plate_layout(cmpd_name);
-CREATE INDEX  ix_plate_layout_concentration ON plate_layout(concentration);
-CREATE INDEX  ix_plate_layout_DMSO_conc ON plate_layout(DMSO_conc);
-CREATE INDEX  ix_plate_layout_CODE ON plate_layout(CODE);
+CREATE INDEX  ix_plate_layout_batch_id ON plate_layout(batch_id);
+CREATE INDEX  ix_plate_layout_pert_type ON plate_layout(pert_type);
+
+ALTER TABLE plate_layout ADD CONSTRAINT constr_primary_key_plate_layout_layout_id_well_id PRIMARY KEY (layout_id, well_id);
+
+CREATE OR REPLACE VIEW plate_layout_v1 AS
+  SELECT
+    plate_layout.layout_id,
+    plate_layout.layout_comment,
+    plate_layout.well_id,
+    plate_layout.cmpd_id,
+    plate_layout.solvent,
+    plate_layout.stock_conc,
+    plate_layout.stock_conc_unit,
+    plate_layout.cmpd_conc,
+    plate_layout.cmpd_conc_unit,
+    plate_layout.dmso_conc_perc,
+    plate_layout.pert_type,
+    plate_layout.morph_change,
+    compound.batchid,
+    compound.cbkid,
+    compound.libid,
+    compound.libtxt,
+    compound.smiles,
+    compound.inchi,
+    compound.inkey
+  FROM
+      plate_layout
+  LEFT JOIN compound ON plate_layout.cmpd_id = compound.batchid;
 
 
 
+DROP TABLE IF EXISTS plate CASCADE;
+CREATE TABLE plate (
+  layout_id               text,
+  barcode                 text PRIMARY KEY,
+  type                    text,
+  size                    int,
+  seeded                  timestamp,
+  cell_line               text,
+  cells_per_well          numeric,
+  treatment               text,
+  treatment_units         text,
+  painted                 timestamp,
+  painted_type            text
+);
+
+CREATE INDEX  ix_plate_layout_id ON plate(layout_id);
+CREATE INDEX  ix_plate_barcode ON plate(barcode);
+CREATE INDEX  ix_plate_size ON plate(size);
+CREATE INDEX  ix_plate_seeded ON plate(seeded);
+CREATE INDEX  ix_plate_cell_line ON plate(cell_line);
+CREATE INDEX  ix_plate_treatment ON plate(treatment);
+CREATE INDEX  ix_plate_treatment_units ON plate(treatment_units);
+CREATE INDEX  ix_plate_painted ON plate(painted);
+
+
+-- INSERT INTO plate (plate_barcode)
+-- SELECT DISTINCT(plate_barcode) FROM images;
+
+-- well...
+DROP TABLE IF EXISTS well CASCADE;
+CREATE TABLE well (
+    serial_id             serial UNIQUE,
+    plate_barcode         text,
+    well_id       	      text,
+    cell_line             text,
+    cell_passage          text,
+    cell_density_perwell  int,
+    treatment_h           int,
+    PRIMARY KEY(plate_barcode, well_id)
+);
+CREATE INDEX ix_well_plate_barcode ON well(plate_barcode);
+CREATE INDEX ix_well_well_id ON well(well_id);
+
+
+
+DROP TABLE IF EXISTS  compound CASCADE;
+CREATE TABLE compound (
+  batchid         text,
+  cbkid           text,
+  libid           text,
+  libtxt          text,
+  smiles          text,
+  inchi           text,
+  inkey           text
+);
+CREATE INDEX  ix_compound_batchid ON compound(batchid);
+CREATE INDEX  ix_compound_cbkid   ON compound(cbkid);
+CREATE INDEX  ix_compound_libid   ON compound(libid);
+CREATE INDEX  ix_compound_libtxt  ON compound(libtxt);
+CREATE INDEX  ix_compound_smiles  ON compound(smiles);
+CREATE INDEX  ix_compound_inchi   ON compound(inchi);
+CREATE INDEX  ix_compound_inkey   ON compound(inkey);
+
+
+
+DROP TABLE IF EXISTS project CASCADE;
+CREATE TABLE project (
+    name                    text PRIMARY KEY,
+    description             text
+);
+
+CREATE INDEX  project_description_idx ON project USING GIN (to_tsvector('english', description));
+
+INSERT INTO project (name)
+SELECT DISTINCT(project) FROM images;
+
+
+DROP TABLE IF EXISTS experiment CASCADE;
+CREATE TABLE experiment (
+    id                      serial PRIMARY KEY,
+    name                    text,
+    project                 text,
+    creation_time           timestamp,
+    description             text
+);
+
+CREATE INDEX  experiment_name_idx ON experiment(description);
+CREATE INDEX  experiment_project_idx ON experiment(project);
+CREATE INDEX  experiment_description_idx ON experiment USING GIN (to_tsvector('english', description));
+
+INSERT INTO experiment (name, project, creation_time, description) VALUES	
+('version_1',	'2020_11_04_CPJUMP1',	current_timestamp, 'Description here'),
+('version_2',	'2020_11_04_CPJUMP1', current_timestamp,'Description here');	
+
+
+CREATE OR REPLACE VIEW well_all_view AS
+  SELECT
+    plate.barcode AS plate_barcode,
+    plate.seeded AS plate_seeded,
+    plate.painted AS plate_painted,
+    plate.size AS plate_size,
+    plate.plate_layout_id,
+    plate_layout.well_id,
+    plate_layout.cmpd_id,
+    plate_layout.solvent,
+    plate_layout.stock_conc,
+    plate_layout.stock_conc_unit,
+    plate_layout.cmpd_conc,
+    plate_layout.cmpd_conc_unit,
+    plate_layout.dmso_conc_perc,
+    plate_layout.pert_type,
+    plate_layout.morph_change,
+    compound.batchid,
+    compound.cbkid,
+    compound.libid,
+    compound.libtxt,
+    compound.smiles,
+    compound.inchi,
+    compound.inkey,
+    well.serial_id AS serial_id,
+    well.cell_line,
+    well.cell_passage,
+    well.cell_density_perwell,
+    well.treatment_h
+  FROM
+      plate
+  LEFT JOIN plate_layout ON plate.plate_layout_id = plate_layout.layout_id
+  LEFT JOIN compound ON plate_layout.cmpd_id = compound.batchid
+  LEFT JOIN well ON plate.barcode = well.plate_barcode AND plate_layout.well_id = well.well_id;
 
 
 -- Some misc commands
@@ -381,3 +489,17 @@ UPDATE plate_acquisition
    SET channel_map_id = channel_map_mapping.channel_map 
    FROM channel_map_mapping WHERE plate_acquisition.plate_barcode = channel_map_mapping.plate_barcode;
 
+
+-- Add readonly user
+CREATE USER pharmbio_readonly WITH PASSWORD 'readonly';
+GRANT CONNECT ON DATABASE imagedb TO pharmbio_readonly;
+GRANT USAGE ON SCHEMA public TO pharmbio_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO pharmbio_readonly;
+-- Allow user to access all tables, including ones not created yet (might not work)
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+   GRANT SELECT ON TABLES TO pharmbio_readonly;
+
+
+-- From pod terminal, log in with client and copy a file to remote database (from a pod to server)
+psql "dbname=imagedb user=postgres host=imagedb-pg-postgresql.services.svc.cluster.local"
+\copy compound FROM '/home/jovyan/cbcs_tested.tsv' DELIMITER E'\t' CSV HEADER;

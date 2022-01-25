@@ -88,7 +88,6 @@ def get_plate(plate_name):
         raise err
     finally:
         if conn is not None:
-            conn.close()
             put_connection(conn)
 
 
@@ -131,7 +130,6 @@ def list_all_plates():
         raise err
     finally:
         if conn is not None:
-            conn.close()
             put_connection(conn)
 
 
@@ -223,5 +221,4 @@ def select_from_db(query):
         raise err
     finally:
         if conn is not None:
-            conn.close()
             put_connection(conn)

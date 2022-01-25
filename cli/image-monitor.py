@@ -93,17 +93,28 @@ def insert_meta_into_db(img_meta):
     # Insert into images table
     insert_meta_into_table_images(img_meta, plate_acq_id)
 
+def getPlateBarcodeFromPlateName(plate_name):
+    # extract barcode from plate_name
+    regexp = '.*-(P015\\d{3})(-|$).*'
+    match = regexp.match(reg, plate_name)
+    if match:
+      barcode = match.group(1)
+    else:
+      barcode = plate_name
+    
+    return barcode
 
 def insert_meta_into_table_images(img_meta, plate_acq_id):
 
     conn = None
     try:
         
-        insert_query = "INSERT INTO images(project, plate_acquisition_id, plate_barcode, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        insert_query = "INSERT INTO images(project, plate_acquisition_id, plate_barcode, plate_name, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         conn = get_connection()
         insert_cursor = conn.cursor()
         insert_cursor.execute(insert_query, (img_meta['project'],
                                             plate_acq_id,
+                                            getPlateBarcodeFromPlateName(img_meta['plate']),
                                             img_meta['plate'],
                                             img_meta['timepoint'],
                                             img_meta['well'],
@@ -172,10 +183,11 @@ def insert_plate_acq(img_meta):
         if imaged_timepoint >= datetime(2020,9,1):
             channel_map_id = 2
         
-        query = "INSERT INTO plate_acquisition(plate_barcode, imaged, microscope, channel_map_id, timepoint, folder) VALUES(%s, %s, %s, %s, %s, %s) RETURNING id"
+        query = "INSERT INTO plate_acquisition(plate_barcode, plate_name, imaged, microscope, channel_map_id, timepoint, folder) VALUES(%s, %s, %s, %s, %s, %s, %s) RETURNING id"
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(query, (img_meta['plate'],
+        cursor.execute(query, (getPlateBarcodeFromPlateName(img_meta['plate']),
+                               img_meta['plate'],
                                imaged_timepoint,
                                img_meta['microscope'],
                                channel_map_id,

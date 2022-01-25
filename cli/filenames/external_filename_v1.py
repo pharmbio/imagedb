@@ -2,6 +2,10 @@ import re
 import os
 import logging
 
+# file examples
+# /share/data/external-datasets/2020_11_04_CPJUMP1/images/BR00116992__2020-11-05T21_31_31-Measurement1/Images/r16c24f09p01-ch3sk1fk1fl1.tiff
+
+
 def parse_path_and_file(path):
 
   # If something errors (file not parsable with this parser, then exception and return None)
@@ -30,10 +34,11 @@ def parse_path_and_file(path):
       + 'r(.+?)' # row (1)
       + 'c(.+?)'  # col (2)
       + 'f(.+?)'  # wellsample (field) (3)
-      + 'p(.+?)-'   # dont know
-      + 'ch([0-9]+)'  # Channel (color channel?) (4)
+      + 'p(.+?)'   # dont know (4)
+      + '-'
+      + 'ch([0-9]+)'  # Channel (color channel?) (5)
       + '.+?'     # don't know
-      + '(\.tiff?)?', path)   # Extension (5)
+      + '(\.tiff?)?', path)   # Extension (6)
 
 
     row = match.group(1)
@@ -44,9 +49,9 @@ def parse_path_and_file(path):
 
     site = match.group(3)
 
-    channel = match.group(4)
+    channel = match.group(5)
 
-    extension = match.group(5)
+    extension = match.group(6)
 
     # logging
     logging.debug("well" + well)
