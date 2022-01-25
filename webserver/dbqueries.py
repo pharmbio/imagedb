@@ -100,9 +100,10 @@ def list_all_plates():
 
         conn = get_connection()
 
-        query = ("SELECT DISTINCT plate_barcode, project "
-                 " FROM images "
-                 " ORDER BY project, plate_barcode")
+        query = ("SELECT DISTINCT name, plate_barcode, project, id "
+                 " FROM plate_acquisition "
+                 " WHERE timepoint = 1"
+                 " ORDER BY project, name, plate_barcode, id")
 
         logging.debug("query" + str(query))
 
@@ -112,8 +113,10 @@ def list_all_plates():
         resultlist = []
 
         for row in cursor:
-            resultlist.append({'plate': row[0],
-                               'project': row[1]
+            resultlist.append({'acq_name': row[0],
+                               'plate_barcode': row[1],
+                               'project': row[2],
+                               'acq_id': row[3]
                                })
 
         # Close/Release connection

@@ -230,7 +230,9 @@ function drawPlatesListSidebar(queryResults) {
 
     // Create a list with all projects
     let proj = result.project;
-    let plate = result.plate;
+    let plate_barcode = result.plate_barcode;
+    let acq_name = result.acq_name;
+    let acq_id = result.acq_id;
 
     // create a new sublist for each project
     if (last_proj !== proj) {
@@ -244,7 +246,7 @@ function drawPlatesListSidebar(queryResults) {
     // Create a list item for the plate
     let plate_item = document.createElement('li');
     let link = document.createElement('a');
-    let linktext = plate;
+    let linktext = acq_name;
     link.className = "text-info";
     link.href = "";
 
@@ -261,7 +263,7 @@ function drawPlatesListSidebar(queryResults) {
     // Add plate click handler
     plate_item.onclick = function (e) {
       e.preventDefault();
-      apiLoadPlate(plate)
+      apiLoadPlate(plate_barcode, acq_id);
     };
 
     // add plate item to projects plate_list
@@ -305,7 +307,8 @@ function apiLoadPlateBarcode(barcode) {
   apiLoadPlate(barcode);
 }
 
-function apiLoadPlateAcquisition(acquisition_name) {
+
+function apiLoadPlate(plate_name, select_acq_id=undefined) {
 
   // stop any current animation
   stopAnimation();
@@ -320,40 +323,13 @@ function apiLoadPlateAcquisition(acquisition_name) {
           window.loaded_plates = new Plates(json['data'].plates);
           console.log(window.loaded_plates);
           console.log("Plates loaded")
+
           updateToolbarWithNewPlate();
 
-          redrawPlate(true);
-        });
-      }
-      else {
-        response.text().then(function (text) {
-          displayModalServerError(response.status, text);
-        });
-      }
-    })
-
-    .catch(function (error) {
-      console.log(error);
-      displayModalError(error);
-    });
-}
-
-function apiLoadPlate(plate_name) {
-
-  // stop any current animation
-  stopAnimation();
-  document.getElementById("animate-cbx").checked = false;
-
-  fetch('/api/plate/' + plate_name)
-    .then(function (response) {
-      if (response.status === 200) {
-        response.json().then(function (json) {
-
-          console.log('plate data', json);
-          window.loaded_plates = new Plates(json['data'].plates);
-          console.log(window.loaded_plates);
-          console.log("Plates loaded")
-          updateToolbarWithNewPlate();
+          if(select_acq_id !== 'undefined'){
+            console.log("Select acq id:", select_acq_id)
+            setSelectedAcquisition(select_acq_id);
+          }
 
           redrawPlate(true);
         });

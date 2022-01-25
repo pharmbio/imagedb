@@ -93,14 +93,14 @@ def insert_meta_into_db(img_meta):
     # Insert into images table
     insert_meta_into_table_images(img_meta, plate_acq_id)
 
-def getPlateBarcodeFromPlateName(plate_name):
+def getPlateBarcodeFromPlateAcquisitionName(acquisition_name):
     # extract barcode from plate_name
-    regexp = '.*-(P015\\d{3})(-|$).*'
-    match = regexp.match(reg, plate_name)
+    pattern = '.*-(P015\\d{3})(-|$).*'
+    match = re.search(pattern, acquisition_name)
     if match:
       barcode = match.group(1)
     else:
-      barcode = plate_name
+      barcode = acquisition_name
     
     return barcode
 
@@ -109,12 +109,12 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
     conn = None
     try:
         
-        insert_query = "INSERT INTO images(project, plate_acquisition_id, plate_barcode, plate_name, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        insert_query = "INSERT INTO images(project, plate_acquisition_id, plate_barcode, plate_acquisition_name, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         conn = get_connection()
         insert_cursor = conn.cursor()
         insert_cursor.execute(insert_query, (img_meta['project'],
                                             plate_acq_id,
-                                            getPlateBarcodeFromPlateName(img_meta['plate']),
+                                            getPlateBarcodeFromPlateAcquisitionName(img_meta['plate']),
                                             img_meta['plate'],
                                             img_meta['timepoint'],
                                             img_meta['well'],
@@ -135,20 +135,20 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
 def select_or_insert_plate_acq(img_meta):
 
     # First select to see if plate_acq already exists
-    plate_acq_id = select_plate_acq_id(img_meta)
+    plate_acq_id = select_plate_acq_id(img_meta['path'])
 
     if plate_acq_id is None:
         plate_acq_id = insert_plate_acq(img_meta)
     
     return plate_acq_id
 
-def select_plate_acq_id(img_meta):
+def select_plate_acq_id(image_path):
 
     conn = None
     
     try:
         
-        folder = os.path.dirname(img_meta['path'])
+        folder = os.path.dirname(image_path)
 
         query = ("SELECT id "
                         "FROM plate_acquisition "
@@ -183,11 +183,12 @@ def insert_plate_acq(img_meta):
         if imaged_timepoint >= datetime(2020,9,1):
             channel_map_id = 2
         
-        query = "INSERT INTO plate_acquisition(plate_barcode, plate_name, imaged, microscope, channel_map_id, timepoint, folder) VALUES(%s, %s, %s, %s, %s, %s, %s) RETURNING id"
+        query = "INSERT INTO plate_acquisition(plate_barcode, name, project, imaged, microscope, channel_map_id, timepoint, folder) VALUES(%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(query, (getPlateBarcodeFromPlateName(img_meta['plate']),
+        cursor.execute(query, (getPlateBarcodeFromPlateAcquisitionName(img_meta['plate']),
                                img_meta['plate'],
+                               img_meta['project'],
                                imaged_timepoint,
                                img_meta['microscope'],
                                channel_map_id,

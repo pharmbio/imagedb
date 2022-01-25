@@ -122,7 +122,7 @@ CREATE INDEX  ix_channel_map_mapping_channel_map ON channel_map_mapping(channel_
 
 CREATE OR REPLACE VIEW images_all_view AS
   SELECT
-    images.id as id,
+    images.id,
     images.plate_acquisition_id,
     images.project,
     images.plate_barcode,
@@ -131,27 +131,29 @@ CREATE OR REPLACE VIEW images_all_view AS
     images.site,
     images.channel,
     images.path,
-    images.metadata,
-    well.well_id,
-    well.cell_line,
-    well.cell_passage,
-    well.cell_density_perwell,
-    well.treatment_h,
+    plate.size,
+    plate.cell_line,
+    plate.cells_per_well,
+    plate_layout.layout_id,
+    plate_layout.solvent,
+    plate_layout.stock_conc,
+    compound.batchid,
+    compound.inchi,
     plate_acquisition.imaged,
     plate_acquisition.microscope,
     plate_acquisition.channel_map_id,
     channel_map.map_id,
     channel_map.dye
-  FROM
-      images
-  LEFT JOIN plate ON images.plate_barcode = plate.barcode
-  LEFT JOIN well ON plate.barcode = well.plate_barcode AND images.well = well.well_id
-  LEFT JOIN plate_acquisition on images.plate_barcode = plate_acquisition.plate_barcode
-  LEFT JOIN channel_map ON plate_acquisition.channel_map_id = channel_map.map_id AND images.channel = channel_map.channel;
+   FROM (((((images
+     LEFT JOIN plate_acquisition ON ((images.plate_barcode = plate_acquisition.plate_barcode)))
+     LEFT JOIN channel_map ON (((plate_acquisition.channel_map_id = channel_map.map_id) AND (images.channel = channel_map.channel))))
+     LEFT JOIN plate ON ((images.plate_barcode = plate.barcode)))
+     LEFT JOIN plate_layout ON (((plate.layout_id = plate_layout.layout_id) AND (plate_layout.well_id = images.well))))
+     LEFT JOIN compound ON ((plate_layout.batch_id = compound.batchid)));
 
 CREATE OR REPLACE VIEW images_minimal_view AS
   SELECT
-    images.id as id,
+    images.id,
     images.plate_acquisition_id,
     images.project,
     images.plate_barcode,
@@ -160,24 +162,25 @@ CREATE OR REPLACE VIEW images_minimal_view AS
     images.site,
     images.channel,
     images.path,
-    well.comp_id,
-    well.comp_conc_um,
-    well.tot_well_vol_ul,
-    well.cell_line,
-    well.cell_passage,
-    well.cell_density_perwell,
-    well.treatment_h,
+    plate.size,
+    plate.cell_line,
+    plate.cells_per_well,
+    plate_layout.layout_id,
+    plate_layout.solvent,
+    plate_layout.stock_conc,
+    compound.batchid,
+    compound.inchi,
     plate_acquisition.imaged,
     plate_acquisition.microscope,
     plate_acquisition.channel_map_id,
     channel_map.map_id,
     channel_map.dye
-  FROM
-      images
-  LEFT JOIN plate ON images.plate_barcode = plate.barcode
-  LEFT JOIN well ON plate.barcode = well.plate_barcode AND images.well = well.well_name
-  LEFT JOIN plate_acquisition on images.plate_barcode = plate_acquisition.plate_barcode
-  LEFT JOIN channel_map ON plate_acquisition.channel_map_id = channel_map.map_id AND images.channel = channel_map.channel;
+   FROM (((((images
+     LEFT JOIN plate_acquisition ON ((images.plate_barcode = plate_acquisition.plate_barcode)))
+     LEFT JOIN channel_map ON (((plate_acquisition.channel_map_id = channel_map.map_id) AND (images.channel = channel_map.channel))))
+     LEFT JOIN plate ON ((images.plate_barcode = plate.barcode)))
+     LEFT JOIN plate_layout ON (((plate.layout_id = plate_layout.layout_id) AND (plate_layout.well_id = images.well))))
+     LEFT JOIN compound ON ((plate_layout.batch_id = compound.batchid)));
 
 
 -- Other tables
