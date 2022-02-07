@@ -152,7 +152,7 @@ CREATE OR REPLACE VIEW images_all_view AS
      LEFT JOIN compound ON ((plate_layout.batch_id = compound.batchid)));
 
 CREATE OR REPLACE VIEW images_minimal_view AS
-  SELECT
+SELECT
     images.id,
     images.plate_acquisition_id,
     images.project,
@@ -176,7 +176,7 @@ CREATE OR REPLACE VIEW images_minimal_view AS
     channel_map.map_id,
     channel_map.dye
    FROM (((((images
-     LEFT JOIN plate_acquisition ON ((images.plate_barcode = plate_acquisition.plate_barcode)))
+     LEFT JOIN plate_acquisition ON ((images.plate_acquisition_id = plate_acquisition.id)))
      LEFT JOIN channel_map ON (((plate_acquisition.channel_map_id = channel_map.map_id) AND (images.channel = channel_map.channel))))
      LEFT JOIN plate ON ((images.plate_barcode = plate.barcode)))
      LEFT JOIN plate_layout ON (((plate.layout_id = plate_layout.layout_id) AND (plate_layout.well_id = images.well))))
@@ -202,6 +202,9 @@ CREATE INDEX  ix_image_analyses_plate_acquisition_id ON image_analyses(plate_acq
 CREATE INDEX  ix_image_analyses_start ON image_analyses(start);
 CREATE INDEX  ix_image_analyses_finish ON image_analyses(finish);
 
+-- UPDATE image_analyses
+-- SET meta = jsonb_set(meta,'{type}','"cp_features"',true)
+-- WHERE pipeline_name like 'Featur%'
 
 
 
@@ -230,9 +233,9 @@ CREATE OR REPLACE VIEW image_analyses_v1 AS
         image_analyses.pipeline_name AS pipeline_name,
         plate_acquisition.id AS plate_acquisition_id,
         plate_acquisition.plate_barcode AS plate_barcode,
-        image_analyses.start at time zone 'utc' at time zone 'cet' AS start,
-        image_analyses.finish at time zone 'utc' at time zone 'cet' AS finish,
-        image_analyses.error at time zone 'utc' at time zone 'cet' AS error,
+        image_analyses.start at time zone 'cet' AS start,
+        image_analyses.finish at time zone 'cet' AS finish,
+        image_analyses.error at time zone 'cet' AS error,
         image_analyses.meta AS meta,
         image_analyses.depends_on_id AS depends_on_id,
         image_analyses.result AS result
@@ -240,6 +243,35 @@ CREATE OR REPLACE VIEW image_analyses_v1 AS
         plate_acquisition
     RIGHT JOIN image_analyses ON image_analyses.plate_acquisition_id = plate_acquisition.id
 ;
+
+CREATE OR REPLACE VIEW image_analyses_per_plate AS
+  SELECT
+        plate_acquisition.project,
+        plate_acquisition.plate_barcode AS plate_barcode,
+        plate_acquisition.name AS plate_acq_name,
+        plate_acquisition.id AS plate_acq_id,
+        image_analyses.id AS analysis_id,
+        to_char(image_analyses.finish at time zone 'cet', 'YYYY-MM-DD')  AS analysis_date,
+        to_char(image_analyses.error at time zone 'cet', 'YYYY-MM-DD') AS analysis_error,
+        image_analyses.meta AS meta,
+        image_analyses.pipeline_name,
+        '/share/data/cellprofiler/automation/results/' || plate_acquisition.plate_barcode 
+                                                       || '/' 
+                                                       || plate_acquisition.id 
+                                                       || '/' 
+                                                       || image_analyses.id ||
+                                                       '/' as results
+    FROM
+        plate_acquisition
+    LEFT JOIN image_analyses ON image_analyses.plate_acquisition_id = plate_acquisition.id
+;
+
+-- SELECT * FROM image_analyses_per_plate
+-- ORDER BY project, plate_barcode, plate_acq_name, meta, analysis_date
+--
+-- SELECT project, plate_acq_name, meta, analysis_date, analysis_error, pipeline_name, plate_acq_id, analysis_id, results
+-- FROM image_analyses_per_plate
+-- ORDER BY project, plate_barcode, plate_acq_name, meta, analysis_date
 
 
 CREATE OR REPLACE VIEW image_sub_analyses_v1 AS
@@ -249,9 +281,9 @@ CREATE OR REPLACE VIEW image_sub_analyses_v1 AS
         image_analyses.pipeline_name AS pipeline_name,
         plate_acquisition.id AS plate_acquisition_id,
         plate_acquisition.plate_barcode AS plate_barcode,
-        image_sub_analyses.start at time zone 'utc' at time zone 'cet' AS start,
-        image_sub_analyses.finish at time zone 'utc' at time zone 'cet' AS finish,
-        image_sub_analyses.error at time zone 'utc' at time zone 'cet' AS error,
+        image_sub_analyses.start at time zone 'cet' AS start,
+        image_sub_analyses.finish at time zone 'cet' AS finish,
+        image_sub_analyses.error at time zone 'cet' AS error,
         image_sub_analyses.meta AS meta,
         image_sub_analyses.depends_on_sub_id AS depends_on_sub_id,
         image_sub_analyses.result AS result
@@ -329,17 +361,18 @@ ALTER TABLE plate_layout ADD CONSTRAINT constr_primary_key_plate_layout_layout_i
 CREATE OR REPLACE VIEW plate_layout_v1 AS
   SELECT
     plate_layout.layout_id,
-    plate_layout.layout_comment,
     plate_layout.well_id,
-    plate_layout.cmpd_id,
+    plate_layout.batch_id,
     plate_layout.solvent,
     plate_layout.stock_conc,
     plate_layout.stock_conc_unit,
+    plate_layout.cmpd_vol,
+    plate_layout.cmpd_vol_unit,
+    plate_layout.well_vol,
+    plate_layout.well_vol_unit,
+    plate_layout.pert_type,
     plate_layout.cmpd_conc,
     plate_layout.cmpd_conc_unit,
-    plate_layout.dmso_conc_perc,
-    plate_layout.pert_type,
-    plate_layout.morph_change,
     compound.batchid,
     compound.cbkid,
     compound.libid,
@@ -349,7 +382,7 @@ CREATE OR REPLACE VIEW plate_layout_v1 AS
     compound.inkey
   FROM
       plate_layout
-  LEFT JOIN compound ON plate_layout.cmpd_id = compound.batchid;
+  LEFT JOIN compound ON plate_layout.batch_id = compound.batchid;
 
 
 
