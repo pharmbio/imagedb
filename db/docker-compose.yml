@@ -60,3 +60,5 @@ services:
       - "traefik.http.routers.imagedbadminer.rule=Host(`${TRAEFIK_FRONTEND_URL?You need to specify env TRAEFIK_FRONTEND_URL, e.g. TRAEFIK_FRONTEND_URL=name.my-domain.com}`)"
       - "traefik.http.routers.imagedbadminer.entrypoints=websecure"
       - "traefik.http.routers.imagedbadminer.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.mybasicauthmiddleware.basicauth.users=pharmbio:$$apr1$$fyCe4GTP$$ZKBx4uASZNC819ZY7As2J/"
+      - "traefik.http.routers.imagedbadminer.middlewares=mybasicauthmiddleware"
