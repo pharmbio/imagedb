@@ -67,7 +67,7 @@ def get_plate(plate_name):
         put_connection(conn)
         conn = None
 
-        logging.debug(str(resultlist))
+        logging.debug("len(resultlist):" + str(len(resultlist)))
 
         # create a nested json object of all images.
         # A plate object containing all plate_acquisitions. The plate_acquisitions containing all wells and then
