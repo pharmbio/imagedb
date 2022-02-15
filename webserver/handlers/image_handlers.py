@@ -55,6 +55,8 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
     async def get(self, ch1, ch2, ch3):
         """Handles GET requests.
         """
+        
+        logging.debug("Inside ThumbImageMergeHandler")
 
         channels = {'1': ch1}
 
@@ -70,7 +72,7 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
             new_value = imgdb_settings.IMAGES_THUMB_FOLDER + "/" + value
             channels.update({key: new_value})
 
-        logging.debug(channels)
+        # logging.debug(channels)
 
         img_path = None
         if len(channels) == 1:
@@ -78,7 +80,7 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
         else:
             img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER)
 
-        logging.debug(img_path)
+        # logging.debug(img_path)
 
         self.set_header("Content-type", "image/png")
         self.write(open(img_path, 'rb').read())
