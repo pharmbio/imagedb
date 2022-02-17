@@ -425,6 +425,8 @@ function redrawImageViewer(clearFirst = true) {
 
   console.log("inside redrawImageViewer, clear first=", clearFirst)
 
+  //clearFirst = true;
+
   if (clearFirst) {
     viewer.world.removeAll();
   }
@@ -454,38 +456,11 @@ function redrawImageViewer(clearFirst = true) {
     },
   });
 
-
-
-  //let brightness = getSelectedBrightnessValue();
-  //viewer.setFilterOptions({
-  //      filters: {
-  //          processors: function(context, callback) {
-  //                 context.filter = 'brightness(' + brightness + ')';
-  //                 // Do not forget to call this.render with the callback
-  //                 console.log('brightness' + brightness);
-  //                 callback();
-  //                 //this.render(callback);
-  //          }
-  //      }
-  // });
-
-  //let brightness = getSelectedBrightnessValue();
-  //viewer.setFilterOptions({
-  //  filters: {
-  //      processors: function(context, callback) {
-  //          Caman(context.canvas, function() {
-  //              this.exposure(brightness);
-  //              //this.vibrance(40);
-  //              // Do not forget to call this.render with the callback
-  //              this.render(callback);
-  //          });
-  //      }
-  //  }
-  //});
-
+  console.log(" viewer.world.getItemCount()" + viewer.world.getItemCount());
 
   if (clearFirst) {
     // First load the selected acquisition
+    //addImageToViewer(1, imgURL, 1);
     addImageToViewer(acquisitionIndex, imgURL, 1);
 
     // Then add the other ones
@@ -500,6 +475,7 @@ function redrawImageViewer(clearFirst = true) {
   for (let n = 0; n <= tpCount; n++) {
     let imgItem = viewer.world.getItemAt(n);
     console.log("n=" + n, imgItem);
+  //  console.log(imgItem.source.url);
     if (imgItem) {
       if (n === acquisitionIndex) {
         imgItem.setOpacity(1);
@@ -518,7 +494,6 @@ function loadAcquisitionImagesIntoViewer(skipIndex) {
 
   // Image viewer hack since it only takes a single site
   let site = getSelectedSite()[0];
-
 
 
   // First odd ones
@@ -552,7 +527,7 @@ function addImageToViewer(index, imgURL, opacity) {
       console.log("item", event.item);
       console.log("source", event.item.source);
       if (event.item.opacity === 1) {
-        redrawImageViewer(false);
+         redrawImageViewer(false);
       }
     }
   });
@@ -1377,6 +1352,11 @@ function createMergeThumbImgURLFromChannels(channels) {
 }
 
 function createMergeImgURLFromChannels(channels) {
+
+  console.log(channels, channels);
+  if(!channels){
+    return "/static/images/empty.png";
+  }
 
   let selected_channel = String(getSelectedChannelValue());
 

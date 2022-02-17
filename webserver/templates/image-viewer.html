@@ -329,11 +329,8 @@
 
       tileSources: {
         opacity: 1,
-        preload: true,
         type: 'image',
         url: '{{ image_url }}',
-        buildPyramid: false,
-        sequenceMode: true,
         success: function (event) {
           console.log("image-loaded from image-viewer.html");
           console.log(viewer.world.getItemCount());
