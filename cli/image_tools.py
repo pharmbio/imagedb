@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 
+from ast import Not
 import logging
 import os
 from PIL import Image
 import cv2 as cv2
 import subprocess
+import time
+import glob
+from pathlib import Path
 
 def colon_delimited_to_dict(inputString):
   # for each line in result, split into key-val on delimiter(colon)
@@ -72,9 +76,73 @@ def makeThumb_opencv(path, thumbpath, overwrite):
     # save thumb
     cv2.imwrite(thumbpath_with_ext, imRes)
 
+def tif2png_recursive(in_path, out_path):
+  exts = ['.tif', '.tiff']
+  files = [p for p in Path(in_path).rglob('*') if p.suffix in exts]
+
+  for file in files:
+    filename = str(file)
+    if not 'thumb' in filename:
+      out_filename = filename.replace(in_path, out_path).replace(file.suffix, '.png')
+      if not os.path.isfile(out_filename):
+        any2png(filename, out_filename)
+
+def any2png(in_path, out_path):
+
+  #logging.debug("Inside img2png")
+  #logging.debug("in_path:" + str(in_path))
+  #logging.debug("out_path:" + str(out_path))
+
+  os.makedirs(os.path.dirname(out_path),exist_ok=True)
+  start = time.time()
+  cv2_any2png(in_path, out_path)
+
+  #logging.debug("time:" + str(time.time() - start))
+  #logging.debug("orig:" + str(os.path.getsize(in_path)))
+  #logging.debug("new :" + str(os.path.getsize(out_path)))
+
+  # start = time.time()
+  # cv2.imread(out_path)
+  # logging.info("open:" + str(time.time() - start))
+
+
+  logging.info("Done img2png")
+
+
+def pillow_any2png(in_path, out_path):
+  orig_img = Image.open(in_path)
+  orig_img.save(out_path, "PNG", compress_level=9)
+
+def cv2_any2png(in_path, out_path):
+  orig_img = cv2.imread(in_path)
+  cv2.imwrite(out_path, orig_img, [cv2.IMWRITE_PNG_COMPRESSION, 9])
+
+
+
+
 
 if __name__ == '__main__':
-  # test tiff-function
-  result = read_tiff_info("/mnt/messi/tmp/WT-day7-40X-H2O2-Glu_B02_s3_w58595D8FD-A862-48FD-BE61-DDE35F0EDAC3.tif")
-  print(result)
+
+  #
+  # Configure logging
+  #
+  logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                      datefmt='%H:%M:%S',
+                      level=logging.DEBUG)
+  rootLogger = logging.getLogger()
+
+  #imgfile = "/share/mikro/IMX/MDC_pharmbio/JUMP-v1/P013841-GR-U2OS-50h-L1/2021-10-04/801/P013841-GR-U2OS-50h-L1_C03_s1_w1D25AE1A3-B911-4E54-9B3F-06B19BD45236.tif"
+  #imgpath = "/share/mikro/IMX/MDC_pharmbio/dicot/"
+
+
+  orig_root = '/share/mikro/'
+  new_root = '/share/mikro-compressed/'
+
+  in_path = "/share/mikro/IMX/MDC_pharmbio/dicot/"
+  out_path = in_path.replace(orig_root, new_root)
+
+  # img2png(in_path, out_path)
+  tif2png_recursive(in_path, out_path)
+
+
 

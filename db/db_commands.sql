@@ -203,8 +203,12 @@ CREATE INDEX  ix_image_analyses_start ON image_analyses(start);
 CREATE INDEX  ix_image_analyses_finish ON image_analyses(finish);
 
 -- UPDATE image_analyses
--- SET meta = jsonb_set(meta,'{type}','"cp_features"',true)
--- WHERE pipeline_name like 'Featur%'
+-- SET meta = jsonb_set(coalesce(meta,{}),'{type}','"cp_features"',true)
+-- WHERE pipeline_name like '%FEAT%'
+
+-- UPDATE image_analyses
+-- SET meta = jsonb_set(coalesce(meta,'{}'),'{type}','"cp_qc"',true)
+-- WHERE pipeline_name like '%QC%'
 
 
 

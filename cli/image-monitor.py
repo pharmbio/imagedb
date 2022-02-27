@@ -13,21 +13,21 @@ import json
 from datetime import datetime, timedelta
 
 from filenames.filenames import parse_path_and_file
-from image_tools import makeThumb
-from image_tools import read_tiff_info
+import image_tools
 import settings as imgdb_settings
 
 __connection_pool = None
+
 
 def get_connection():
 
     global __connection_pool
     if __connection_pool is None:
-        __connection_pool = psycopg2.pool.SimpleConnectionPool(1, 2, user = imgdb_settings.DB_USER,
-                                              password = imgdb_settings.DB_PASS,
-                                              host = imgdb_settings.DB_HOSTNAME,
-                                              port = imgdb_settings.DB_PORT,
-                                              database = imgdb_settings.DB_NAME)
+        __connection_pool = psycopg2.pool.SimpleConnectionPool(1, 2, user=imgdb_settings.DB_USER,
+                                                               password=imgdb_settings.DB_PASS,
+                                                               host=imgdb_settings.DB_HOSTNAME,
+                                                               port=imgdb_settings.DB_PORT,
+                                                               database=imgdb_settings.DB_NAME)
     return __connection_pool.getconn()
 
 
@@ -52,15 +52,18 @@ def get_subdirs(root_path, filter=""):
 #
 # Recursively gets all subdirs in dir
 #
+
+
 def get_subdirs_recursively_no_thumb_dir(path):
     logging.debug(path)
     subdirs = []
     for root, dir, files in os.walk(path):
         for subdir in dir:
             if "thumb" not in subdir:
-              subdir = os.path.join(root, subdir)
-              subdirs.append(subdir)
+                subdir = os.path.join(root, subdir)
+                subdirs.append(subdir)
     return subdirs
+
 
 def get_all_image_files(path):
     # get all files
@@ -80,11 +83,13 @@ def get_all_image_files(path):
 def get_last_modified(path):
     return
 
+
 def make_thumb_path(image, thumbdir):
     # need to strip / otherwise path can not be joined
     image_subpath = image.strip("/")
     thumb_path = os.path.join(thumbdir, image_subpath)
     return thumb_path
+
 
 def insert_meta_into_db(img_meta):
 
@@ -93,37 +98,40 @@ def insert_meta_into_db(img_meta):
     # Insert into images table
     insert_meta_into_table_images(img_meta, plate_acq_id)
 
+
 def getPlateBarcodeFromPlateAcquisitionName(acquisition_name):
     # extract barcode from plate_name
     pattern = '.*-(P015\\d{3})(-|$).*'
     match = re.search(pattern, acquisition_name)
     if match:
-      barcode = match.group(1)
+        barcode = match.group(1)
     else:
-      barcode = acquisition_name
-    
+        barcode = acquisition_name
+
     return barcode
+
 
 def insert_meta_into_table_images(img_meta, plate_acq_id):
 
     conn = None
     try:
-        
+
         insert_query = "INSERT INTO images(project, plate_acquisition_id, plate_barcode, plate_acquisition_name, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         conn = get_connection()
         insert_cursor = conn.cursor()
         insert_cursor.execute(insert_query, (img_meta['project'],
-                                            plate_acq_id,
-                                            getPlateBarcodeFromPlateAcquisitionName(img_meta['plate']),
-                                            img_meta['plate'],
-                                            img_meta['timepoint'],
-                                            img_meta['well'],
-                                            img_meta['wellsample'],
-                                            img_meta['channel'],
-                                            img_meta['path'],
-                                            json.dumps(img_meta['file_meta']),
-                                            json.dumps(img_meta)
-                                            ))
+                                             plate_acq_id,
+                                             getPlateBarcodeFromPlateAcquisitionName(
+                                                 img_meta['plate']),
+                                             img_meta['plate'],
+                                             img_meta['timepoint'],
+                                             img_meta['well'],
+                                             img_meta['wellsample'],
+                                             img_meta['channel'],
+                                             img_meta['path'],
+                                             json.dumps(img_meta['file_meta']),
+                                             json.dumps(img_meta)
+                                             ))
         insert_cursor.close()
         conn.commit()
     except Exception as err:
@@ -132,6 +140,7 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
     finally:
         put_connection(conn)
 
+
 def select_or_insert_plate_acq(img_meta):
 
     # First select to see if plate_acq already exists
@@ -139,27 +148,28 @@ def select_or_insert_plate_acq(img_meta):
 
     if plate_acq_id is None:
         plate_acq_id = insert_plate_acq(img_meta)
-    
+
     return plate_acq_id
+
 
 def select_plate_acq_id(image_path):
 
     conn = None
-    
+
     try:
-        
+
         folder = os.path.dirname(image_path)
 
         query = ("SELECT id "
-                        "FROM plate_acquisition "
-                        "WHERE folder = %s ")
+                 "FROM plate_acquisition "
+                 "WHERE folder = %s ")
 
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(query, (folder,))
         plate_acq_id = cursor.fetchone()
         cursor.close()
-        
+
         return plate_acq_id
 
     except Exception as err:
@@ -169,20 +179,20 @@ def select_plate_acq_id(image_path):
         put_connection(conn)
 
 
-
 def insert_plate_acq(img_meta):
 
     conn = None
     try:
 
-        imaged_timepoint = datetime(int(img_meta['date_year']), int(img_meta['date_month']), int(img_meta['date_day_of_month']))
+        imaged_timepoint = datetime(int(img_meta['date_year']), int(
+            img_meta['date_month']), int(img_meta['date_day_of_month']))
         folder = os.path.dirname(img_meta['path'])
 
         # Set default channel_map_id and change it to new one if after a certain date
         channel_map_id = 1
-        if imaged_timepoint >= datetime(2020,9,1):
+        if imaged_timepoint >= datetime(2020, 9, 1):
             channel_map_id = 2
-        
+
         query = "INSERT INTO plate_acquisition(plate_barcode, name, project, imaged, microscope, channel_map_id, timepoint, folder) VALUES(%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"
         conn = get_connection()
         cursor = conn.cursor()
@@ -207,7 +217,7 @@ def insert_plate_acq(img_meta):
         raise err
     finally:
         put_connection(conn)
-    
+
 
 def image_exists_in_db(image_path):
 
@@ -218,7 +228,7 @@ def image_exists_in_db(image_path):
 
         exists_path_query = "SELECT EXISTS (SELECT 1 FROM images WHERE path = %s)"
         cursor.execute(exists_path_query, (image_path,))
-       
+
         path_exists = cursor.fetchone()[0]
         cursor.close()
         return path_exists
@@ -228,6 +238,56 @@ def image_exists_in_db(image_path):
         raise err
     finally:
         put_connection(conn)
+        
+def make_compressed_copy(img_meta, ORIG_ROOT_PATH, COMPRESSED_ROOT_PATH):
+    
+    filename, suffix = os.path.splitext(img_meta['path'])
+    out_filename = img_meta['path'].replace(ORIG_ROOT_PATH, COMPRESSED_ROOT_PATH).replace(suffix, '.png')
+    if not os.path.isfile(out_filename):
+        image_tools.any2png(img_meta['path'], out_filename)
+
+    return out_filename
+
+
+def addImageToImagedb(img_meta):
+    # read tiff-meta-tags
+    # make inside try-catch so a corrupted image doesn't stop it all
+    tiff_meta = ""
+    try:
+        tiff_meta = image_tools.read_tiff_info(img_meta['path'])
+    except Exception as e:
+        logging.error("Exception reading tiff meta: %s", e)
+        logging.error("image: " + str(img_meta['path']))
+        logging.error( "Continuing since we don't want to break on a single bad image")
+
+    img_meta['file_meta'] = tiff_meta
+
+    # create compressed image (if it is an IMX image)
+    IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
+    COMPRESSED_IMG_ROOT = '/share/mikro-compressed/IMX/MDC_pharmbio/'
+    if img_meta['path'].startswith(IMX_ORIG_ROOT):
+        path_compressed_img = make_compressed_copy(img_meta, IMX_ORIG_ROOT, COMPRESSED_IMG_ROOT)
+        img_meta['path'] = path_compressed_img
+    
+    # insert into db
+    insert_meta_into_db(img_meta)
+
+    # create thumb image
+    thumb_path = make_thumb_path(img_meta['path'],
+                                 imgdb_settings.IMAGES_THUMB_FOLDER)
+    logging.debug(thumb_path)
+
+    # Only create thumb if not exists already
+    # make inside try-catch so a corrupted image doesn't stop it all
+    if not os.path.exists(thumb_path):
+        try:
+            image_tools.makeThumb(img_meta['path'], thumb_path, False)
+        except Exception as e:
+            logging.error("Exception making thumb image: %s", e)
+            logging.error("image: " + str(img_meta['path']))
+            logging.error("thumb_path: " + str(thumb_path))
+            logging.error(
+                "Continuing since we don't want to break on a single bad image")
 
 
 def add_plate_to_db(images, latest_filedate_to_test):
@@ -263,46 +323,16 @@ def add_plate_to_db(images, latest_filedate_to_test):
 
                 # Insert image if not in db (no result)
                 if image_exists == False:
-
-                    # read tiff-meta-tags
-                    # make inside try-catch so a corrupted image doesn't stop it all
-                    tiff_meta = ""
-                    try:
-                        tiff_meta = read_tiff_info(img_meta['path'])
-                    except Exception as e:
-                        logging.error("Exception reading tiff meta: %s", e)
-                        logging.error("image: " + str(image))
-                        logging.error("Continuing since we don't want to break on a single bad image")
-                    
-                    img_meta['file_meta'] = tiff_meta
-
-                    # insert into db
-                    insert_meta_into_db(img_meta)
-
-                    # create thumb image
-                    thumb_path = make_thumb_path(image,
-                                                 imgdb_settings.IMAGES_THUMB_FOLDER)
-                    logging.debug(thumb_path)
-
-                    # Only create thumb if not exists already
-                    # make inside try-catch so a corrupted image doesn't stop it all
-                    if not os.path.exists(thumb_path):
-                        try:
-                            makeThumb(image, thumb_path, False)
-                        except Exception as e:
-                            logging.error("Exception making thumb image: %s", e)
-                            logging.error("image: " + str(image))
-                            logging.error("thumb_path: " + str(thumb_path))
-                            logging.error("Continuing since we don't want to break on a single bad image")
-
+                    addImageToImagedb(img_meta)
                 else:
-                    logging.debug("doc exists already")
+                    logging.debug("image exists already in db")
 
             if idx % 100 == 0:
                 logging.info("images processed:" + str(idx))
                 logging.info("images total to process:" + str(len(images)))
         else:
-            logging.debug("file is to old for being inserted into database, image_modtime < latest_filedate_to_test")
+            logging.debug(
+                "file is to old for being inserted into database, image_modtime < latest_filedate_to_test")
 
     logging.info("done add_plate_metadata to db")
     return current_latest_imagefile
@@ -318,11 +348,13 @@ def import_plate_images_and_meta(plate_date_dir, latest_import_filedate):
     logging.debug(all_images)
 
     # import images (if later than latest_import_filedate)
-    current_latest_imported_file = add_plate_to_db(all_images, latest_import_filedate)
+    current_latest_imported_file = add_plate_to_db(
+        all_images, latest_import_filedate)
 
     logging.info("done import_plate_images_and_meta: " + str(plate_date_dir))
 
     return current_latest_imported_file
+
 
 def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, proj_root_dirs, exhaustive_initial_poll, continuous_polling):
 
@@ -338,13 +370,15 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
     else:
         exception_file_name = "exceptions-last-limited_poll.log"
 
-    exception_file = os.path.join(imgdb_settings.ERROR_LOG_DIR, exception_file_name)
+    exception_file = os.path.join(
+        imgdb_settings.ERROR_LOG_DIR, exception_file_name)
 
     while True:
 
         start_time = time.time()
         logging.info("Staring new poll: " + str(datetime.today()))
-        logging.info("latest_filedate_last_poll=" + str(datetime.fromtimestamp(latest_filedate_last_poll)))
+        logging.info("latest_filedate_last_poll=" +
+                     str(datetime.fromtimestamp(latest_filedate_last_poll)))
 
         # TODO maybe reimplement plate_filter
         # plate_filter = ""
@@ -372,23 +406,24 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
                     logging.info(exhaustive_initial_poll)
                     logging.info(is_initial_poll)
-                    logging.info("(exhaustive_initial_poll and is_initial_poll)" + str((exhaustive_initial_poll and is_initial_poll)))
-                    logging.info("timedelta(days=poll_dirs_margin_days)" + str(timedelta(days=poll_dirs_margin_days)))
+                    logging.info("(exhaustive_initial_poll and is_initial_poll)" +
+                                 str((exhaustive_initial_poll and is_initial_poll)))
+                    logging.info("timedelta(days=poll_dirs_margin_days)" +
+                                 str(timedelta(days=poll_dirs_margin_days)))
                     logging.info("date_delta" + str(date_delta))
-
-
 
                     # poll images in directories more recent than today + poll_dirs_date_margin_days
                     if date_delta <= timedelta(days=poll_dirs_margin_days) or \
-                             (exhaustive_initial_poll and is_initial_poll):
+                            (exhaustive_initial_poll and is_initial_poll):
 
                         logging.info("Image folder is more recent")
 
                         # set file date to test inserting into db to last poll latest file minus margin
-                        latest_filedate_last_poll_with_margin = latest_filedate_last_poll - latest_file_change_margin
+                        latest_filedate_last_poll_with_margin = latest_filedate_last_poll - \
+                            latest_file_change_margin
 
                         current_dir_latest_filedate = import_plate_images_and_meta(plate_dir,
-                                                                               latest_filedate_last_poll_with_margin)
+                                                                                   latest_filedate_last_poll_with_margin)
 
                         # keep track of latest file in this current poll
                         current_poll_latest_filedate = max(current_poll_latest_filedate,
@@ -399,12 +434,14 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                 except Exception as e:
                     logging.exception("Exception in plate dir")
                     with open(exception_file, 'a') as exc_file:
-                       exc_file.write("Exception, time:" + str(datetime.today()) + "\n")
-                       exc_file.write("plate_dir:" + str(plate_dir) + "\n")
-                       exc_file.write(traceback.format_exc())
+                        exc_file.write("Exception, time:" +
+                                       str(datetime.today()) + "\n")
+                        exc_file.write("plate_dir:" + str(plate_dir) + "\n")
+                        exc_file.write(traceback.format_exc())
 
         # Set latest file mod for all monitored dirs
-        latest_filedate_last_poll = max(latest_filedate_last_poll, current_poll_latest_filedate)
+        latest_filedate_last_poll = max(
+            latest_filedate_last_poll, current_poll_latest_filedate)
 
         elapsed_time = time.time() - start_time
         logging.info("Time spent polling: " + str(elapsed_time))
@@ -412,13 +449,13 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
         is_initial_poll = False
 
         # Sleep until next polling action
-        logging.info("Going to sleep for: " + str(sleep_time) + "sek" )
+        logging.info("Going to sleep for: " + str(sleep_time) + "sek")
         time.sleep(sleep_time)
 
         # TODO could skip sleeping if images were inserted... but difficult then with 2 hour margin (all files would be tried again)
 
         if continuous_polling != True:
-          break
+            break
 
 
 #
@@ -448,7 +485,7 @@ try:
                         default=imgdb_settings.EXHAUSTIVE_INITIAL_POLL)
     parser.add_argument('-lfcm', '--latest-file-change-margin', help='Description for xxx argument',
                         default=imgdb_settings.LATEST_FILE_CHANGE_MARGIN)
-    #parser.add_argument('-ll', '--log-level', help='Description for xxx argument',
+    # parser.add_argument('-ll', '--log-level', help='Description for xxx argument',
     #                    default=imgdb_settings.LOG_LEVEL)
 
     args = parser.parse_args()
