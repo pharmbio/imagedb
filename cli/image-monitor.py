@@ -238,9 +238,9 @@ def image_exists_in_db(image_path):
         raise err
     finally:
         put_connection(conn)
-        
+
 def make_compressed_copy(img_meta, ORIG_ROOT_PATH, COMPRESSED_ROOT_PATH):
-    
+
     filename, suffix = os.path.splitext(img_meta['path'])
     out_filename = img_meta['path'].replace(ORIG_ROOT_PATH, COMPRESSED_ROOT_PATH).replace(suffix, '.png')
     if not os.path.isfile(out_filename):
@@ -263,12 +263,12 @@ def addImageToImagedb(img_meta):
     img_meta['file_meta'] = tiff_meta
 
     # create compressed image (if it is an IMX image)
-    IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
-    COMPRESSED_IMG_ROOT = '/share/mikro-compressed/IMX/MDC_pharmbio/'
-    if img_meta['path'].startswith(IMX_ORIG_ROOT):
-        path_compressed_img = make_compressed_copy(img_meta, IMX_ORIG_ROOT, COMPRESSED_IMG_ROOT)
-        img_meta['path'] = path_compressed_img
-    
+    # IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
+    # COMPRESSED_IMG_ROOT = '/share/mikro-compressed/IMX/MDC_pharmbio/'
+    # if img_meta['path'].startswith(IMX_ORIG_ROOT):
+    #     path_compressed_img = make_compressed_copy(img_meta, IMX_ORIG_ROOT, COMPRESSED_IMG_ROOT)
+    #     img_meta['path'] = path_compressed_img
+
     # insert into db
     insert_meta_into_db(img_meta)
 

@@ -57,8 +57,8 @@ CREATE TABLE plate_acquisition (
   microscope        text,
   channel_map_id    int,
   timepoint         int,
-  folder            text,
-  acquisition_name  text,
+  folder            text
+  name              text,
   project           text
 );
 CREATE INDEX ix_plate_acquisition_plate_barcode ON plate_acquisition(plate_barcode);
@@ -67,6 +67,19 @@ CREATE INDEX ix_plate_acquisition_microscope ON plate_acquisition(microscope);
 CREATE INDEX ix_plate_acquisition_folder ON plate_acquisition(folder);
 CREATE INDEX ix_plate_acquisition_name ON plate_acquisition(name);
 CREATE INDEX ix_plate_acquisition_project ON plate_acquisition(project);
+
+CREATE OR REPLACE VIEW plate_acquisition_v1 AS
+  SELECT   
+    id,
+    name,
+    plate_barcode,
+    project,
+    imaged,
+    microscope,
+    channel_map_id,
+    timepoint,
+    folder
+  FROM plate_acquisition;
 
 -- ALTER TABLE plate_acquisition ADD COLUMN name text;
 -- UPDATE plate_acquisition SET name=plate_barcode;
@@ -113,10 +126,10 @@ INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
 
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
 CREATE TABLE channel_map_mapping (
-  plate_barcode  text,
+  plate_acquisition_name  text,
   channel_map     int
 );
-CREATE INDEX  ix_channel_map_mapping_plate_barcode ON channel_map_mapping(plate_barcode);
+CREATE INDEX  ix_channel_map_mapping_plate_acquisition_name ON channel_map_mapping(plate_acquisition_name);
 CREATE INDEX  ix_channel_map_mapping_channel_map ON channel_map_mapping(channel_map);
 
 
@@ -527,7 +540,7 @@ CREATE OR REPLACE VIEW well_all_view AS
 ---> Then Update:
 UPDATE plate_acquisition
    SET channel_map_id = channel_map_mapping.channel_map 
-   FROM channel_map_mapping WHERE plate_acquisition.plate_barcode = channel_map_mapping.plate_barcode;
+   FROM channel_map_mapping WHERE plate_acquisition.name = channel_map_mapping.plate_acquisition_name;
 
 
 -- Add readonly user

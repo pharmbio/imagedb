@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
@@ -25,6 +25,13 @@ RUN apt-get update && apt-get install -y \
 # install tiffinfo
 RUN apt-get update && apt-get install -y \
         libtiff-tools
+
+ENV TZ=Europe/London
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+        libgl1 \
+        libglib2.0-0
 
 # Install with pip before copy all files, otherwise docker needs to build
 # this layer allways after file changes in app-dir

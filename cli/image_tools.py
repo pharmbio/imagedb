@@ -109,13 +109,13 @@ def any2png(in_path, out_path):
   logging.info("Done img2png")
 
 
-def pillow_any2png(in_path, out_path):
+def pillow_any2png(in_path, out_path, compression=6):
   orig_img = Image.open(in_path)
-  orig_img.save(out_path, "PNG", compress_level=9)
+  orig_img.save(out_path, "PNG", compress_level=compression)
 
-def cv2_any2png(in_path, out_path):
+def cv2_any2png(in_path, out_path, compression=6):
   orig_img = cv2.imread(in_path)
-  cv2.imwrite(out_path, orig_img, [cv2.IMWRITE_PNG_COMPRESSION, 9])
+  cv2.imwrite(out_path, orig_img, [cv2.IMWRITE_PNG_COMPRESSION, compression])
 
 
 

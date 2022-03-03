@@ -26,15 +26,20 @@ class Plate {
   }
 
   getPlateLayout(siteNames) {
-    // Loop through wellNames and see if size is outside 96 plate limit
+    // Loop through wellNames (for all acquisitions) and see if size is outside 96 plate limit
     // if not return 96 size specs
-    let wells = this.getWellsOfFirstAcquisition();
-    for (let well of Object.values(wells)) {
-      let wellName = well.id;
-      let nRow = getRowIndexFrowWellName(wellName);
-      let nCol = getColIndexFrowWellName(wellName);
-      if (nRow > 8 || nCol > 12) {
-        return { "rows": 16, "cols": 24, "sites": siteNames };
+
+    Object.keys(this.plateObj.acquisitions)
+
+    for(let acquisition_name of Object.keys(this.getAcquisitions())){
+      let wells = this.getWells(acquisition_name);
+      for (let well of Object.values(wells)) {
+        let wellName = well.id;
+        let nRow = getRowIndexFrowWellName(wellName);
+        let nCol = getColIndexFrowWellName(wellName);
+        if (nRow > 8 || nCol > 12) {
+          return { "rows": 16, "cols": 24, "sites": siteNames };
+        }
       }
     }
     return { "rows": 8, "cols": 12, "sites": siteNames };
@@ -50,7 +55,6 @@ class Plate {
     for (let site of Object.values(sites)) {
       siteNames.push(site.id);
     }
-
     return siteNames;
   }
 
@@ -1443,8 +1447,6 @@ function animationSpeedSelectChanged() {
 function animateCbxChanged() {
   toggleAnimation();
 }
-
-
 
 function viewerBrightnessSelectChanged() {
   redrawImageViewer();
