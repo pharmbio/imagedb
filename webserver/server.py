@@ -92,9 +92,9 @@ if __name__ == '__main__':
 
     logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                         datefmt='%H:%M:%S',
-                        level=logging.DEBUG)
+                        level=logging.INFO)
 
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
 
     APP = tornado.web.Application(ROUTES, **SETTINGS)
     APP.listen(8080)

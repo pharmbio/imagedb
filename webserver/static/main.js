@@ -25,14 +25,15 @@ class Plate {
     return this.plateObj.id;
   }
 
-  getPlateLayout(siteNames) {
+
+  getPlateSize(siteNames) {
     // Loop through wellNames (for all acquisitions) and see if size is outside 96 plate limit
     // if not return 96 size specs
 
     Object.keys(this.plateObj.acquisitions)
 
-    for(let acquisition_name of Object.keys(this.getAcquisitions())){
-      let wells = this.getWells(acquisition_name);
+    for(let acquisition_id of Object.keys(this.getAcquisitions())){
+      let wells = this.getWells(acquisition_id);
       for (let well of Object.values(wells)) {
         let wellName = well.id;
         let nRow = getRowIndexFrowWellName(wellName);
@@ -45,9 +46,9 @@ class Plate {
     return { "rows": 8, "cols": 12, "sites": siteNames };
   }
 
-  getAvailableSites() {
+  getAvailableSites(acquisition_id) {
     // get names of the sites of the first acquisition and first well
-    let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0];
+    let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0]; 
     let firstWellKey = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells)[0];
     let sites = this.plateObj.acquisitions[firstPlateAcqKey].wells[firstWellKey].sites;
 
@@ -58,35 +59,30 @@ class Plate {
     return siteNames;
   }
 
-  getChannelNames() {
+  getChannelNames(acquisition_id) {
     // Get channel keys for the first sites object of the first well of first acquisition in plate object
     let nCount = 0;
-    let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0];
-    let firstWellKey = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells)[0];
-    let firstSiteKey = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells[firstWellKey].sites)[0];
-    let channelNames = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells[firstWellKey].sites[firstSiteKey].channels);
+    let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
+    let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
+    let channelNames = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites[firstSiteKey].channels);
     return channelNames;
   }
 
-  getChannels(acquisition, well_name, site) {
-    if(this.plateObj.acquisitions[acquisition] != null &&
-       this.plateObj.acquisitions[acquisition].wells[well_name] != null && 
-       this.plateObj.acquisitions[acquisition].wells[well_name].sites[site]){
-      return this.plateObj.acquisitions[acquisition].wells[well_name].sites[site].channels;
+  getChannels(acquisition_id, well_name, site) {
+    if(this.plateObj.acquisitions[acquisition_id] != null &&
+       this.plateObj.acquisitions[acquisition_id].wells[well_name] != null && 
+       this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site]){
+      return this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site].channels;
     }
     else{
       return null;
     }
   }
 
-  getWells(acquisition) {
-    return this.plateObj.acquisitions[acquisition].wells;
+  getWells(acquisition_id) {
+    return this.plateObj.acquisitions[acquisition_id].wells;
   }
 
-  getWellsOfFirstAcquisition() {
-    let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0];
-    return this.getWells(firstPlateAcqKey);
-  }
 
   getAcquisitions() {
     return this.plateObj.acquisitions;
@@ -100,13 +96,12 @@ class Plate {
     return nCount;
   }
 
-  countChannels() {
+  countChannels(acquisition_id) {
     // Count number of keys for the first sites object of the first well of first acquisition in plate object
     let nCount = 0;
-    let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0];
-    let firstWellKey = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells)[0];
-    let firstSiteKey = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells[firstWellKey].sites)[0];
-    nCount = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells[firstWellKey].sites[firstSiteKey].channels).length;
+    let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
+    let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
+    nCount = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites[firstSiteKey].channels).length;
 
     return nCount;
   }
@@ -129,19 +124,6 @@ class Plate {
     nCount = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells[firstWellKey].sites).length;
 
     return nCount;
-  }
-
-  getPlateAcquisitionID(acquisition) {
-    let image_meta = this.getAcquisitionImageMeta(acquisition);
-    let plate_acq_id = image_meta["plate_acquisition_id"]
-    return plate_acq_id;
-  }
-
-
-  getAcquisitionImageMeta(acquisition) {
-    console.log("acquisition", acquisition)
-    let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition].wells)[0];
-    return this.getWellImageMeta(acquisition, firstWellKey);
   }
 
   getWellImageMeta(acquisition, well_name) {
@@ -328,12 +310,7 @@ function apiLoadPlate(plate_name, select_acq_id=undefined) {
           console.log(window.loaded_plates);
           console.log("Plates loaded")
 
-          updateToolbarWithNewPlate();
-
-          if(select_acq_id !== 'undefined'){
-            console.log("Select acq id:", select_acq_id)
-            setSelectedAcquisition(select_acq_id);
-          }
+          updateToolbarWithNewPlate(select_acq_id);
 
           redrawPlate(true);
         });
@@ -367,14 +344,11 @@ function loadPlateFromViewer(plate_name, acquisition, well, site, channel) {
 
           console.log(window.loaded_plates);
 
-          updateToolbarWithNewPlate();
-
-          setSelectedAcquisition(acquisition);
-          setWellSelection(well);
-          setSiteSelection(site);
-          setChannelSelection(channel);
+          updateToolbarWithNewPlate(acquisition, well, site, channel);
 
           loadAcquisitionImagesIntoViewer(acquisition);
+
+          redrawImageViewer()
 
 
         });
@@ -393,17 +367,24 @@ function loadPlateFromViewer(plate_name, acquisition, well, site, channel) {
 
 }
 
-
-function updateToolbarWithNewPlate() {
-
-  updateAcquisitionSelect(getLoadedPlate());
-  updateAcquisitionSlider(getLoadedPlate());
-
-  console.log("countWells()", getLoadedPlate().countWells());
+function updateToolbarWithNewAcquisition() {
 
   updateWellSelect(getLoadedPlate());
   updateSiteSelect(getLoadedPlate());
   updateChannelSelect(getLoadedPlate());
+
+}
+
+
+function updateToolbarWithNewPlate(selected_acq_id, selected_well, selected_site, selected_channel){
+  updateAcquisitionSelect(getLoadedPlate(), selected_acq_id);
+  updateAcquisitionSlider(getLoadedPlate(selected_acq_id));
+        
+  updateWellSelect(getLoadedPlate(), selected_well);
+  
+  updateSiteSelect(getLoadedPlate(), selected_site);
+
+  updateChannelSelect(getLoadedPlate(), selected_channel);
 
   updatePlateNameLabel(getLoadedPlate().getName());
   // updatePlateAcqLabel(getLoadedPlate());
@@ -639,30 +620,32 @@ function create_site_layout(well_name, sites){
   table.className = 'siteTable';
 
   // Now add rows and columns
-
-  console.log("sites", sites)
   nSites = sites.length;
-  //console.log("nSites", nSites);
+  console.log("nSites", nSites);
 
-  rows = Math.sqrt(nSites);
-  cols = Math.sqrt(nSites);
 
-  siteCounter = 0;
-  for (let row = 0; row < rows; row++) {
+  nRows = Math.ceil(Math.sqrt(nSites));
+  nCols = Math.ceil(Math.sqrt(nSites));
+
+  for (let row = 0; row < nRows; row++) {
     let rowElement = document.createElement('tr');
     //rowElement.className = 'siteRow';
-    for (let col = 1; col <= cols; col++) {
+    for (let col = 0; col < nCols; col++) {
 
-      let site_name = sites[siteCounter];
+      nSite = col + row * nCols // This if you want column order: nSite = row + col * nCols
+
+      //console.log("add site: " + nSite);
+
+      let site_name = sites[nSite];
       let cell_name = well_name + "_s" + site_name;
 
       let site_cell = document.createElement('td');
       site_cell.id = cell_name;
       site_cell.className = 'siteCell';
       rowElement.appendChild(site_cell);
-      siteCounter++;
     }
     table.appendChild(rowElement);
+
   }
   return table;
 
@@ -740,7 +723,7 @@ function drawPlate(plateObj, acquisition, sites, clearFirst) {
   
   // first create a new plate consisting of empty well-div's
   if (document.getElementById('plateTable') == null) {
-    let plateLayout = plateObj.getPlateLayout(siteNames);
+    let plateLayout = plateObj.getPlateSize(siteNames);
     let table = createEmptyTable(plateLayout.rows, plateLayout.cols, plateLayout.sites);
     container.appendChild(table);
     console.log('done create div');
@@ -914,7 +897,7 @@ function old_drawPlate(plateObj, acquisition, site, clearFirst) {
 
   // first create a new plate consisting of empty well-div's
   if (document.getElementById('plateTable') == null) {
-    let plateLayout = plateObj.getPlateLayout();
+    let plateLayout = plateObj.getPlateSize();
     let table = createEmptyTable(plateLayout.rows, plateLayout.cols);
     container.appendChild(table);
   }
@@ -1000,9 +983,9 @@ function getSelectedAcquisitionIndex() {
   return elem.selectedIndex;
 }
 
-function getAcquisitionIndex() {
+function getSelectedAcquisitionId() {
   let elem = document.getElementById('acquisition-select');
-  return elem.selectedIndex;
+  return getAcquisitionFromIndex(elem.selectedIndex);
 }
 
 function getAcquisitionFromIndex(index) {
@@ -1044,7 +1027,7 @@ function setSelectedAcquisitionByIndex(index) {
   console.log("index", index);
   // elem.options[elem.selectedIndex].value = index;
   updateAcquisitionSliderPos();
-  redrawPlateAndViewer();
+  //redrawPlateAndViewer();
 
 }
 
@@ -1090,8 +1073,10 @@ function getSelectedAnimationSpeed() {
 }
 
 
-function updateAcquisitionSelect(plateObj) {
+function updateAcquisitionSelect(plateObj, selected_acq_id=undefined) {
   let elemSelect = document.getElementById('acquisition-select');
+
+ 
 
   // reset
   elemSelect.options.length = 0;
@@ -1102,7 +1087,10 @@ function updateAcquisitionSelect(plateObj) {
   for (let n = 0; n < nCount; n++) {
 
     plate_acq_id = Object.keys(acquisitions)[n];
-    elemSelect.options[n] = new Option(plate_acq_id);
+
+    selected = (selected_acq_id == plate_acq_id) ? true : false;
+
+    elemSelect.options[n] = new Option(plate_acq_id, plate_acq_id, selected, selected);
 
   }
 
@@ -1217,7 +1205,7 @@ function updateAnimationSpeed() {
 }
 
 
-function updateWellSelect(plateObj) {
+function updateWellSelect(plateObj, selected_well) {
 
   // This select is not available on all pages, return if not
   let elemSelect = document.getElementById('well-select');
@@ -1228,10 +1216,12 @@ function updateWellSelect(plateObj) {
   // reset
   elemSelect.options.length = 0;
 
-  // Just loop all wells for first acquisition
-  let wells = plateObj.getWellsOfFirstAcquisition();
+  let wells = plateObj.getWells(getSelectedAcquisitionId());
+  console.log(getSelectedAcquisitionId());
+  console.log(wells);
   Object.keys(wells).forEach(function (well_key) {
-    elemSelect.options.add(new Option(well_key));
+    selected = (selected_well == well_key) ? true : false;
+    elemSelect.options.add(new Option(well_key, selected));
   });
 }
 
@@ -1262,19 +1252,20 @@ function getSelectIndexFromSelectValue(elemSelect, value) {
   return index;
 }
 
-function updateSiteSelect(plateObj) {
+function updateSiteSelect(plateObj, selected_site) {
   let elemSelect = document.getElementById('site-select');
 
   // reset
   elemSelect.options.length = 0;
 
   // add as many options as sites
-  let siteNames = plateObj.getAvailableSites();
+  let siteNames = plateObj.getAvailableSites(getSelectedAcquisitionId());
 
   // Loop through the siteNames array
   for (let name of siteNames) {
     option_json = "[" + name + "]";
-    elemSelect.add(new Option(option_json, option_json));
+    selected = (selected_site == option_json) ? true : false;
+    elemSelect.add(new Option(option_json, option_json, selected));
   }
 
   // finally add an "all" option
@@ -1292,8 +1283,7 @@ function updatePlateNameLabel(plate_name) {
 
 function updatePlateAcqLabel(plateObj) {
 
-  let selectedAcquisition = getSelectedAcquisitionIndex();
-  let plate_acq_id = plateObj.getPlateAcquisitionID(selectedAcquisition);
+  let plate_acq_id = getSelectedAcquisitionId()
 
   document.getElementById('plate-acq-label').innerHTML = "Acq-id: " + plate_acq_id;
   document.getElementById('plate-acq-label').title = "Acq-id: " + plate_acq_id;
@@ -1305,7 +1295,7 @@ function updateChannelSelect(plateObj) {
   // reset
   elemSelect.options.length = 0;
 
-  let nCount = plateObj.countChannels();
+  let nCount = plateObj.countChannels(getSelectedAcquisitionId());
 
   console.log("channelcount", nCount);
 
@@ -1319,7 +1309,7 @@ function updateChannelSelect(plateObj) {
   }
 
   // add as many options as channels
-  let channel_names = plateObj.getChannelNames();
+  let channel_names = plateObj.getChannelNames(getSelectedAcquisitionId());
   for (let n = 1; n <= nCount; n++) {
     channel_name = channel_names[n - 1];
     elemSelect.add(new Option("" + n + "-" + channel_name, n));
@@ -1429,6 +1419,7 @@ function brightnessSelectChanged() {
 }
 
 function acquisitionSelectChanged() {
+  updateToolbarWithNewAcquisition();
   redrawPlate();
 }
 
