@@ -145,7 +145,7 @@ var loaded_plates = null;
 var animation = null;
 
 function initMainWindow(plateBarcode, acquisitionID) {
-
+  selectBrightnessFromStoredValue();
   apiListPlates();
 
   console.log("plateBarcode", plateBarcode);
@@ -159,6 +159,12 @@ function initMainWindow(plateBarcode, acquisitionID) {
     apiLoadPlateBarcode(plateBarcode);
   }
 }
+
+function initViewerWindow(){
+  selectBrightnessFromStoredValue();
+  loadPlateFromViewer(plate, acquisition, well, site, channel);
+}
+
 
 function getLoadedPlate() {
   // return first (and only) plate
@@ -300,9 +306,13 @@ function apiLoadPlate(plate_name, select_acq_id=undefined) {
   stopAnimation();
   document.getElementById("animate-cbx").checked = false;
 
-  fetch('/api/plate/' + plate_name)
+  url = '/api/plate/' + plate_name;
+  fetch(url)
     .then(function (response) {
       if (response.status === 200) {
+
+        //window.history.pushState('', '', url);
+
         response.json().then(function (json) {
 
           console.log('plate data', json);
@@ -348,7 +358,7 @@ function loadPlateFromViewer(plate_name, acquisition, well, site, channel) {
 
           console.log("done loadPlateFromViewer respone OK");
 
-          //redrawImageViewer();
+          redrawImageViewer();
 
         });
       }
@@ -1042,10 +1052,17 @@ function getSelectedZoomValue() {
   return parseInt(elem.options[elem.selectedIndex].value);
 }
 
-
 function getSelectedBrightnessValue() {
   let elem = document.getElementById('brightness-select');
   return parseInt(elem.options[elem.selectedIndex].value);
+}
+
+function selectBrightnessFromStoredValue(){
+  let brightness = getBrightnessFromStore();
+  console.log("brightness", brightness);
+  let elem = document.getElementById('brightness-select');
+  let index = getIndexFromValue(elem.options, brightness);
+  elem.selectedIndex = index;
 }
 
 function setSelectedAcquisition(acquisitionID) {
@@ -1455,6 +1472,8 @@ function zoomSelectChanged() {
 }
 
 function brightnessSelectChanged() {
+  let brightness = getSelectedBrightnessValue();
+  setBrightnessInStore(brightness);
   redrawPlate();
 }
 
@@ -1740,3 +1759,63 @@ function drawTable(rows, divname) {
   console.log("drawTable finished")
 
 }
+
+/*
+*
+*  Cookie-store section
+*
+*/
+function getCookie(name) {
+  let cookie = {};
+  document.cookie.split(';').forEach(function (el) {
+      let [k, v] = el.split('=');
+      cookie[k.trim()] = v;
+  });
+  return cookie[name];
+}
+
+function setCookie(name, value, expires = "Tue, 19 Jan 2038 03:14:00 UTC") {
+  let cookie_string = name + "=" + value + ";expires=" + expires + ";path=/";
+  console.log("cookiestring", cookie_string);
+  document.cookie = cookie_string;
+}
+
+function deleteCookie(name) {
+  setCookie(name, '', "Thu, 01 Jan 1970 00:00:00 GMT");
+}
+
+function setCookieData(name, data) {
+  console.log("data:", data);
+  // Data is stored in base64 encoded and in json format
+  let value = window.btoa(JSON.stringify(data));
+  setCookie(name, value);
+}
+
+function getCookieData(name) {
+  let cookie = getCookie(name);
+  console.log("cookie", cookie);
+  if (cookie == null) {
+      return null;
+  } else {
+      // Data is base64 encoded and in json format
+      return JSON.parse(window.atob(cookie));
+  }
+}
+
+function getBrightnessFromStore() {
+  let brightness = getCookieData("brightness");
+
+  if (brightness == null) {
+    brightness = getDefaultBrightness();
+  }
+  return brightness;
+}
+
+function getDefaultBrightness(){
+  return 100;
+}
+
+function setBrightnessInStore(brightness) {
+  setCookieData("brightness", brightness);
+}
+

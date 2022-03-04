@@ -390,20 +390,18 @@
     // Update scalebar size etc
     updateShowScalebar();
 
-
     // Prevent Caman from caching the canvas because without this:
     // 1. We have a memory leak
     // 2. Non-caman filters in between 2 camans filters get ignored.
     var caman = Caman;
     caman.Store.put = function () {};
 
-
     let plate = '{{ plate }}';
     let acquisition = '{{ acquisition }}';
     let well = '{{ well }}';
     let site = '[{{ site }}]';
     let channel = '{{ channel }}';
-    loadPlateFromViewer(plate, acquisition, well, site, channel);
+    initViewerWindow(plate, acquisition, well, site, channel);
   </script>
 
 </body>
