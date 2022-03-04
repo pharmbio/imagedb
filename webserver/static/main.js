@@ -346,10 +346,9 @@ function loadPlateFromViewer(plate_name, acquisition, well, site, channel) {
 
           updateToolbarWithNewPlate(acquisition, well, site, channel);
 
-          loadAcquisitionImagesIntoViewer(acquisition);
+          console.log("done loadPlateFromViewer respone OK");
 
-          redrawImageViewer()
-
+          //redrawImageViewer();
 
         });
       }
@@ -377,6 +376,9 @@ function updateToolbarWithNewAcquisition() {
 
 
 function updateToolbarWithNewPlate(selected_acq_id, selected_well, selected_site, selected_channel){
+
+  console.log("selected_well", selected_well);
+
   updateAcquisitionSelect(getLoadedPlate(), selected_acq_id);
   updateAcquisitionSlider(getLoadedPlate(selected_acq_id));
         
@@ -406,7 +408,62 @@ function redrawPlateAndViewer(clearFirst = false) {
   }
 }
 
+
 function redrawImageViewer(clearFirst = true) {
+
+  console.log("inside redrawImageViewer, clear first=", clearFirst);
+
+  // get what to redraw
+
+  let acquisition = getSelectedAcquisition();
+  console.log("acquisition", acquisition);
+  
+  // Image viewer hack since it only takes a single site
+  let site = getSelectedSite()[0];
+  console.log("site", site);
+  let well_name = getSelectedWell();
+  console.log("well_name", well_name);
+  let channels = getLoadedPlate().getChannels(acquisition, well_name, site);
+  console.log("channels", channels);
+  let imgURL = createMergeImgURLFromChannels(channels);
+
+  console.log("imgUrl", imgURL);
+
+  // Set brightness
+  let brightness = getSelectedBrightnessValue();
+  // This Openseadragon Brightness is working like css if I use the Coontrast filter instead
+  let contrast = brightness / 100;
+  viewer.setFilterOptions({
+    filters: {
+      processors: OpenSeadragon.Filters.CONTRAST(contrast)
+    },
+  });
+
+  addImageToViewer(0, imgURL, 1);
+
+  console.log('done redrawImageViewer');
+
+}
+
+function addImageToViewer(index, imgURL, opacity) {
+  console.log('index', index);
+  viewer.addSimpleImage({
+    opacity: opacity,
+    preload: true,
+    type: 'image',
+    url: imgURL,
+    buildPyramid: false,
+    sequenceMode: true,
+    success: function (event) {
+      console.log("image-loaded: n=" + index);
+      console.log("item", event.item);
+      console.log("source", event.item.source);
+    }
+  });
+}
+
+
+function redrawImageViewer_anime_version(clearFirst = true) {
 
   console.log("inside redrawImageViewer, clear first=", clearFirst)
 
@@ -498,25 +555,7 @@ function loadAcquisitionImagesIntoViewer(skipIndex) {
   }
 }
 
-function addImageToViewer(index, imgURL, opacity) {
-  console.log('index', index);
-  viewer.addSimpleImage({
-    opacity: opacity,
-    preload: true,
-    type: 'image',
-    url: imgURL,
-    buildPyramid: false,
-    sequenceMode: true,
-    success: function (event) {
-      console.log("image-loaded: n=" + index);
-      console.log("item", event.item);
-      console.log("source", event.item.source);
-      if (event.item.opacity === 1) {
-         redrawImageViewer(false);
-      }
-    }
-  });
-}
+
 
 function openViewer(well_name, site_name) {
 
@@ -1027,7 +1066,7 @@ function setSelectedAcquisitionByIndex(index) {
   console.log("index", index);
   // elem.options[elem.selectedIndex].value = index;
   updateAcquisitionSliderPos();
-  //redrawPlateAndViewer();
+  redrawPlateAndViewer();
 
 }
 
@@ -1075,8 +1114,6 @@ function getSelectedAnimationSpeed() {
 
 function updateAcquisitionSelect(plateObj, selected_acq_id=undefined) {
   let elemSelect = document.getElementById('acquisition-select');
-
- 
 
   // reset
   elemSelect.options.length = 0;
@@ -1217,12 +1254,13 @@ function updateWellSelect(plateObj, selected_well) {
   elemSelect.options.length = 0;
 
   let wells = plateObj.getWells(getSelectedAcquisitionId());
-  console.log(getSelectedAcquisitionId());
-  console.log(wells);
   Object.keys(wells).forEach(function (well_key) {
     selected = (selected_well == well_key) ? true : false;
-    elemSelect.options.add(new Option(well_key, selected));
+    elemSelect.options.add(new Option(well_key, well_key, selected, selected));
   });
+
+  console.log("elemSelect.", elemSelect.selectedIndex);
+
 }
 
 function setWellSelection(well) {
@@ -1265,7 +1303,7 @@ function updateSiteSelect(plateObj, selected_site) {
   for (let name of siteNames) {
     option_json = "[" + name + "]";
     selected = (selected_site == option_json) ? true : false;
-    elemSelect.add(new Option(option_json, option_json, selected));
+    elemSelect.add(new Option(option_json, option_json, selected, selected));
   }
 
   // finally add an "all" option
@@ -1289,7 +1327,7 @@ function updatePlateAcqLabel(plateObj) {
   document.getElementById('plate-acq-label').title = "Acq-id: " + plate_acq_id;
 }
 
-function updateChannelSelect(plateObj) {
+function updateChannelSelect(plateObj, selected_channel) {
   let elemSelect = document.getElementById('channel-select');
 
   // reset
@@ -1312,7 +1350,9 @@ function updateChannelSelect(plateObj) {
   let channel_names = plateObj.getChannelNames(getSelectedAcquisitionId());
   for (let n = 1; n <= nCount; n++) {
     channel_name = channel_names[n - 1];
-    elemSelect.add(new Option("" + n + "-" + channel_name, n));
+    channel_option_text = "" + n + "-" + channel_name
+    selected = (selected_channel == channel_name) ? true : false
+    elemSelect.add(new Option(channel_option_text, n, selected, selected));
   }
 }
 
