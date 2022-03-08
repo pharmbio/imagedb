@@ -13,6 +13,13 @@ volumes:
       type: none
       device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro}
       o: bind
+  # this is microimages-compressed share
+  mikroimages-compressed-bind:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${SHARE_MIKRO_COMPRESSED?You need to specify env SHARE_MIKRO_COMPRESSED, e.g. SHARE_MIKRO_COMPRESSED=/share/mikro-compressed}
+      o: bind
   # this is microimages r-o share
   externalimages-bind:
     driver: local
@@ -58,6 +65,7 @@ services:
       DB_PORT: 5432
     volumes:
       - mikroimages-bind:/share/mikro
+      - mikroimages-compressed-bind:/share/mikro-compressed
       - externalimages-bind:/share/data/external-datasets
       - resultimages-bind:/share/data/cellprofiler
       - imagedb-bind:/share/imagedb

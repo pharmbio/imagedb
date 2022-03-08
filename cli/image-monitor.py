@@ -240,11 +240,12 @@ def image_exists_in_db(image_path):
         put_connection(conn)
 
 def make_compressed_copy(img_meta, ORIG_ROOT_PATH, COMPRESSED_ROOT_PATH):
-
+    COMPRESSION_LEVEL = 4
     filename, suffix = os.path.splitext(img_meta['path'])
     out_filename = img_meta['path'].replace(ORIG_ROOT_PATH, COMPRESSED_ROOT_PATH).replace(suffix, '.png')
     if not os.path.isfile(out_filename):
-        image_tools.any2png(img_meta['path'], out_filename)
+        image_tools.any2png(img_meta['path'], out_filename, COMPRESSION_LEVEL)
+        #image_tools.any2lzw(img_meta['path'], out_filename)
 
     return out_filename
 
@@ -263,11 +264,11 @@ def addImageToImagedb(img_meta):
     img_meta['file_meta'] = tiff_meta
 
     # create compressed image (if it is an IMX image)
-    # IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
-    # COMPRESSED_IMG_ROOT = '/share/mikro-compressed/IMX/MDC_pharmbio/'
-    # if img_meta['path'].startswith(IMX_ORIG_ROOT):
-    #     path_compressed_img = make_compressed_copy(img_meta, IMX_ORIG_ROOT, COMPRESSED_IMG_ROOT)
-    #     img_meta['path'] = path_compressed_img
+    IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
+    COMPRESSED_IMG_ROOT = '/share/mikro-compressed/IMX/MDC_pharmbio/'
+    if img_meta['path'].startswith(IMX_ORIG_ROOT):
+        path_compressed_img = make_compressed_copy(img_meta, IMX_ORIG_ROOT, COMPRESSED_IMG_ROOT)
+        img_meta['path'] = path_compressed_img
 
     # insert into db
     insert_meta_into_db(img_meta)
@@ -404,13 +405,13 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
                     date_delta = datetime.today() - datetime.fromtimestamp(dir_last_modified)
 
-                    logging.info(exhaustive_initial_poll)
-                    logging.info(is_initial_poll)
-                    logging.info("(exhaustive_initial_poll and is_initial_poll)" +
-                                 str((exhaustive_initial_poll and is_initial_poll)))
-                    logging.info("timedelta(days=poll_dirs_margin_days)" +
-                                 str(timedelta(days=poll_dirs_margin_days)))
-                    logging.info("date_delta" + str(date_delta))
+                    #logging.info(exhaustive_initial_poll)
+                    #logging.info(is_initial_poll)
+                    #logging.info("(exhaustive_initial_poll and is_initial_poll)" +
+                    #             str((exhaustive_initial_poll and is_initial_poll)))
+                    #logging.info("timedelta(days=poll_dirs_margin_days)" +
+                    #             str(timedelta(days=poll_dirs_margin_days)))
+                    #logging.info("date_delta" + str(date_delta))
 
                     # poll images in directories more recent than today + poll_dirs_date_margin_days
                     if date_delta <= timedelta(days=poll_dirs_margin_days) or \

@@ -137,6 +137,7 @@ CREATE OR REPLACE VIEW images_all_view AS
   SELECT
     images.id,
     images.plate_acquisition_id,
+    images.plate_acquisition_name,
     images.project,
     images.plate_barcode,
     images.timepoint,
@@ -158,7 +159,7 @@ CREATE OR REPLACE VIEW images_all_view AS
     channel_map.map_id,
     channel_map.dye
    FROM (((((images
-     LEFT JOIN plate_acquisition ON ((images.plate_barcode = plate_acquisition.plate_barcode)))
+     LEFT JOIN plate_acquisition ON ((images.plate_acquisition_id = plate_acquisition.id)))
      LEFT JOIN channel_map ON (((plate_acquisition.channel_map_id = channel_map.map_id) AND (images.channel = channel_map.channel))))
      LEFT JOIN plate ON ((images.plate_barcode = plate.barcode)))
      LEFT JOIN plate_layout ON (((plate.layout_id = plate_layout.layout_id) AND (plate_layout.well_id = images.well))))

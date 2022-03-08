@@ -87,7 +87,7 @@ def tif2png_recursive(in_path, out_path):
       if not os.path.isfile(out_filename):
         any2png(filename, out_filename)
 
-def any2png(in_path, out_path):
+def any2lzw(in_path, out_path):
 
   #logging.debug("Inside img2png")
   #logging.debug("in_path:" + str(in_path))
@@ -96,8 +96,9 @@ def any2png(in_path, out_path):
   os.makedirs(os.path.dirname(out_path),exist_ok=True)
   start = time.time()
   cv2_any2png(in_path, out_path)
+  cv2_any2lzw(in_path, out_path)
 
-  #logging.debug("time:" + str(time.time() - start))
+  logging.debug("time:" + str(time.time() - start))
   #logging.debug("orig:" + str(os.path.getsize(in_path)))
   #logging.debug("new :" + str(os.path.getsize(out_path)))
 
@@ -108,14 +109,17 @@ def any2png(in_path, out_path):
 
   logging.info("Done img2png")
 
+def any2png(in_path, out_path, compression_level):
+  os.makedirs(os.path.dirname(out_path),exist_ok=True)
+  cv2_any2png(in_path, out_path, compression_level)
 
-def pillow_any2png(in_path, out_path, compression=6):
-  orig_img = Image.open(in_path)
-  orig_img.save(out_path, "PNG", compress_level=compression)
-
-def cv2_any2png(in_path, out_path, compression=6):
+def cv2_any2png(in_path, out_path, compression=4):
   orig_img = cv2.imread(in_path)
   cv2.imwrite(out_path, orig_img, [cv2.IMWRITE_PNG_COMPRESSION, compression])
+
+def cv2_any2lzw(in_path, out_path, compression=6):
+  orig_img = cv2.imread(in_path)
+  cv2.imwrite(out_path, orig_img, [cv2.IMWRITE_TIFF_COMPRESSION])
 
 
 
