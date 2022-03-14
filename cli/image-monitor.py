@@ -219,7 +219,7 @@ def insert_plate_acq(img_meta):
         put_connection(conn)
 
 
-def image_exists_in_db(image_path, compressed_copy_path):
+def image_exists_in_db(image_path):
 
     conn = None
     try:
@@ -227,7 +227,7 @@ def image_exists_in_db(image_path, compressed_copy_path):
         cursor = conn.cursor()
 
         exists_path_query = "SELECT EXISTS (SELECT 1 FROM images WHERE path = %s OR path = %s)"
-        cursor.execute(exists_path_query, (image_path, compressed_copy_path))
+        cursor.execute(exists_path_query, (image_path))
 
         path_exists = cursor.fetchone()[0]
         cursor.close()
@@ -324,7 +324,7 @@ def add_plate_to_db(images, latest_filedate_to_test):
             if not img_meta['is_thumbnail']:
 
                 # Check if image already exists in db
-                image_exists = image_exists_in_db(img_meta['path'], img_meta['path_compressed_copy'])
+                image_exists = image_exists_in_db(img_meta['path'])
 
                 # Insert image if not in db (no result)
                 if image_exists == False:
