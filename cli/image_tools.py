@@ -9,7 +9,6 @@ import subprocess
 import time
 import glob
 from pathlib import Path
-from wand.image import Image
 
 def colon_delimited_to_dict(inputString):
   # for each line in result, split into key-val on delimiter(colon)
