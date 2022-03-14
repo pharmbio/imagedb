@@ -249,7 +249,7 @@ def make_compressed_copy(img_meta):
     if not os.path.isfile(img_meta['path_compressed_copy']):
         image_tools.any2png(img_meta['path'], img_meta['path_compressed_copy'], COMPRESSION_LEVEL)
 
-def addImageToImagedb(img_meta):
+def addImageToImagedb(img_meta, make_compressed_copy=False):
     # read tiff-meta-tags
     # make inside try-catch so a corrupted image doesn't stop it all
     tiff_meta = ""
@@ -262,8 +262,7 @@ def addImageToImagedb(img_meta):
 
     img_meta['file_meta'] = tiff_meta
 
-    IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
-    if img_meta['path'].startswith(IMX_ORIG_ROOT):
+    if make_compressed_copy:
         make_compressed_copy(img_meta)
         img_meta['path'] = img_meta['path_compressed_copy']
 
@@ -304,10 +303,13 @@ def add_plate_to_db(images, latest_filedate_to_test):
 
         logging.debug(img_meta)
 
-        # Add compressed path to image_meta
-        IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
-        COMPRESSED_IMG_ROOT = '/share/mikro-compressed/IMX/MDC_pharmbio/'
-        img_meta['path_compressed_copy'] = make_compressed_copy_filename(img_meta, IMX_ORIG_ROOT, COMPRESSED_IMG_ROOT)
+        # Make compressed copy only if IMX-file
+        make_compressed_copy = False
+        #IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
+        #if img_meta['path'].startswith(IMX_ORIG_ROOT):
+        #    COMPRESSED_IMG_ROOT = '/share/mikro-compressed/IMX/MDC_pharmbio/'
+        #    img_meta['path_compressed_copy'] = make_compressed_copy_filename(img_meta, IMX_ORIG_ROOT, COMPRESSED_IMG_ROOT)
+        #    make_compressed_copy = True
 
         # get last modified date of this image-file
         image_modtime = os.path.getmtime(image)
@@ -326,7 +328,7 @@ def add_plate_to_db(images, latest_filedate_to_test):
 
                 # Insert image if not in db (no result)
                 if image_exists == False:
-                    addImageToImagedb(img_meta)
+                    addImageToImagedb(img_meta, make_compressed_copy)
                 else:
                     logging.debug("image exists already in db")
 
