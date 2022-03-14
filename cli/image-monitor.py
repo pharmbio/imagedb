@@ -226,7 +226,7 @@ def image_exists_in_db(image_path):
         conn = get_connection()
         cursor = conn.cursor()
 
-        exists_path_query = "SELECT EXISTS (SELECT 1 FROM images WHERE path = %s OR path = %s)"
+        exists_path_query = "SELECT EXISTS (SELECT 1 FROM images WHERE path = %s)"
         cursor.execute(exists_path_query, (image_path))
 
         path_exists = cursor.fetchone()[0]
