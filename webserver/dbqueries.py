@@ -57,6 +57,9 @@ def get_plate(plate_name):
         logging.debug("query" + query)
 
         cursor = conn.cursor()
+        
+        logging.info(cursor.mogrify(query, (plate_name, )))
+        
         cursor.execute(query, (plate_name, ))
 
         # create a list with all results as key-values

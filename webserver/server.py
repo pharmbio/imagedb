@@ -88,7 +88,9 @@ ROUTES = [
 
 if __name__ == '__main__':
 
-    tornado.log.enable_pretty_logging()
+    #tornado.log.enable_pretty_logging()
+    
+    logging.getLogger('tornado.access').disabled = True
 
     logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                         datefmt='%H:%M:%S',

@@ -219,15 +219,15 @@ def insert_plate_acq(img_meta):
         put_connection(conn)
 
 
-def image_exists_in_db(image_path):
+def image_exists_in_db(image_path, compressed_copy_path):
 
     conn = None
     try:
         conn = get_connection()
         cursor = conn.cursor()
 
-        exists_path_query = "SELECT EXISTS (SELECT 1 FROM images WHERE path = %s)"
-        cursor.execute(exists_path_query, (image_path,))
+        exists_path_query = "SELECT EXISTS (SELECT 1 FROM images WHERE path = %s OR path = %s)"
+        cursor.execute(exists_path_query, (image_path, compressed_copy_path))
 
         path_exists = cursor.fetchone()[0]
         cursor.close()
@@ -239,16 +239,15 @@ def image_exists_in_db(image_path):
     finally:
         put_connection(conn)
 
-def make_compressed_copy(img_meta, ORIG_ROOT_PATH, COMPRESSED_ROOT_PATH):
-    COMPRESSION_LEVEL = 4
+def make_compressed_copy_filename(img_meta, ORIG_ROOT_PATH, COMPRESSED_ROOT_PATH):
     filename, suffix = os.path.splitext(img_meta['path'])
     out_filename = img_meta['path'].replace(ORIG_ROOT_PATH, COMPRESSED_ROOT_PATH).replace(suffix, '.png')
-    if not os.path.isfile(out_filename):
-        image_tools.any2png(img_meta['path'], out_filename, COMPRESSION_LEVEL)
-        #image_tools.any2lzw(img_meta['path'], out_filename)
-
     return out_filename
 
+def make_compressed_copy(img_meta):
+    COMPRESSION_LEVEL = 4
+    if not os.path.isfile(img_meta['path_compressed_copy']):
+        image_tools.any2png(img_meta['path'], img_meta['path_compressed_copy'], COMPRESSION_LEVEL)
 
 def addImageToImagedb(img_meta):
     # read tiff-meta-tags
@@ -263,12 +262,10 @@ def addImageToImagedb(img_meta):
 
     img_meta['file_meta'] = tiff_meta
 
-    # create compressed image (if it is an IMX image)
     IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
-    COMPRESSED_IMG_ROOT = '/share/mikro-compressed/IMX/MDC_pharmbio/'
     if img_meta['path'].startswith(IMX_ORIG_ROOT):
-        path_compressed_img = make_compressed_copy(img_meta, IMX_ORIG_ROOT, COMPRESSED_IMG_ROOT)
-        img_meta['path'] = path_compressed_img
+        make_compressed_copy(img_meta)
+        img_meta['path'] = img_meta['path_compressed_copy']
 
     # insert into db
     insert_meta_into_db(img_meta)
@@ -307,6 +304,11 @@ def add_plate_to_db(images, latest_filedate_to_test):
 
         logging.debug(img_meta)
 
+        # Add compressed path to image_meta
+        IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
+        COMPRESSED_IMG_ROOT = '/share/mikro-compressed/IMX/MDC_pharmbio/'
+        img_meta['path_compressed_copy'] = make_compressed_copy_filename(img_meta, IMX_ORIG_ROOT, COMPRESSED_IMG_ROOT)
+
         # get last modified date of this image-file
         image_modtime = os.path.getmtime(image)
 
@@ -320,7 +322,7 @@ def add_plate_to_db(images, latest_filedate_to_test):
             if not img_meta['is_thumbnail']:
 
                 # Check if image already exists in db
-                image_exists = image_exists_in_db(img_meta['path'])
+                image_exists = image_exists_in_db(img_meta['path'], img_meta['path_compressed_copy'])
 
                 # Insert image if not in db (no result)
                 if image_exists == False:
@@ -388,7 +390,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
         for proj_root_dir in proj_root_dirs:
 
             # Get all subdirs (these are the top plate dir)
-            logging.debug("proj_root_dir" + str(proj_root_dir))
+            logging.info("proj_root_dir" + str(proj_root_dir))
             subdirs = get_subdirs_recursively_no_thumb_dir(proj_root_dir)
 
             # pretend every subdir is a plate dir
@@ -396,7 +398,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
                 try:
 
-                    logging.debug("plate_dir: " + str(plate_dir))
+                    logging.info("plate_dir: " + str(plate_dir))
 
                     # get date from dir
                     dir_last_modified = os.path.getmtime(plate_dir)

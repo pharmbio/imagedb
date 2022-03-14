@@ -58,8 +58,32 @@ def tif2png_pillow(channels, outdir, overwrite_existing=False):
 
     return png_path
 
+def count_unique_colors(image_path):
+    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+    img = Image.open(image_path)
+    return len(np.unique(image))
 
-async def merge_channels(channels, outdir, overwrite_existing=False):
+def auto_white_balance(im, p=.6):
+    '''https://stackoverflow.com/questions/48268068/how-do-i-do-the-equivalent-of-gimps-colors-auto-white-balance-in-python-fu'''
+    '''Stretch each channel histogram to same percentile as mean.'''
+
+    # get mean values
+    p0, p1 = np.percentile(im, p), np.percentile(im, 100-p)
+
+    for i in range(3):
+        ch = im[:,:,i]
+        # get channel values
+        pc0, pc1 = np.percentile(ch, p), np.percentile(ch, 100-p)
+        # stretch channel to same range as mean
+        ch = (p1 - p0) * (ch - pc0) / (pc1 - pc0) + p0
+        im[:,:,i] = ch
+
+    return im
+
+async def merge_channels(channels, outdir, overwrite_existing=True):
+    ''' For now in image veiewer read image as 8 bit grayscale cv2.IMREAD_GRAYSCALE
+        instead of 16 bit cv2.IMREAD_UNCHANGED (can't see difference in img viewer and saves 90% of size)
+        and also dont create np array with np.uint16'''
 
     #logging.info("Inside async merge")
 
@@ -84,36 +108,44 @@ async def merge_channels(channels, outdir, overwrite_existing=False):
         logging.debug("list len =" + str(len(paths)))
 
         # Read images, raise exceptions manually since opencv is silent if file doesn't exist
-        r = cv2.imread(paths[0], 0)
-        if r is None:
+        b = cv2.imread(paths[0],  cv2.IMREAD_GRAYSCALE)
+        if b is None:
             raise Exception('image read returned NONE, path: ' + str(paths[0]))
 
         # Create a blank image that has three channels
         # and the same number of pixels as your original input
-        merged_img = np.zeros((r.shape[0], r.shape[1], 3))
+        merged_img = np.zeros((b.shape[0], b.shape[1], 3)) #, np.uint16)
 
         # Add the channels to the needed image one by one
         # opencv uses bgr format instead of rgb
-        merged_img[:, :, 2] = r
+        merged_img[:, :, 0] = b
 
         if len(paths) > 1:
-            g = cv2.imread(paths[1], 0)
-            if g is None:
+            r = cv2.imread(paths[1], cv2.IMREAD_GRAYSCALE)
+            if r is None:
                 raise Exception('image read returned NONE, path: ' + str(paths[1]))
+
+            merged_img[:, :, 2] = r
+
+        if len(channels) > 2:
+            g = cv2.imread(paths[2], cv2.IMREAD_GRAYSCALE)
+            if g is None:
+                raise Exception('image read returned NONE, path: ' + str(paths[2]))
 
             merged_img[:, :, 1] = g
 
-        if len(channels) > 2:
-            b = cv2.imread(paths[2], 0)
-            if b is None:
-                raise Exception('image read returned NONE, path: ' + str(paths[2]))
-
-            merged_img[:, :, 0] = b
+        # normalize colors
+        merged_img = auto_white_balance(merged_img)
 
         # Save the merged image
         if not os.path.exists(os.path.dirname(merged_file)):
             os.makedirs(os.path.dirname(merged_file))
         cv2.imwrite(merged_file, merged_img)
+
+        #logging.info("img unique:" + str(len(np.unique(merged_img))))
+
+    #logging.info("Unique colors:" + str(count_unique_colors(merged_file)))
+
 
     return merged_file
 

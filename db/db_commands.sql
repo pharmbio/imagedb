@@ -151,6 +151,7 @@ CREATE OR REPLACE VIEW images_all_view AS
     plate_layout.layout_id,
     plate_layout.solvent,
     plate_layout.stock_conc,
+    plate_layout.pert_type,
     compound.batchid,
     compound.inchi,
     plate_acquisition.imaged,

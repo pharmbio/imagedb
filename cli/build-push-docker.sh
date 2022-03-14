@@ -1,2 +1,2 @@
-docker build -t pharmbio/imagedb-cli:latest .
-docker push pharmbio/imagedb-cli:latest
+docker build -t ghcr.io/pharmbio/imagedb-cli:latest .
+docker push ghcr.io/pharmbio/imagedb-cli:latest
