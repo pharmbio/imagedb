@@ -69,7 +69,7 @@ CREATE INDEX ix_plate_acquisition_name ON plate_acquisition(name);
 CREATE INDEX ix_plate_acquisition_project ON plate_acquisition(project);
 
 CREATE OR REPLACE VIEW plate_acquisition_v1 AS
-  SELECT   
+  SELECT
     id,
     name,
     plate_barcode,
@@ -104,22 +104,22 @@ CREATE TABLE channel_map (
 CREATE INDEX  ix_channel_map_id ON channel_map(map_id);
 CREATE INDEX  ix_channel_map_name ON channel_map(name);
 
-INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES	
-(1,	1,	'HOECHST',		'channel_map_1'),		
-(1,	2,	'CONC',	     	'channel_map_1'),		
-(1,	3,	'SYTO', 			'channel_map_1'),		
-(1,	4,	'MITO', 			'channel_map_1'),		
-(1,	5,	'PHAandWGA',  'channel_map_1');		
-				
-INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES	
-(2,	1,	'HOECHST',		'channel_map_2'),		
-(2,	2,	'MITO',	     	'channel_map_2'),		
-(2,	3,	'PHAandWGA', 			'channel_map_2'),		
-(2,	4,	'SYTO', 			'channel_map_2'),		
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
+(1,	1,	'HOECHST',		'channel_map_1'),
+(1,	2,	'CONC',	     	'channel_map_1'),
+(1,	3,	'SYTO', 			'channel_map_1'),
+(1,	4,	'MITO', 			'channel_map_1'),
+(1,	5,	'PHAandWGA',  'channel_map_1');
+
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
+(2,	1,	'HOECHST',		'channel_map_2'),
+(2,	2,	'MITO',	     	'channel_map_2'),
+(2,	3,	'PHAandWGA', 			'channel_map_2'),
+(2,	4,	'SYTO', 			'channel_map_2'),
 (2,	5,	'CONC',  'channel_map_2');
 
-INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES	
-(3,	1,	'HOECHST',		'channel_map_3'),		
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
+(3,	1,	'HOECHST',		'channel_map_3'),
 (3,	2,	'PHA',	'channel_map_3');
 
 
@@ -146,18 +146,33 @@ CREATE OR REPLACE VIEW images_all_view AS
     images.channel,
     images.path,
     plate.size,
+    plate.seeded,
     plate.cell_line,
     plate.cells_per_well,
+    plate.type AS plate_type,
+    plate.treatment,
+    plate.treatment_units,
+    plate.painted,
+    plate.painted_type,
     plate_layout.layout_id,
     plate_layout.solvent,
     plate_layout.stock_conc,
     plate_layout.pert_type,
+    plate_layout.batch_id,
+    plate_layout.cmpd_vol,
+    plate_layout.well_vol,
+    plate_layout.cmpd_conc,
     compound.batchid,
+    compound.name AS compound_name,
+    compound.cbkid,
+    compound.libid,
+    compound.libtxt,
+    compound.smiles,
     compound.inchi,
+    compound.inkey,
     plate_acquisition.imaged,
     plate_acquisition.microscope,
     plate_acquisition.channel_map_id,
-    channel_map.map_id,
     channel_map.dye
    FROM (((((images
      LEFT JOIN plate_acquisition ON ((images.plate_acquisition_id = plate_acquisition.id)))
@@ -210,7 +225,7 @@ CREATE TABLE image_analyses (
     error                 timestamp,
     meta                  jsonb,
     depends_on_id         jsonb, -- if the analysis depends on another analysis being done, otherwise null
-    result                jsonb 
+    result                jsonb
 );
 
 CREATE INDEX  ix_image_analyses_plate_acquisition_id ON image_analyses(plate_acquisition_id);
@@ -237,7 +252,7 @@ CREATE TABLE image_sub_analyses (
     error                 timestamp,
     meta                  jsonb,
     depends_on_sub_id     jsonb, -- if the analysis depends on another analysis being done, otherwise null
-    result                jsonb 
+    result                jsonb
 );
 
 CREATE INDEX  ix_image_sub_analyses_analysis_id ON image_sub_analyses(analysis_id);
@@ -274,10 +289,10 @@ CREATE OR REPLACE VIEW image_analyses_per_plate AS
         to_char(image_analyses.error at time zone 'cet', 'YYYY-MM-DD') AS analysis_error,
         image_analyses.meta AS meta,
         image_analyses.pipeline_name,
-        '/share/data/cellprofiler/automation/results/' || plate_acquisition.plate_barcode 
-                                                       || '/' 
-                                                       || plate_acquisition.id 
-                                                       || '/' 
+        '/share/data/cellprofiler/automation/results/' || plate_acquisition.plate_barcode
+                                                       || '/'
+                                                       || plate_acquisition.id
+                                                       || '/'
                                                        || image_analyses.id ||
                                                        '/' as results
     FROM
@@ -396,6 +411,7 @@ CREATE OR REPLACE VIEW plate_layout_v1 AS
     compound.cbkid,
     compound.libid,
     compound.libtxt,
+    compound.name,
     compound.smiles,
     compound.inchi,
     compound.inkey
@@ -458,7 +474,8 @@ CREATE TABLE compound (
   libtxt          text,
   smiles          text,
   inchi           text,
-  inkey           text
+  inkey           text,
+  name            text,
 );
 CREATE INDEX  ix_compound_batchid ON compound(batchid);
 CREATE INDEX  ix_compound_cbkid   ON compound(cbkid);
@@ -467,6 +484,30 @@ CREATE INDEX  ix_compound_libtxt  ON compound(libtxt);
 CREATE INDEX  ix_compound_smiles  ON compound(smiles);
 CREATE INDEX  ix_compound_inchi   ON compound(inchi);
 CREATE INDEX  ix_compound_inkey   ON compound(inkey);
+CREATE INDEX  ix_compound_name    ON compound(name);
+
+CREATE TABLE compound_extra(
+   batchid            text,
+   pubchem_CID        text,
+   CasNr              text,
+   synonym            text,
+   description        text,
+   link               text,
+   pubchem_SID        text,
+   morph_change       text,
+   pert_type          text,
+   project            text,
+   external_id        text,
+   BRD_id             text,
+   BRD_moa            text,
+   BRD_target         text,
+   BRD_disease_area   text,
+   BRD_indication     text,
+   seleck_target      text,
+   seleck_pathway     text
+);
+
+CREATE INDEX  ix_compound_extra_batchid ON compound_extra(batchid);
 
 
 
@@ -495,9 +536,9 @@ CREATE INDEX  experiment_name_idx ON experiment(description);
 CREATE INDEX  experiment_project_idx ON experiment(project);
 CREATE INDEX  experiment_description_idx ON experiment USING GIN (to_tsvector('english', description));
 
-INSERT INTO experiment (name, project, creation_time, description) VALUES	
+INSERT INTO experiment (name, project, creation_time, description) VALUES
 ('version_1',	'2020_11_04_CPJUMP1',	current_timestamp, 'Description here'),
-('version_2',	'2020_11_04_CPJUMP1', current_timestamp,'Description here');	
+('version_2',	'2020_11_04_CPJUMP1', current_timestamp,'Description here');
 
 
 CREATE OR REPLACE VIEW well_all_view AS
@@ -541,7 +582,7 @@ CREATE OR REPLACE VIEW well_all_view AS
 ---> Import channel-map map
 ---> Then Update:
 UPDATE plate_acquisition
-   SET channel_map_id = channel_map_mapping.channel_map 
+   SET channel_map_id = channel_map_mapping.channel_map
    FROM channel_map_mapping WHERE plate_acquisition.name = channel_map_mapping.plate_acquisition_name;
 
 
