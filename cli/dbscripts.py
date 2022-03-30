@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from distutils.log import debug
 import logging
 import os
 import re
@@ -110,7 +111,7 @@ def update_analysis_filelist(dry_run=True):
                 file_list = result['file_list']
                 filtered_list = filter_list_remove_imagefiles(file_list)
                 result['file_list'] = filtered_list
-        
+
 
         query = f"""UPDATE image_analyses
                     SET result=%s
@@ -125,7 +126,7 @@ def update_analysis_filelist(dry_run=True):
             cursor.execute(query, [json.dumps(result), id])
             cursor.close()
 
-        
+
         if not dry_run:
             logging.debug("Before commit")
             conn.commit()
@@ -167,7 +168,7 @@ def update_sub_analysis_filelist(dry_run=True):
                 file_list = result['file_list']
                 filtered_list = filter_list_remove_imagefiles(file_list)
                 result['file_list'] = filtered_list
-        
+
 
         query = f"""UPDATE image_sub_analyses
                     SET result=%s
@@ -182,7 +183,7 @@ def update_sub_analysis_filelist(dry_run=True):
             cursor.execute(query, [json.dumps(result), id])
             cursor.close()
 
-        
+
         if not dry_run:
             logging.debug("Before commit")
             conn.commit()
@@ -199,6 +200,75 @@ def update_sub_analysis_filelist(dry_run=True):
     finally:
         if conn is not None:
             put_connection(conn)
+
+
+def update_analysis_pipelines_meta(dry_run=True):
+
+    try:
+        conn = get_connection()
+
+        query = 'SELECT name, meta FROM analysis_pipelines'
+
+        logging.debug(query)
+        cursor = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+
+        cursor.execute(query)
+
+        results = cursor.fetchall()
+        cursor.close()
+
+        for row in results:
+            logging.debug('name' + str(row['name']))
+            name = row['name']
+            meta = row['meta']
+            if meta is not None:
+
+                type = ""
+                for pipeline in meta:
+                    if isinstance(pipeline, dict):
+                        subtype = pipeline.get('sub_type', None)
+                        if subtype == "feat":
+                            type = "cp_features"
+                        if subtype == "feat":
+                            type = "cp_features"
+
+                if "QC" in name:
+                    type = "cp_qc"
+
+                new_meta = {"analysis_meta": {"type": type},
+                            "sub_analyses": meta
+                }
+
+                logging.debug(json.dumps(new_meta, indent=4, sort_keys=True))
+
+
+                query = f"""UPDATE analysis_pipelines
+                            SET meta=%s
+                            WHERE name=%s
+                        """
+
+                cursor = conn.cursor()
+                cursor.execute(query, [json.dumps(new_meta), name])
+                cursor.close()
+
+
+                if not dry_run:
+                    logging.debug("Before commit")
+                    conn.commit()
+                    logging.debug("Commited")
+                else:
+                    logging.debug("Dry_run - no commit")
+
+        put_connection(conn)
+        conn = None
+
+    except (Exception, psycopg2.DatabaseError) as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        if conn is not None:
+            put_connection(conn)
+
 
 
 def update_barcode(dry_run=True):
@@ -220,10 +290,10 @@ def update_barcode(dry_run=True):
 
         for row in platenames:
             #logging.debug('id' + str(row['id']))
-            
+
             plate_acquisition_name = row['plate_barcode']
             #logging.debug('platename: ' + str(plate_acquisition_name))
-        
+
             #reg = '.*-(P015230)(-|$).*'
             reg = '.*-(P015\\d{3})(-|$).*'
             match = re.match(reg, plate_acquisition_name)
@@ -248,7 +318,7 @@ def update_barcode(dry_run=True):
                 update_cursor2.execute(update_query2, [barcode,plate_acquisition_name])
                 update_cursor2.close()
 
-        
+
         if not dry_run:
             logging.debug("Before commit")
             conn.commit()
@@ -285,7 +355,9 @@ try:
 
     #update_barcode(dry_run=False)
     #update_sub_analysis_filelist(dry_run=True)
-    update_analysis_filelist(dry_run=True)
+    #update_analysis_filelist(dry_run=True)
+    update_analysis_pipelines_meta(dry_run=False)
+
 
     #insert_csv("channel_map", "channel_map.tsv")
 

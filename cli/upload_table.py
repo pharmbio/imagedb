@@ -62,6 +62,23 @@ def insert_csv(tablename, filename):
 
     put_connection(conn)
 
+def select(tablename):
+
+    conn = get_connection()
+
+    query = 'SELECT * FROM ' + tablename
+
+    logging.debug(query)
+    cursor = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+
+
+
+    cursor.close()
+    
+    put_connection(conn)
+}
+
+
 #
 #  Main entry for script
 #
@@ -77,7 +94,10 @@ try:
     rootLogger = logging.getLogger()
 
     print("Hello")
-    insert_csv("channel_map", "channel_map.tsv")
+
+    select('channel_map')
+
+    #insert_csv("channel_map", "channel_map.tsv")
 
 except Exception as e:
     print(traceback.format_exc())
