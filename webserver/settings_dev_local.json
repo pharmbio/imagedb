@@ -8,6 +8,21 @@
   "DB_PORT": 5432,
   "DB_HOSTNAME": "imagedb",
   "DB_NAME": "imagedb",
+
+  "EXHAUSTIVE_INITIAL_POLL": "true",
+  "POLL_DIRS_MARGIN_DAYS": 3,
+  "POLL_INTERVAL": 300,
+  "LATEST_FILE_CHANGE_MARGIN": 7200,
+  "PROJ_ROOT_DIRS": [ "/share/mikro/IMX/MDC_pharmbio/dicot",
+                      "/xshare/mikro/IMX/MDC_pharmbio/kinase378-v1",
+                      "/xshare/data/external-datasets/bbbc/BBBC021",
+                      "/xshare/data/external-datasets/2020_11_04_CPJUMP1/images/BR00117054__2020-11-08T21_37_22-Measurement1",
+                      "/xshare/mikro/IMX/MDC_pharmbio/Covid19-Profiling/Exp4-MRC5-L4-229E",
+                      "/xshare/mikro/IMX/MDC_pharmbio/Aish",
+                      "/xshare/mikro/IMX/MDC_pharmbio/test/384--helgi-westest/"
+                     ],
+  "CONTINUOUS_POLLING": "true",
+
   "ADMINER_URL": "https://imagedb-adminer.devserver.pharmb.io/?pgsql=imagedb&username=postgres&db=imagedb&ns=public",
   "PIPELINEGUI_URL": "https://pipelinegui.devserver.pharmb.io",
   "PIPELINEGUI_STATIC_RESULTS_DIR": "/cpp_work/results"

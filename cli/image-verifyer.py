@@ -3,10 +3,12 @@
 import logging
 import argparse
 import os
+from pathlib import Path
 import re
 import time
 import traceback
 import glob
+from unittest import result
 import psycopg2
 import psycopg2.extras
 from psycopg2 import pool
@@ -243,65 +245,6 @@ def add_more_plate_acq():
     finally:
         put_connection(conn)
 
-def update_plate_acq():
-    logging.info("Inside update_plate_acq()")
-
-    conn = None
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-
-        #query = ("Update images "
-        #         " SET imaged = "
-        #         "       make_timestamp((metadata ->> 'date_year')::int, "
-        #         "                      (metadata ->> 'date_month')::int, "
-        #         "                      (metadata ->> 'date_day_of_month')::int, 0, 0, 0.0)"
-        #         "       ")
-
-        #query = ("Update images "
-        #         " SET folder = "
-        #         "   regexp_replace(path, '([^/]+$)', '')"
-        #         "       ")
-
-   
-        #UPDATE plate_acquisition
-        #SET folder = images.folder
-        #FROM images
-        #WHERE plate_acquisition.id = images.plate_acquisition_id
-
-
-        cursor.execute(query)
-        cursor.close()
-        conn.commit()
-
-        #UPDATE images
-        #SET imaged = make_timestamp 
-
-        counter = 0
-        for row in cursor:
-            timestamp = row['timestamp']
-
-
-         #   imaged_timepoint = datetime(int(date_year), int(date_month), int(date_day_of_month))
-
-            logging.debug("imaged: " + str(timestamp)) 
-
-            counter += 1
-
-            if counter % 10000 == 0:
-                logging.debug("files verified counter: " + str(counter))
-
-            if counter > 1000:
-                logging.error("Exit loop here")
-                break
-
-
-    except Exception as err:
-        logging.exception("Message")
-        raise err
-    finally:
-        put_connection(conn)
-
 def select_or_insert_plate_acq(plate_barcode, microscope, timepoint, imaged_timepoint, folder):
 
     # First select to see if plate_acq already exists
@@ -367,6 +310,33 @@ def select_plate_acq_id(plate_barcode, timepoint, folder):
         raise err
     finally:
         put_connection(conn)
+        
+def select_finished_plate_acq_folder():
+
+    conn = None
+    
+    try:
+        
+        query = ("SELECT folder "
+                 "FROM plate_acquisition "
+                 "WHERE finished IS NOT NULL")
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(query)
+        
+        # get result as list instead of tuples
+        result = [r[0] for r in cursor.fetchall()]
+        
+        cursor.close()
+        
+        return result
+
+    except Exception as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        put_connection(conn)
 
 
 def insert_plate_acq(plate_barcode, microscope, timepoint, imaged_timepoint, folder):
@@ -403,6 +373,21 @@ def insert_plate_acq(plate_barcode, microscope, timepoint, imaged_timepoint, fol
         raise err
     finally:
         put_connection(conn)
+        
+
+def find_dirs_containing_img_files_recursive(path):
+    """Yield lowest level directories containing image files as Path (not starting with '.')
+       the method is called recursively to find all subdirs """
+    for entry in os.scandir(path):
+        # recurse directories
+        if not entry.name.startswith('.') and entry.is_dir():
+            yield from find_dirs_containing_img_files_recursive(entry.path)
+        if entry.is_file():
+            # return parent path if file is imagefile, then break scandir-loop
+            if entry.path.lower().endswith(('.png','.tif','tiff')):
+                yield(Path(entry.path).parent)
+                break
+            
 
 
 
@@ -429,14 +414,41 @@ try:
     logging.debug("all args" + str(args))
     logging.debug("args.testarg" + str(args.testarg))
 
+    start = time.time()
+
     # deal_with_orfans()
-    deal_with_dupes()
+    # deal_with_dupes()
+
     #update_plate_acq()
     # add_more_plate_acq()
+    
+    # get all image dirs within root dirs 
+    img_dirs = set(find_dirs_containing_img_files_recursive("/share/mikro/IMX/MDC_pharmbio/"))
+    
+    # remove finished acquisitions
+    finished_acq_folders = select_finished_plate_acq_folder()
+    for path in set(img_dirs):
+        if str(path) in finished_acq_folders:
+            img_dirs.remove(path)
+            print("removed: " + str(path))
+            
+    # remove old dirs
+    cutoff_time = time.time() - 3600 * 48 
+    for path in set(img_dirs):
+        if path.stat().st_mtime < cutoff_time:
+            img_dirs.remove(path)
+            print("removed: " + str(path))
+    
+    # remove blacklisted (Directories with unparsable images that were found since start of program)
 
-
-
-
+    print(img_dirs)
+    
+    files = os.listdir('/share/mikro/IMX/MDC_pharmbio/kinase378-v1/kinase378-v1-FA-P015239-A549-48h-P2-L4/2022-01-28/903')
+    print(len(files))
+    
+    print("elapsed: " + str(time.time() - start))
+    
+    
     
 
 

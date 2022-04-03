@@ -3,10 +3,12 @@
 import logging
 import argparse
 import os
+from pathlib import Path
 import re
 import time
 import traceback
 import glob
+from typing import Dict, List
 import psycopg2
 from psycopg2 import pool
 import json
@@ -65,19 +67,17 @@ def get_subdirs_recursively_no_thumb_dir(path):
     return subdirs
 
 
-def get_all_image_files(path):
+def get_all_image_files(dir):
     # get all files
-    logging.info(path)
+    logging.info(dir)
 
-    all_files = []
-    for file in os.listdir(path):
-        if file.lower().endswith(".tif") or file.lower().endswith(".png") or file.lower().endswith(".tiff"):
-            absolute_file = os.path.join(path, file)
-            all_files.append(absolute_file)
+    image_files = []
+    for file in os.listdir(dir):
+        if file.lower().endswith( (".tif", ".png", ".tiff") ):
+            absolute_file = os.path.join(dir, file)
+            image_files.append(absolute_file)
 
-    # logging.info("found files" + str(all_files))
-
-    return all_files
+    return image_files
 
 
 def get_last_modified(path):
@@ -208,6 +208,14 @@ def insert_plate_acq(img_meta):
 
         plate_acq_id = cursor.fetchone()[0]
         cursor.close()
+        
+        # Also add to New acquisitions table
+        query = "INSERT INTO new_plate_acquisition(id, folder) VALUES(%s, %s)"
+        cursor2 = conn.cursor()
+        cursor2.execute(query, (plate_acq_id,
+                               folder
+                               ))
+
         conn.commit()
 
         return plate_acq_id
@@ -249,7 +257,7 @@ def make_compressed_copy(img_meta):
     if not os.path.isfile(img_meta['path_compressed_copy']):
         image_tools.any2png(img_meta['path'], img_meta['path_compressed_copy'], COMPRESSION_LEVEL)
 
-def addImageToImagedb(img_meta, make_compressed_copy=False):
+def addImageToImagedb(img_meta):
     # read tiff-meta-tags
     # make inside try-catch so a corrupted image doesn't stop it all
     tiff_meta = ""
@@ -261,10 +269,6 @@ def addImageToImagedb(img_meta, make_compressed_copy=False):
         logging.error( "Continuing since we don't want to break on a single bad image")
 
     img_meta['file_meta'] = tiff_meta
-
-    if make_compressed_copy:
-        make_compressed_copy(img_meta)
-        img_meta['path'] = img_meta['path_compressed_copy']
 
     # insert into db
     insert_meta_into_db(img_meta)
@@ -286,15 +290,10 @@ def addImageToImagedb(img_meta, make_compressed_copy=False):
             logging.error(
                 "Continuing since we don't want to break on a single bad image")
 
-
-def add_plate_to_db(images, latest_filedate_to_test):
+def add_plate_to_db(images):
+    global processed
+    
     logging.info("start add_plate_metadata to db")
-    logging.info("hello")
-
-    current_latest_imagefile = 0
-
-    # sort images (just to get thumb after image)
-    # images.sort(key=image_name_sort_fn)
 
     # Loop all Images
     for idx, image in enumerate(images):
@@ -303,65 +302,285 @@ def add_plate_to_db(images, latest_filedate_to_test):
 
         logging.debug(img_meta)
 
-        # Make compressed copy only if IMX-file
-        make_compressed_copy = False
-        #IMX_ORIG_ROOT = '/share/mikro/IMX/MDC_pharmbio/'
-        #if img_meta['path'].startswith(IMX_ORIG_ROOT):
-        #    COMPRESSED_IMG_ROOT = '/share/mikro-compressed/IMX/MDC_pharmbio/'
-        #    img_meta['path_compressed_copy'] = make_compressed_copy_filename(img_meta, IMX_ORIG_ROOT, COMPRESSED_IMG_ROOT)
-        #    make_compressed_copy = True
+        # Skip thumbnails
+        if not img_meta['is_thumbnail']:
+            
+            # Check if image already exists in db
+            image_exists = image_exists_in_db(img_meta['path'])
 
-        # get last modified date of this image-file
-        image_modtime = os.path.getmtime(image)
+            # Insert image if not in db (no result)
+            if image_exists == False:
+                addImageToImagedb(img_meta)
+                
+            else:
+                logging.debug("image exists already in db")
 
-        # Keep track of latest processed file
-        current_latest_imagefile = max(current_latest_imagefile, image_modtime)
-
-        # Only check newer files if image is in db already
-        if image_modtime > latest_filedate_to_test:
-
-            # Skip thumbnails
-            if not img_meta['is_thumbnail']:
-
-                # Check if image already exists in db
-                image_exists = image_exists_in_db(img_meta['path'])
-
-                # Insert image if not in db (no result)
-                if image_exists == False:
-                    addImageToImagedb(img_meta, make_compressed_copy)
-                else:
-                    logging.debug("image exists already in db")
-
-            if idx % 100 == 0:
+            if idx % 100 == 1:
                 logging.info("images processed:" + str(idx))
                 logging.info("images total to process:" + str(len(images)))
-        else:
-            logging.debug(
-                "file is to old for being inserted into database, image_modtime < latest_filedate_to_test")
-
+                
+        # Add image to processed images (path as key and timestamp as value)
+        processed[ img_meta['path'] ] = time.time()
+    
+    
     logging.info("done add_plate_metadata to db")
-    return current_latest_imagefile
 
+def find_dirs_containing_img_files_recursive(path):
+    """
+    Yield lowest level directories containing image files as Path (not starting with '.')
+    the method is called recursively to find all subdirs
+    """
+    
+    for entry in os.scandir(path):
+        # recurse directories
+        if not entry.name.startswith('.') and entry.is_dir():
+            yield from find_dirs_containing_img_files_recursive(entry.path)
+        if entry.is_file():
+            # return parent path if file is imagefile, then break scandir-loop
+            if entry.path.lower().endswith(('.png','.tif','tiff')):
+                yield(Path(entry.path).parent)
+                break
+            
+def select_finished_plate_acq_folder():
 
+    conn = None
+    try:
+        query = ("SELECT folder "
+                 "FROM plate_acquisition "
+                 "WHERE finished IS NOT NULL")
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(query)
+        
+        # get result as list instead of tuples
+        result = [r[0] for r in cursor.fetchall()]
+        
+        cursor.close()
+        
+        return result
+
+    except Exception as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        put_connection(conn)
+        
+def select_unfinished_plate_acq_folder():
+
+    conn = None
+    try:
+        query = ("SELECT folder "
+                 "FROM plate_acquisition "
+                 "WHERE finished IS NULL")
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(query)
+        
+        # get result as list instead of tuples
+        result = [r[0] for r in cursor.fetchall()]
+        
+        cursor.close()
+        
+        return result
+
+    except Exception as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        put_connection(conn)
+        
+
+def find_dirs_containing_img_files_recursive_from_list_of_paths(path_list: List[str]):
+    for path in path_list:
+        yield from find_dirs_containing_img_files_recursive(path)
+        
+def find_dirs_containing_img_files_recursive(path: str):
+    """Yield lowest level directories containing image files as Path (not starting with '.')
+       the method is called recursively to find all subdirs """
+
+    for entry in os.scandir(path):
+        # recurse directories
+        if not entry.name.startswith('.') and entry.is_dir():
+            yield from find_dirs_containing_img_files_recursive(entry.path)
+        if entry.is_file():
+            # return parent path if file is imagefile, then break scandir-loop
+            if entry.path.lower().endswith(('.png','.tif','tiff')):
+                yield(Path(entry.path).parent)
+                break
+
+def update_finished_plate_acquisitions(cutoff_time):
+    global processed
+    
+    # first get unfinished acq from database
+    unfinished = select_unfinished_plate_acq_folder()
+    
+    for plate_acq_folder in unfinished:
+        
+        # loop processed images in reverse to see when last file was processed for this unfinished folder
+        for img_path in reversed(processed):
+            if plate_acq_folder in img_path:
+                proc_time = processed[img_path]
+                logging.info("proc_time=" + str(proc_time))
+                logging.info("cutoff_time=" + str(cutoff_time))
+                if proc_time < cutoff_time:
+                    folder = os.path.dirname(img_path)
+                    update_acquisition_finished(folder, cutoff_time)
+
+                # latest proc_time for this acquisition is found, time to break
+                break 
+
+def update_acquisition_finished(folder: str, timestamp: float):
+    
+    logging.info("inside update_acquisition_finished, folder: " + folder) 
+    
+    conn = None
+    try:
+
+        query = (" UPDATE plate_acquisition "
+                 " SET finished = %s "
+                 " WHERE folder = %s")
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(query, (datetime.utcfromtimestamp(timestamp), folder) )
+        assert cursor.rowcount == 1, "rowcount should always be 1 for this update query"
+        cursor.close()
+        conn.commit()
+    except Exception as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        put_connection(conn)
+    
+    
 #
 # Main import function
 #
-def import_plate_images_and_meta(plate_date_dir, latest_import_filedate):
-    logging.info("start import_plate_images_and_meta: " + str(plate_date_dir))
-    all_images = get_all_image_files(plate_date_dir)
-
-    logging.debug(all_images)
-
+def import_plate_images_and_meta(plate_dir: str):
+    """
+    Main import function
+    """
+    
+    global processed
+    
+    logging.info("start import_plate_images_and_meta: " + str(plate_dir))
+    
+    all_images = get_all_image_files(plate_dir)
+    
+    # create a new list with only images not in processed dict
+    new_images = [img for img in all_images if img not in processed]
+    
     # import images (if later than latest_import_filedate)
-    current_latest_imported_file = add_plate_to_db(
-        all_images, latest_import_filedate)
+    if len(new_images) > 0:
+        add_plate_to_db(new_images)
 
-    logging.info("done import_plate_images_and_meta: " + str(plate_date_dir))
+    logging.info("done import_plate_images_and_meta: " + str(plate_dir))
 
-    return current_latest_imported_file
+
+# directories that doesn't have images or is throwing error when processed
+blacklist: list[str] = []
+
+# processed filenames and timestamp when processed
+processed: dict[str, float]= dict()
 
 
 def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, proj_root_dirs, exhaustive_initial_poll, continuous_polling):
+    
+    global processed, blacklist
+    
+    cutoff_time = time.time() - 60 * 10
+    
+    logging.info("proj_root_dirs: " + str(proj_root_dirs))
+    
+    while True:
+        
+        start_loop = time.time()
+    
+        # get all image dirs within root dirs 
+        img_dirs = set(find_dirs_containing_img_files_recursive_from_list_of_paths(proj_root_dirs))
+        
+        # remove finished acquisitions
+        finished_acq_folders = select_finished_plate_acq_folder()
+        for path in set(img_dirs):
+            if str(path) in finished_acq_folders:
+                img_dirs.remove(path)
+                #logging.info("removed because finished: " + str(path))
+                
+        logging.info("img dirs left: " + str(img_dirs))
+                
+        # remove old dirs
+        cutoff_time = time.time() - (3600 * 24 * 90) # (sek/h/day)
+        for path in set(img_dirs):
+            if path.stat().st_mtime < cutoff_time:
+                img_dirs.remove(path)
+                #logging.info("removed because old: " + str(path))
+        
+        logging.info("img dirs left: " + str(img_dirs))
+        logging.info("blacklist: " + str(blacklist))
+        
+        # remove blacklisted (Directories with unparsable images that were found since start of program)
+        for path in set(img_dirs):
+            if str(path) in blacklist:
+                img_dirs.remove(path)
+                logging.info("removed because blacklisted: " + str(path))
+        
+        logging.info("img dirs left: " + str(img_dirs))
+
+        # Import images in imagedirs
+        for img_dir in img_dirs:
+            try: 
+                import_plate_images_and_meta(str(img_dir))
+            except Exception as e:
+                    logging.exception("Exception in img_dir")
+                    # add dir to blacklist
+                    logging.info("Add to blacklist img_dir: " + str(img_dir))
+                    blacklist.append(str(img_dir))
+                    exception_file = os.path.join(imgdb_settings.ERROR_LOG_DIR, "exceptions-last-poll.log")
+                    with open(exception_file, 'a') as exc_file:
+                        exc_file.write("Exception, time:" +
+                                       str(datetime.today()) + "\n")
+                        exc_file.write("img_dir:" + str(img_dir) + "\n")
+                        exc_file.write(traceback.format_exc())
+        
+                        
+        # If time > 10 min (default cutpoff_time) since last uploaded from unfinished plate_acquisitions
+        # If so update plate_acq to finished
+        update_finished_plate_acquisitions(cutoff_time)
+        
+        # If latest processed file was longer ago than cutofftime,
+        # clear processed dict (mainly to release memory)
+        clear_processed = False
+        for img_path in reversed(processed):
+            proc_time = processed[img_path]
+            if proc_time < cutoff_time:
+                logging.info("clear processed dict")
+                clear_processed = True
+            # Only check the last
+            break   
+        if clear_processed:
+            processed.clear()
+        
+        logging.info("elapsed: " + str(time.time() - start_loop) + " sek")
+        
+        # dump blacklist in log dir
+        if blacklist:
+            logfile = os.path.join(imgdb_settings.ERROR_LOG_DIR, "blacklist.json")
+            with open(logfile, 'w') as filehandle:
+                json.dump(blacklist, filehandle)
+        
+        # Sleep until next polling action
+        logging.info("Going to sleep for: " + str(sleep_time) + "sek")
+        time.sleep(sleep_time)
+
+        # TODO could skip sleeping if images were inserted... but difficult then with 2 hour margin (all files would be tried again)
+
+        if continuous_polling != True:
+            break
+    
+    
+def polling_loop_old(poll_dirs_margin_days, latest_file_change_margin, sleep_time, proj_root_dirs, exhaustive_initial_poll, continuous_polling):
 
     logging.info("Inside polling loop")
 

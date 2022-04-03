@@ -59,7 +59,8 @@ CREATE TABLE plate_acquisition (
   timepoint         int,
   folder            text
   name              text,
-  project           text
+  project           text,
+  finished          timestamp
 );
 CREATE INDEX ix_plate_acquisition_plate_barcode ON plate_acquisition(plate_barcode);
 CREATE INDEX ix_plate_acquisition_channel_map_id ON plate_acquisition(channel_map_id);
@@ -67,6 +68,9 @@ CREATE INDEX ix_plate_acquisition_microscope ON plate_acquisition(microscope);
 CREATE INDEX ix_plate_acquisition_folder ON plate_acquisition(folder);
 CREATE INDEX ix_plate_acquisition_name ON plate_acquisition(name);
 CREATE INDEX ix_plate_acquisition_project ON plate_acquisition(project);
+CREATE INDEX ix_plate_acquisition_imaged ON plate_acquisition(imaged);
+CREATE INDEX ix_plate_acquisition_finished ON plate_acquisition(finished);
+
 
 CREATE OR REPLACE VIEW plate_acquisition_v1 AS
   SELECT
@@ -91,7 +95,12 @@ CREATE OR REPLACE VIEW plate_acquisition_v1 AS
 -- WHERE plate_acquisition.id = images.plate_acquisition_id;
 
 
-
+DROP TABLE IF EXISTS new_plate_acquisition CASCADE;
+CREATE TABLE new_plate_acquisition (
+  id                int PRIMARY KEY,
+  folder            text
+);
+CREATE INDEX ix_new_plate_acquisition_folder ON new_plate_acquisition(folder);
 
 
 DROP TABLE IF EXISTS  channel_map CASCADE;
@@ -260,6 +269,25 @@ CREATE INDEX  ix_image_sub_analyses_start ON image_sub_analyses(start);
 CREATE INDEX  ix_image_sub_analyses_finish ON image_sub_analyses(finish);
 
 
+DROP TABLE IF EXISTS imageset;
+CREATE TABLE imageset (
+    name                  text,
+    plate_acquisition_id  int
+);
+
+CREATE INDEX  ix_imageset_name ON imageset(name);
+CREATE INDEX  ix_imageset_plate_acquisition_id ON imageset(plate_acquisition_id);
+ALTER TABLE imageset ADD CONSTRAINT constr_primary_key_imageset_name_plate_acquisition_id PRIMARY KEY (name, plate_acquisition_id);
+
+CREATE OR REPLACE VIEW imageset_images_all_view AS
+  SELECT
+        imageset.name AS imageset_name,
+        images.*
+    FROM
+        images
+    RIGHT JOIN imageset ON imageset.plate_acquisition_id = images.plate_acquisition_id
+;
+
 
 CREATE OR REPLACE VIEW image_analyses_v1 AS
   SELECT
@@ -289,12 +317,7 @@ CREATE OR REPLACE VIEW image_analyses_per_plate AS
         to_char(image_analyses.error at time zone 'cet', 'YYYY-MM-DD') AS analysis_error,
         image_analyses.meta AS meta,
         image_analyses.pipeline_name,
-        '/share/data/cellprofiler/automation/results/' || plate_acquisition.plate_barcode
-                                                       || '/'
-                                                       || plate_acquisition.id
-                                                       || '/'
-                                                       || image_analyses.id ||
-                                                       '/' as results
+        image_analyses.result::json->'file_list'
     FROM
         plate_acquisition
     LEFT JOIN image_analyses ON image_analyses.plate_acquisition_id = plate_acquisition.id
@@ -599,3 +622,10 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 -- From pod terminal, log in with client and copy a file to remote database (from a pod to server)
 psql "dbname=imagedb user=postgres host=imagedb-pg-postgresql.services.svc.cluster.local"
 \copy compound FROM '/home/jovyan/cbcs_tested.tsv' DELIMITER E'\t' CSV HEADER;
+
+
+-- some jsonb
+SELECT
+jsonb_set(meta, '{analysis_meta}', '{"type":"cp-features"}'::jsonb)
+FROM analysis_pipelines
+where meta->'analysis_meta'->'type' = 'cp_features'

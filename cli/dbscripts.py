@@ -30,12 +30,19 @@ def get_connection():
 
 
 def put_connection(pooled_connection):
-
-    global __connection_pool
-    if __connection_pool:
-        __connection_pool.putconn(pooled_connection)
-
-def insert_csv_old(tablename, filename):
+  "EXHAUSTIVE_INITIAL_POLL": "true",
+  "POLL_DIRS_MARGIN_DAYS": 3,
+  "POLL_INTERVAL": 300,
+  "LATEST_FILE_CHANGE_MARGIN": 7200,
+  "PROJ_ROOT_DIRS": [ "/share/mikro/IMX/MDC_pharmbio/dicot",
+                      "/xshare/mikro/IMX/MDC_pharmbio/kinase378-v1",
+                      "/xshare/data/external-datasets/bbbc/BBBC021",
+                      "/xshare/data/external-datasets/2020_11_04_CPJUMP1/images/BR00117054__2020-11-08T21_37_22-Measurement1",
+                      "/xshare/mikro/IMX/MDC_pharmbio/Covid19-Profiling/Exp4-MRC5-L4-229E",
+                      "/xshare/mikro/IMX/MDC_pharmbio/Aish",
+                      "/xshare/mikro/IMX/MDC_pharmbio/test/384--helgi-westest/"
+                     ],
+  "CONTINUOUS_POLLING": "true",
     sql = """
         INSERT INTO test (a, b, c, d)
         VALUES %s
@@ -111,7 +118,19 @@ def update_analysis_filelist(dry_run=True):
                 file_list = result['file_list']
                 filtered_list = filter_list_remove_imagefiles(file_list)
                 result['file_list'] = filtered_list
-
+  "EXHAUSTIVE_INITIAL_POLL": "true",
+  "POLL_DIRS_MARGIN_DAYS": 3,
+  "POLL_INTERVAL": 300,
+  "LATEST_FILE_CHANGE_MARGIN": 7200,
+  "PROJ_ROOT_DIRS": [ "/share/mikro/IMX/MDC_pharmbio/dicot",
+                      "/xshare/mikro/IMX/MDC_pharmbio/kinase378-v1",
+                      "/xshare/data/external-datasets/bbbc/BBBC021",
+                      "/xshare/data/external-datasets/2020_11_04_CPJUMP1/images/BR00117054__2020-11-08T21_37_22-Measurement1",
+                      "/xshare/mikro/IMX/MDC_pharmbio/Covid19-Profiling/Exp4-MRC5-L4-229E",
+                      "/xshare/mikro/IMX/MDC_pharmbio/Aish",
+                      "/xshare/mikro/IMX/MDC_pharmbio/test/384--helgi-westest/"
+                     ],
+  "CONTINUOUS_POLLING": "true",
 
         query = f"""UPDATE image_analyses
                     SET result=%s
@@ -130,7 +149,19 @@ def update_analysis_filelist(dry_run=True):
         if not dry_run:
             logging.debug("Before commit")
             conn.commit()
-            logging.debug("Commited")
+            logging.debug("Commited")  "EXHAUSTIVE_INITIAL_POLL": "true",
+  "POLL_DIRS_MARGIN_DAYS": 3,
+  "POLL_INTERVAL": 300,
+  "LATEST_FILE_CHANGE_MARGIN": 7200,
+  "PROJ_ROOT_DIRS": [ "/share/mikro/IMX/MDC_pharmbio/dicot",
+                      "/xshare/mikro/IMX/MDC_pharmbio/kinase378-v1",
+                      "/xshare/data/external-datasets/bbbc/BBBC021",
+                      "/xshare/data/external-datasets/2020_11_04_CPJUMP1/images/BR00117054__2020-11-08T21_37_22-Measurement1",
+                      "/xshare/mikro/IMX/MDC_pharmbio/Covid19-Profiling/Exp4-MRC5-L4-229E",
+                      "/xshare/mikro/IMX/MDC_pharmbio/Aish",
+                      "/xshare/mikro/IMX/MDC_pharmbio/test/384--helgi-westest/"
+                     ],
+  "CONTINUOUS_POLLING": "true",
         else:
             logging.debug("Dry_run - no commit")
 
@@ -356,7 +387,7 @@ try:
     #update_barcode(dry_run=False)
     #update_sub_analysis_filelist(dry_run=True)
     #update_analysis_filelist(dry_run=True)
-    update_analysis_pipelines_meta(dry_run=False)
+    update_analysis_pipelines_meta(dry_run=True)
 
 
     #insert_csv("channel_map", "channel_map.tsv")
