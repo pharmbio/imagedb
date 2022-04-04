@@ -293,7 +293,7 @@ def addImageToImagedb(img_meta):
 def add_plate_to_db(images):
     global processed
     
-    logging.info("start add_plate_metadata to db")
+    logging.info(f"start add_plate_metadata to db, len(images)(including thumbs): {len(images)}")
 
     # Loop all Images
     for idx, image in enumerate(images):
@@ -311,13 +311,12 @@ def add_plate_to_db(images):
             # Insert image if not in db (no result)
             if image_exists == False:
                 addImageToImagedb(img_meta)
-                
             else:
                 logging.debug("image exists already in db")
 
-            if idx % 100 == 1:
-                logging.info("images processed:" + str(idx))
-                logging.info("images total to process:" + str(len(images)))
+        if idx % 100 == 1:
+                logging.info("images processed (including thubs):" + str(idx))
+                logging.info("images total to process(including thumbs):" + str(len(images)))
                 
         # Add image to processed images (path as key and timestamp as value)
         processed[ img_meta['path'] ] = time.time()
@@ -490,7 +489,6 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
     
     global processed, blacklist
     
-    cutoff_time = time.time() - latest_file_change_margin
     is_initial_poll = True
     
     logging.info("proj_root_dirs: " + str(proj_root_dirs))
@@ -505,6 +503,9 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
         logging.info("")
         
         start_loop = time.time()
+        
+        # create new cutoff time
+        cutoff_time = time.time() - latest_file_change_margin
     
         # get all image dirs within root dirs 
         img_dirs = set(find_dirs_containing_img_files_recursive_from_list_of_paths(proj_root_dirs))
