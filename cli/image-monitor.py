@@ -490,16 +490,26 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
     
     global processed, blacklist
     
-    cutoff_time = time.time() - 60 * 10
+    cutoff_time = time.time() - latest_file_change_margin
+    is_initial_poll = True
     
     logging.info("proj_root_dirs: " + str(proj_root_dirs))
     
     while True:
         
+        logging.info("***")
+        logging.info("")
+        logging.info("Staring new poll: " + str(datetime.today()))
+        logging.info("")
+        logging.info("***")
+        logging.info("")
+        
         start_loop = time.time()
     
         # get all image dirs within root dirs 
         img_dirs = set(find_dirs_containing_img_files_recursive_from_list_of_paths(proj_root_dirs))
+        
+        logging.info(f"len(img_dirs): {len(img_dirs)}")
         
         # remove finished acquisitions
         finished_acq_folders = select_finished_plate_acq_folder()
@@ -508,25 +518,27 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                 img_dirs.remove(path)
                 #logging.info("removed because finished: " + str(path))
                 
-        logging.info("img dirs left: " + str(img_dirs))
+        logging.info(f"len(img_dirs): {len(img_dirs)}")
                 
         # remove old dirs
-        cutoff_time = time.time() - (3600 * 24 * 90) # (sek/h/day)
+        if is_initial_poll:
+            old_dir_cuttoff = 0 # 1970-01-01
+        else:
+            old_dir_cuttoff = (3600 * 24 * poll_dirs_margin_days)
         for path in set(img_dirs):
-            if path.stat().st_mtime < cutoff_time:
+            if path.stat().st_mtime < old_dir_cuttoff:
                 img_dirs.remove(path)
                 #logging.info("removed because old: " + str(path))
-        
-        logging.info("img dirs left: " + str(img_dirs))
-        logging.info("blacklist: " + str(blacklist))
+                
+        logging.info(f"len(img_dirs): {len(img_dirs)}")
         
         # remove blacklisted (Directories with unparsable images that were found since start of program)
         for path in set(img_dirs):
             if str(path) in blacklist:
                 img_dirs.remove(path)
-                logging.info("removed because blacklisted: " + str(path))
+                #logging.info("removed because blacklisted: " + str(path))
         
-        logging.info("img dirs left: " + str(img_dirs))
+        logging.info(f"img dirs left: " + str(img_dirs))
 
         # Import images in imagedirs
         for img_dir in img_dirs:
@@ -571,7 +583,9 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                 json.dump(blacklist, filehandle)
         
         # Sleep until next polling action
-        logging.info("Going to sleep for: " + str(sleep_time) + "sek")
+        is_initial_poll = False
+        logging.info(f"Going to sleep for: {sleep_time} sek")
+        logging.info("")
         time.sleep(sleep_time)
 
         # TODO could skip sleeping if images were inserted... but difficult then with 2 hour margin (all files would be tried again)

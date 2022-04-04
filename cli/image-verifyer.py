@@ -423,28 +423,10 @@ try:
     # add_more_plate_acq()
     
     # get all image dirs within root dirs 
-    img_dirs = set(find_dirs_containing_img_files_recursive("/share/mikro/IMX/MDC_pharmbio/"))
+    #img_dirs = set(find_dirs_containing_img_files_recursive("/share/mikro/IMX/MDC_pharmbio/"))
     
-    # remove finished acquisitions
-    finished_acq_folders = select_finished_plate_acq_folder()
-    for path in set(img_dirs):
-        if str(path) in finished_acq_folders:
-            img_dirs.remove(path)
-            print("removed: " + str(path))
-            
-    # remove old dirs
-    cutoff_time = time.time() - 3600 * 48 
-    for path in set(img_dirs):
-        if path.stat().st_mtime < cutoff_time:
-            img_dirs.remove(path)
-            print("removed: " + str(path))
     
-    # remove blacklisted (Directories with unparsable images that were found since start of program)
-
-    print(img_dirs)
     
-    files = os.listdir('/share/mikro/IMX/MDC_pharmbio/kinase378-v1/kinase378-v1-FA-P015239-A549-48h-P2-L4/2022-01-28/903')
-    print(len(files))
     
     print("elapsed: " + str(time.time() - start))
     
