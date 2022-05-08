@@ -9,18 +9,18 @@ import traceback
 import glob
 import csv
 import psycopg2
-from psycopg2 import pool
-from psycopg2.extras import execute_values
+from psycopg2 import pool, extras, extensions
+
 import settings as imgdb_settings
 import json
 
 __connection_pool = None
 
-def get_connection():
+def get_connection() -> extensions.connection:
 
     global __connection_pool
     if __connection_pool is None:
-        __connection_pool = psycopg2.pool.SimpleConnectionPool(1, 2, user = imgdb_settings.DB_USER,
+        __connection_pool = pool.SimpleConnectionPool(1, 2, user = imgdb_settings.DB_USER,
                                               password = imgdb_settings.DB_PASS,
                                               host = imgdb_settings.DB_HOSTNAME,
                                               port = imgdb_settings.DB_PORT,
@@ -30,23 +30,11 @@ def get_connection():
 
 
 def put_connection(pooled_connection):
-  "EXHAUSTIVE_INITIAL_POLL": "true",
-  "POLL_DIRS_MARGIN_DAYS": 3,
-  "POLL_INTERVAL": 300,
-  "LATEST_FILE_CHANGE_MARGIN": 7200,
-  "PROJ_ROOT_DIRS": [ "/share/mikro/IMX/MDC_pharmbio/dicot",
-                      "/xshare/mikro/IMX/MDC_pharmbio/kinase378-v1",
-                      "/xshare/data/external-datasets/bbbc/BBBC021",
-                      "/xshare/data/external-datasets/2020_11_04_CPJUMP1/images/BR00117054__2020-11-08T21_37_22-Measurement1",
-                      "/xshare/mikro/IMX/MDC_pharmbio/Covid19-Profiling/Exp4-MRC5-L4-229E",
-                      "/xshare/mikro/IMX/MDC_pharmbio/Aish",
-                      "/xshare/mikro/IMX/MDC_pharmbio/test/384--helgi-westest/"
-                     ],
-  "CONTINUOUS_POLLING": "true",
-    sql = """
-        INSERT INTO test (a, b, c, d)
-        VALUES %s
-        """
+
+    global __connection_pool
+    if __connection_pool:
+        __connection_pool.putconn(pooled_connection)
+
 
 
 def insert_csv(tablename, filename):
@@ -118,19 +106,6 @@ def update_analysis_filelist(dry_run=True):
                 file_list = result['file_list']
                 filtered_list = filter_list_remove_imagefiles(file_list)
                 result['file_list'] = filtered_list
-  "EXHAUSTIVE_INITIAL_POLL": "true",
-  "POLL_DIRS_MARGIN_DAYS": 3,
-  "POLL_INTERVAL": 300,
-  "LATEST_FILE_CHANGE_MARGIN": 7200,
-  "PROJ_ROOT_DIRS": [ "/share/mikro/IMX/MDC_pharmbio/dicot",
-                      "/xshare/mikro/IMX/MDC_pharmbio/kinase378-v1",
-                      "/xshare/data/external-datasets/bbbc/BBBC021",
-                      "/xshare/data/external-datasets/2020_11_04_CPJUMP1/images/BR00117054__2020-11-08T21_37_22-Measurement1",
-                      "/xshare/mikro/IMX/MDC_pharmbio/Covid19-Profiling/Exp4-MRC5-L4-229E",
-                      "/xshare/mikro/IMX/MDC_pharmbio/Aish",
-                      "/xshare/mikro/IMX/MDC_pharmbio/test/384--helgi-westest/"
-                     ],
-  "CONTINUOUS_POLLING": "true",
 
         query = f"""UPDATE image_analyses
                     SET result=%s
@@ -149,19 +124,7 @@ def update_analysis_filelist(dry_run=True):
         if not dry_run:
             logging.debug("Before commit")
             conn.commit()
-            logging.debug("Commited")  "EXHAUSTIVE_INITIAL_POLL": "true",
-  "POLL_DIRS_MARGIN_DAYS": 3,
-  "POLL_INTERVAL": 300,
-  "LATEST_FILE_CHANGE_MARGIN": 7200,
-  "PROJ_ROOT_DIRS": [ "/share/mikro/IMX/MDC_pharmbio/dicot",
-                      "/xshare/mikro/IMX/MDC_pharmbio/kinase378-v1",
-                      "/xshare/data/external-datasets/bbbc/BBBC021",
-                      "/xshare/data/external-datasets/2020_11_04_CPJUMP1/images/BR00117054__2020-11-08T21_37_22-Measurement1",
-                      "/xshare/mikro/IMX/MDC_pharmbio/Covid19-Profiling/Exp4-MRC5-L4-229E",
-                      "/xshare/mikro/IMX/MDC_pharmbio/Aish",
-                      "/xshare/mikro/IMX/MDC_pharmbio/test/384--helgi-westest/"
-                     ],
-  "CONTINUOUS_POLLING": "true",
+            logging.debug("Commited")
         else:
             logging.debug("Dry_run - no commit")
 
@@ -254,24 +217,12 @@ def update_analysis_pipelines_meta(dry_run=True):
             meta = row['meta']
             if meta is not None:
 
-                type = ""
-                for pipeline in meta:
-                    if isinstance(pipeline, dict):
-                        subtype = pipeline.get('sub_type', None)
-                        if subtype == "feat":
-                            type = "cp_features"
-                        if subtype == "feat":
-                            type = "cp_features"
+                if meta['analysis_meta']['type'] == "cp_features":
+                    meta['analysis_meta']['type'] = "cp-features"
+                if meta['analysis_meta']['type'] == "cp_qc":
+                    meta['analysis_meta']['type'] = "cp-qc"
 
-                if "QC" in name:
-                    type = "cp_qc"
-
-                new_meta = {"analysis_meta": {"type": type},
-                            "sub_analyses": meta
-                }
-
-                logging.debug(json.dumps(new_meta, indent=4, sort_keys=True))
-
+                logging.debug(json.dumps(meta, indent=4, sort_keys=True))
 
                 query = f"""UPDATE analysis_pipelines
                             SET meta=%s
@@ -279,7 +230,7 @@ def update_analysis_pipelines_meta(dry_run=True):
                         """
 
                 cursor = conn.cursor()
-                cursor.execute(query, [json.dumps(new_meta), name])
+                cursor.execute(query, [json.dumps(meta), name])
                 cursor.close()
 
 
@@ -299,6 +250,8 @@ def update_analysis_pipelines_meta(dry_run=True):
     finally:
         if conn is not None:
             put_connection(conn)
+
+
 
 
 
@@ -367,6 +320,133 @@ def update_barcode(dry_run=True):
         if conn is not None:
             put_connection(conn)
 
+def select_images_from_plate_acq(acq_id: int):
+
+    try:
+
+        #start = time.time()
+        conn = get_connection()
+
+        query = """
+                SELECT well, site, count(path)
+                FROM images_minimal_view
+                WHERE plate_acquisition_id = %s
+                GROUP BY well, site
+                ORDER BY well, site
+                HAVING count(path) = 5
+                """
+
+        cursor = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+        start = time.time()
+        cursor.execute(query, (acq_id, ))
+        results = cursor.fetchall()
+        cursor.close()
+
+        put_connection(conn)
+        conn = None
+
+        logging.info(f"elapsed: {time.time() - start}")
+
+        return results
+
+    except (Exception, psycopg2.DatabaseError) as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        if conn is not None:
+            put_connection(conn)
+
+def select_latest_plate_acq():
+
+    try:
+
+        cutoff_time = time.time() - 3600 * 240
+        conn = get_connection()
+
+        query = """
+                SELECT *
+                FROM plate_acquisition
+                WHERE finished > %s
+                """
+
+        cursor = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+        start = time.time()
+        cursor.execute(query, (cutoff_time, ))
+        results = cursor.fetchall()
+        cursor.close()
+
+        put_connection(conn)
+        conn = None
+
+        logging.info(f"elapsed: {time.time() - start}")
+
+        return results
+
+    except (Exception, psycopg2.DatabaseError) as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        if conn is not None:
+            put_connection(conn)
+
+
+
+def select_channels(map_id: int):
+
+    try:
+
+        #start = time.time()
+        conn = get_connection()
+
+        query = """
+                SELECT *
+                FROM channel_map
+                WHERE map_id = %s
+                """
+
+        cursor = conn.cursor()
+        start = time.time()
+        cursor.execute(query, (map_id, ))
+        results = cursor.fetchall()
+        cursor.close()
+
+        put_connection(conn)
+        conn = None
+
+        logging.info(f"elapsed: {time.time() - start}")
+
+        return results
+
+    except (Exception, psycopg2.DatabaseError) as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        if conn is not None:
+            put_connection(conn)
+
+def get_complete_imgset_from_plate_acq(acq_id: int):
+    all_img = select_images_from_plate_acq(acq_id)
+    #print(all_img)
+    channel_count = len(select_channels(2))
+    print(channel_count)
+    last_well = None
+    last_site = None
+    counter = 0
+    # for img in all_img:
+    #     well = img['well']
+    #     site = img['site']
+    #     if well != last_well:
+    #         last_well = well
+    #         last_site = site
+    #         counter = 0
+    #     if site != last_site:
+    #         last_site = site
+    #         counter = 0
+
+    #     counter += 1
+    #     print(counter)
+
+
 
 #
 #  Main entry for script
@@ -387,8 +467,16 @@ try:
     #update_barcode(dry_run=False)
     #update_sub_analysis_filelist(dry_run=True)
     #update_analysis_filelist(dry_run=True)
-    update_analysis_pipelines_meta(dry_run=True)
+    #update_analysis_pipelines_meta(dry_run=True)
 
+    #update_analysis_pipelines_meta(dry_run=False)
+
+
+    #get_complete_imgset_from_plate_acq(1042)
+
+    print(select_latest_plate_acq())
+
+    #print (select_channels(2))
 
     #insert_csv("channel_map", "channel_map.tsv")
 
