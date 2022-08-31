@@ -69,4 +69,5 @@ services:
       - imgagedb-webroot-bind:/app
       - mikroimages-bind:/share/mikro
       - imagedb-bind:/share/imagedb
+      - externalimages-bind:/share/data/external-datasets
 

@@ -264,6 +264,18 @@
             </select>
           </div>
 
+
+        </form>
+
+        <!-- Hide unpublished form -->
+        <form id='hide-unpublished-form'>
+            <!-- Hide unpublished -->
+            <div class="form-group form-check" style="margin-bottom: 0px;">
+              <div class="col-md-12">
+                <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="hide-unpublished-cb">
+                <label class="form-check-label" style="margin-top:0.8rem;" for="hide-unpublished-cb">Hide unpublished</label>
+              </div>
+            </div>
         </form>
 
 
@@ -337,10 +349,10 @@
               <input type="text" id="acquisition-slider" name="" value="" style="width:0px;" />
             </div>
 
-            <!-- Acquisition animation -->
+            <!-- Animation -->
             <div class="form-group form-check" style="margin-bottom: 0px;">
               <div class="col-md-4">
-                <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" disabled">
+                <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="animate-cbx" disabled>
                 <label class="form-check-label" style="margin-top:0.8rem;" for="animate-cbx">Animate</label>
               </div>
             </div>
@@ -414,8 +426,6 @@
   <!-- /#wrapper -->
 
   <!-- Modal dialogs -->
-
-
 
   <!-- Modal dialog "Errormessage.." -->
   <div class="modal" id="error-modal" tabindex="1" role="dialog" aria-labelledby="errormodalLabel" aria-hidden="true">
@@ -509,6 +519,7 @@
       $("#channel-select").change(channelSelectChanged);
       $("#animation-speed-select").change(animationSpeedSelectChanged);
       $("#animate-cbx").change(animateCbxChanged);
+      $("#hide-unpublished-cb").change(hideUnpublishedSelectChanged);
 
       // Call init window javascript function
       let plateBarcode = '{{barcode}}';

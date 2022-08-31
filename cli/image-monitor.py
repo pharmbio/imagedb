@@ -20,12 +20,13 @@ import settings as imgdb_settings
 
 __connection_pool = None
 
+IMAGE_EXTENSIONS = (".tif", ".tiff", ".png", ".jpg", ".jpeg")
 
 def get_connection():
 
     global __connection_pool
     if __connection_pool is None:
-        __connection_pool = psycopg2.pool.SimpleConnectionPool(1, 2, user=imgdb_settings.DB_USER,
+        __connection_pool = pool.SimpleConnectionPool(1, 2, user=imgdb_settings.DB_USER,
                                                                password=imgdb_settings.DB_PASS,
                                                                host=imgdb_settings.DB_HOSTNAME,
                                                                port=imgdb_settings.DB_PORT,
@@ -73,7 +74,7 @@ def get_all_image_files(dir):
 
     image_files = []
     for file in os.listdir(dir):
-        if file.lower().endswith( (".tif", ".png", ".tiff") ):
+        if file.lower().endswith( IMAGE_EXTENSIONS ):
             absolute_file = os.path.join(dir, file)
             image_files.append(absolute_file)
 
@@ -300,6 +301,10 @@ def add_plate_to_db(images):
 
         img_meta = parse_path_and_file(image)
 
+        # img meta should never be None
+        if img_meta is None:
+            raise Exception('img_meta is None')
+
         logging.debug(img_meta)
 
         # Skip thumbnails
@@ -321,24 +326,8 @@ def add_plate_to_db(images):
         # Add image to processed images (path as key and timestamp as value)
         processed[ img_meta['path'] ] = time.time()
 
-
     logging.info("done add_plate_metadata to db")
 
-def find_dirs_containing_img_files_recursive(path):
-    """
-    Yield lowest level directories containing image files as Path (not starting with '.')
-    the method is called recursively to find all subdirs
-    """
-
-    for entry in os.scandir(path):
-        # recurse directories
-        if not entry.name.startswith('.') and entry.is_dir():
-            yield from find_dirs_containing_img_files_recursive(entry.path)
-        if entry.is_file():
-            # return parent path if file is imagefile, then break scandir-loop
-            if entry.path.lower().endswith(('.png','.tif','tiff')):
-                yield(Path(entry.path).parent)
-                break
 
 def select_finished_plate_acq_folder():
 
@@ -393,11 +382,16 @@ def select_unfinished_plate_acq_folder():
 
 def find_dirs_containing_img_files_recursive_from_list_of_paths(path_list: List[str]):
     for path in path_list:
-        yield from find_dirs_containing_img_files_recursive(path)
+        if not os.path.exists(path):
+            logging.exception(f"Path does not exist: {path}")
+        else:
+            yield from find_dirs_containing_img_files_recursive(path)
 
 def find_dirs_containing_img_files_recursive(path: str):
-    """Yield lowest level directories containing image files as Path (not starting with '.')
-       the method is called recursively to find all subdirs """
+    """
+    Yield lowest level directories containing image files as Path (not starting with '.')
+    the method is called recursively to find all subdirs
+    """
 
     for entry in os.scandir(path):
         # recurse directories
@@ -405,7 +399,7 @@ def find_dirs_containing_img_files_recursive(path: str):
             yield from find_dirs_containing_img_files_recursive(entry.path)
         if entry.is_file():
             # return parent path if file is imagefile, then break scandir-loop
-            if entry.path.lower().endswith(('.png','.tif','tiff')):
+            if entry.path.lower().endswith( IMAGE_EXTENSIONS ):
                 yield(Path(entry.path).parent)
                 break
 
@@ -593,109 +587,6 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
         if continuous_polling != True:
             break
-
-
-def polling_loop_old(poll_dirs_margin_days, latest_file_change_margin, sleep_time, proj_root_dirs, exhaustive_initial_poll, continuous_polling):
-
-    logging.info("Inside polling loop")
-
-    is_initial_poll = True
-    latest_filedate_last_poll = 0
-
-    logging.info("exhaustive_initial_poll=" + str(exhaustive_initial_poll))
-
-    if(exhaustive_initial_poll):
-        exception_file_name = "exceptions-exhaustive_initial_poll.log"
-    else:
-        exception_file_name = "exceptions-last-limited_poll.log"
-
-    exception_file = os.path.join(
-        imgdb_settings.ERROR_LOG_DIR, exception_file_name)
-
-    while True:
-
-        start_time = time.time()
-        logging.info("Staring new poll: " + str(datetime.today()))
-        logging.info("latest_filedate_last_poll=" +
-                     str(datetime.fromtimestamp(latest_filedate_last_poll)))
-
-        # TODO maybe reimplement plate_filter
-        # plate_filter = ""
-
-        current_poll_latest_filedate = 0
-        for proj_root_dir in proj_root_dirs:
-
-            # Get all subdirs (these are the top plate dir)
-            logging.info("proj_root_dir" + str(proj_root_dir))
-            subdirs = get_subdirs_recursively_no_thumb_dir(proj_root_dir)
-
-            # pretend every subdir is a plate dir
-            for plate_dir in subdirs:
-
-                try:
-
-                    logging.info("plate_dir: " + str(plate_dir))
-
-                    # get date from dir
-                    dir_last_modified = os.path.getmtime(plate_dir)
-                    logging.debug("dir_last_modified" + str(
-                                  time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(dir_last_modified))))
-
-                    date_delta = datetime.today() - datetime.fromtimestamp(dir_last_modified)
-
-                    #logging.info(exhaustive_initial_poll)
-                    #logging.info(is_initial_poll)
-                    #logging.info("(exhaustive_initial_poll and is_initial_poll)" +
-                    #             str((exhaustive_initial_poll and is_initial_poll)))
-                    #logging.info("timedelta(days=poll_dirs_margin_days)" +
-                    #             str(timedelta(days=poll_dirs_margin_days)))
-                    #logging.info("date_delta" + str(date_delta))
-
-                    # poll images in directories more recent than today + poll_dirs_date_margin_days
-                    if date_delta <= timedelta(days=poll_dirs_margin_days) or \
-                            (exhaustive_initial_poll and is_initial_poll):
-
-                        logging.info("Image folder is more recent")
-
-                        # set file date to test inserting into db to last poll latest file minus margin
-                        latest_filedate_last_poll_with_margin = latest_filedate_last_poll - \
-                            latest_file_change_margin
-
-                        current_dir_latest_filedate = import_plate_images_and_meta(plate_dir,
-                                                                                   latest_filedate_last_poll_with_margin)
-
-                        # keep track of latest file in this current poll
-                        current_poll_latest_filedate = max(current_poll_latest_filedate,
-                                                           current_dir_latest_filedate)
-
-                        # only update with latest file when everything is checked once
-
-                except Exception as e:
-                    logging.exception("Exception in plate dir")
-                    with open(exception_file, 'a') as exc_file:
-                        exc_file.write("Exception, time:" +
-                                       str(datetime.today()) + "\n")
-                        exc_file.write("plate_dir:" + str(plate_dir) + "\n")
-                        exc_file.write(traceback.format_exc())
-
-        # Set latest file mod for all monitored dirs
-        latest_filedate_last_poll = max(
-            latest_filedate_last_poll, current_poll_latest_filedate)
-
-        elapsed_time = time.time() - start_time
-        logging.info("Time spent polling: " + str(elapsed_time))
-
-        is_initial_poll = False
-
-        # Sleep until next polling action
-        logging.info("Going to sleep for: " + str(sleep_time) + "sek")
-        time.sleep(sleep_time)
-
-        # TODO could skip sleeping if images were inserted... but difficult then with 2 hour margin (all files would be tried again)
-
-        if continuous_polling != True:
-            break
-
 
 #
 #  Main entry for script

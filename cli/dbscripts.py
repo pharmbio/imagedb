@@ -2,6 +2,7 @@
 
 from distutils.log import debug
 import logging
+import math
 import os
 import re
 import time
@@ -10,6 +11,7 @@ import glob
 import csv
 import psycopg2
 from psycopg2 import pool, extras, extensions
+import pathlib
 
 import settings as imgdb_settings
 import json
@@ -446,7 +448,104 @@ def get_complete_imgset_from_plate_acq(acq_id: int):
     #     counter += 1
     #     print(counter)
 
+def get_all_image_files(dir):
+    # get all files
+    logging.info(dir)
 
+    image_files = []
+    for file in os.listdir(dir):
+        if file.lower().endswith( (".tif", ".png", ".tiff") ):
+            absolute_file = os.path.join(dir, file)
+            image_files.append(absolute_file)
+
+    return image_files
+
+def rename_yokogawa_images(path: str, dry_run: bool=True):
+
+    files = get_all_image_files(path)
+
+    files.sort()
+
+    for file in files:
+
+        #os.rename(file, file.replace('_c', '_w'))
+
+        m = re.search('W(.*)F(.*)T(.*)Z(.*)C(.*).tif', os.path.basename(file))
+
+        if m:
+            w = m.group(1)
+            f = m.group(2)
+            c = m.group(5)
+
+            wells = "ABCDEFGHIJKLMNOP"
+            col = (int(w) - 1) % 24 # 0-15
+            row = math.ceil(int(w)/24) # 1-24
+
+            well_row = wells[row - 1] # add 1 for 1-index
+            well_col = int(col) + 1 # subtract 1 for 0-index (well-string is 0-index)
+            well_col = f"{well_col:02d}"
+            site = str(int(f))
+            channel = c
+
+            old_name_wo_ext = pathlib.Path(file).stem
+
+            new_name = old_name_wo_ext + "_" + well_row + well_col + "_" + "s" + site + "_w" + channel + ".tif"
+
+            dirname = os.path.dirname(file)
+
+            new_path = os.path.join(dirname, new_name)
+
+#            stem = pathlib.Path(file).stem.split('_')[0]
+#            new_path = os.path.join(dirname, stem + ".tif")
+
+            print("new path:" + new_path)
+
+            if not dry_run:
+                os.rename(file, new_path)
+
+        else:
+            raise Exception("Could not match filename " + file)
+        
+def move_david_images_to_tp_subfolder(path: str, dry_run: bool=True):
+
+    files = get_all_image_files(path)
+
+    files.sort()
+
+    for file in files:
+
+        #os.rename(file, file.replace('_c', '_w'))
+
+        m = re.search('.*sk([0-9]*).*.tiff', os.path.basename(file))
+
+        if m:
+            tp = m.group(1)
+            
+            subdir = os.path.join(os.path.dirname(file), 'tp-' + str(tp))
+            
+            new_path = os.path.join(subdir, os.path.basename(file))
+            
+            logging.debug(new_path)
+            
+            if not dry_run:
+                os.makedirs(subdir, exist_ok=True)
+                os.rename(file, new_path)
+            
+            
+            
+            
+            
+            #dirname = os.path.dirname(file)
+
+            # new_path = os.path.join(dirname, new_name)
+
+            # print("new path:" + new_path)
+
+            # if not dry_run:
+            #     os.rename(file, new_path)
+
+        else:
+            raise Exception("Could not match filename " + file)
 
 #
 #  Main entry for script
@@ -474,11 +573,16 @@ try:
 
     #get_complete_imgset_from_plate_acq(1042)
 
-    print(select_latest_plate_acq())
+    # print(select_latest_plate_acq())
 
     #print (select_channels(2))
 
     #insert_csv("channel_map", "channel_map.tsv")
+    
+    move_david_images_to_tp_subfolder("/share/data/external-datasets/david/exp180-subset/", True)
+
+    #rename_yokogawa_images("/share/data/external-datasets/Yokogawa-demo/Yokogawa/0220504T101520_20xDemo", True)
+
 
 except Exception as e:
     print(traceback.format_exc())

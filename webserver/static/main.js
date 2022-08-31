@@ -27,28 +27,44 @@ class Plate {
 
 
   getPlateSize(siteNames) {
-    // Loop through wellNames (for all acquisitions) and see if size is outside 96 plate limit
-    // if not return 96 size specs
+    // Loop through wellNames (for all acquisitions) and see if size is outside 96 or 384 plate limit
+    // if not return 96, 384 or 1536
 
     Object.keys(this.plateObj.acquisitions)
+
+    let nMaxRow = 1
+    let nMaxCol = 1
 
     for(let acquisition_id of Object.keys(this.getAcquisitions())){
       let wells = this.getWells(acquisition_id);
       for (let well of Object.values(wells)) {
         let wellName = well.id;
+
         let nRow = getRowIndexFrowWellName(wellName);
         let nCol = getColIndexFrowWellName(wellName);
-        if (nRow > 8 || nCol > 12) {
-          return { "rows": 16, "cols": 24, "sites": siteNames };
-        }
+
+        nMaxRow = Math.max(nMaxRow, nRow);
+        nMaxCol = Math.max(nMaxCol, nCol);
       }
     }
+
+    if (nMaxRow > 16 || nMaxCol > 26) {
+      console.log("1536");
+      return { "rows": 32, "cols": 48, "sites": siteNames };
+    }
+
+    if (nMaxRow > 8 || nMaxCol > 16) {
+      console.log("384");
+      return { "rows": 16, "cols": 24, "sites": siteNames };
+    }
+
+    console.log("96");
     return { "rows": 8, "cols": 12, "sites": siteNames };
   }
 
   getAvailableSites(acquisition_id) {
     // get names of the sites of the first acquisition and first well
-    let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0]; 
+    let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0];
     let firstWellKey = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells)[0];
     let sites = this.plateObj.acquisitions[firstPlateAcqKey].wells[firstWellKey].sites;
 
@@ -70,7 +86,7 @@ class Plate {
 
   getChannels(acquisition_id, well_name, site) {
     if(this.plateObj.acquisitions[acquisition_id] != null &&
-       this.plateObj.acquisitions[acquisition_id].wells[well_name] != null && 
+       this.plateObj.acquisitions[acquisition_id].wells[well_name] != null &&
        this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site]){
       return this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site].channels;
     }
@@ -146,6 +162,7 @@ var animation = null;
 
 function initMainWindow(plateBarcode, acquisitionID) {
   selectBrightnessFromStoredValue();
+  selectHideUnpublishedFromStoredValue();
   apiListPlates();
 
   console.log("plateBarcode", plateBarcode);
@@ -175,9 +192,12 @@ function apiListPlates() {
 
   document.getElementById("left-sidebar-spinner").style.visibility = "visible";
 
+  let formData = new FormData(document.getElementById('query-form'));
+  formData.append("hide-unpublished-cb", getSelectedHideUnpublishedValue() );
+
   fetch('/api/list-plates', {
     method: 'POST',
-    body: new FormData(document.getElementById('query-form'))
+    body: formData
   })
     .then(function (response) {
 
@@ -391,9 +411,9 @@ function updateToolbarWithNewPlate(selected_acq_id, selected_well, selected_site
 
   updateAcquisitionSelect(getLoadedPlate(), selected_acq_id);
   updateAcquisitionSlider(getLoadedPlate(selected_acq_id));
-        
+
   updateWellSelect(getLoadedPlate(), selected_well);
-  
+
   updateSiteSelect(getLoadedPlate(), selected_site);
 
   updateChannelSelect(getLoadedPlate(), selected_channel);
@@ -427,7 +447,7 @@ function redrawImageViewer(clearFirst = true) {
 
   let acquisition = getSelectedAcquisition();
   console.log("acquisition", acquisition);
-  
+
   // Image viewer hack since it only takes a single site
   let site = getSelectedSite()[0];
   console.log("site", site);
@@ -487,7 +507,7 @@ function redrawImageViewer_anime_version(clearFirst = true) {
   let acquisitionIndex = getSelectedAcquisitionIndex();
   let acquisition = getSelectedAcquisition();
   console.log("acquisition", acquisition);
-  
+
   // Image viewer hack since it only takes a single site
   let site = getSelectedSite()[0];
 
@@ -586,7 +606,7 @@ function openViewer(well_name, site_name) {
 
 }
 
-// Redraws currently 
+// Redraws currently
 function redrawPlate(clearFirst = false) {
   // get plate to draw
   let plateObj = getLoadedPlate();
@@ -752,24 +772,24 @@ function createEmptyTable_old(rows, cols) {
 }
 
 function drawPlate(plateObj, acquisition, sites, clearFirst) {
-  
+
   console.log("plateObj", plateObj);
   console.log("clearFirst", clearFirst);
-  
+
   let container = document.getElementById('plate-div');
-  
+
   // If for example a new plate have been selected
   // all old well_images should be removed since plate layout might change
   // But will not get cleared first if it is an animation
-  
+
   // TODO change this hack for smoother animation
   clearFirst = true;
   if (clearFirst) {
     removeChildren(container);
   }
-  
+
   let siteNames = sites; // plateObj.getAvailableSites();
-  
+
   // first create a new plate consisting of empty well-div's
   if (document.getElementById('plateTable') == null) {
     let plateLayout = plateObj.getPlateSize(siteNames);
@@ -777,16 +797,16 @@ function drawPlate(plateObj, acquisition, sites, clearFirst) {
     container.appendChild(table);
     console.log('done create div');
   }
-  
+
   console.log(container);
-  
+
   console.log("acquisition", acquisition);
-  
+
   // now populate well-div's with the wells of the plateobj
   let wells = plateObj.getWells(acquisition);
   Object.keys(wells).forEach(well_key => {
     let well = wells[well_key];
-    
+
     // Add the sites that are selected to be shown
     let nSites = siteNames.length;
     for(let nSite = 0; nSite < nSites; nSite++) {
@@ -797,67 +817,67 @@ function drawPlate(plateObj, acquisition, sites, clearFirst) {
       if(site != null){
 
         console.log("site", site);
-        
+
         let site_key = well_key + "_s" + site_name;
         console.log("site_key", site_key);
         let site_cell = document.getElementById(site_key);
-        
+
         console.log("siteNames", siteNames);
         console.log("site_name", site_name);
         console.log("well_key", well_key);
-        
+
         // Try to get existing canvas - if it doesn't exist create it
         // this way we are only drawing images on top of existing images
         // and animation becomes smooth
         let siteCanvas = document.getElementById('siteCanvas' + site_key);
         if (siteCanvas == null) {
-          
+
           siteCanvas = document.createElement('canvas');
           siteCanvas.className = 'siteCanvas';
           siteCanvas.id = 'siteCanvas' + site_key;
-          
+
           // TODO fix resizing of canvas
           // Canvas size should not be set with css-style
           siteCanvas.width = 100;
           siteCanvas.height = 100;
           //siteCanvas.style.border = "2px solid #ffff00";
-          
+
           site_cell.appendChild(siteCanvas);
         }
         let zoom = getSelectedZoomValue();
         let scale = zoom / 100;
-        
+
         siteCanvas.width = 100 * scale;
         siteCanvas.height = 100 * scale;
-        
+
         let context = siteCanvas.getContext('2d');
-        
-        
-        
+
+
+
         if(site.channels != null){
-          
+
           let url = createMergeThumbImgURLFromChannels(site.channels);
           let img = document.createElement('img');
           img.src = url;
           img.className = 'cellThumbImg';
           img.id = 'cellThumbImg' + site_key;
-          
+
           // Get filter values
           let brightness = getSelectedBrightnessValue() / 100;
-          
+
           //wellThumbImg
           img.onload = function () {
             context.filter = 'brightness(' + brightness + ')'
             context.drawImage(img, 0, 0);
           };
-          
+
           // Create open Viewer click handlers
           siteCanvas.onclick = function () {
             openViewer(well_key, site_name);
           }
-          
+
         }
-        
+
         // Add tooltip when hoovering an image
         // siteCanvas.setAttribute("data-toggle", "tooltip");
         // siteCanvas.setAttribute("data-placement", "right"); // Placement has to be off element otherwise flicker
@@ -866,9 +886,9 @@ function drawPlate(plateObj, acquisition, sites, clearFirst) {
         // siteCanvas.setAttribute("data-html", true);
         siteCanvas.title = site_key; //plateObj.getFormattedWellMeta(acquisition, well_key);
       }
-      
+
     }
-    
+
   })
 
   // Activate tooltips (all that have tooltip attribute within the resultlist)
@@ -880,152 +900,6 @@ function drawPlate(plateObj, acquisition, sites, clearFirst) {
   // });
 
 }
-
-function old_createEmptyTable(rows, cols) {
-  let table = document.createElement('table');
-  table.id = 'plateTable';
-  table.className = 'plateTable';
-
-  // First add header row
-  let headerRow = document.createElement('tr');
-  for (let col = 1; col <= cols; col++) {
-    // If first col then add empty cell before (to match column headers)
-    if (col === 1) {
-      let empty_cell = document.createElement('td');
-      empty_cell.innerHTML = "";
-      empty_cell.className = 'headerCell';
-      headerRow.appendChild(empty_cell);
-    }
-    let row = 0;
-    let well_name = getWellName(row, col);
-    let header_cell = document.createElement('td');
-    header_cell.innerHTML = well_name.substring(1);
-    header_cell.className = 'headerCell';
-    headerRow.appendChild(header_cell);
-  }
-  table.appendChild(headerRow);
-
-  // Now add rows and columns
-  for (let row = 0; row < rows; row++) {
-    let rowElement = document.createElement('tr');
-    for (let col = 1; col <= cols; col++) {
-
-      let well_name = getWellName(row, col);
-
-      // Add column header before first column cell
-      if (col === 1) {
-        let header_cell = document.createElement('td');
-        header_cell.innerHTML = well_name.charAt(0);
-        header_cell.className = 'headerCell';
-        rowElement.appendChild(header_cell);
-      }
-
-      let well_cell = document.createElement('td');
-      well_cell.id = well_name;
-      well_cell.className = 'wellCell';
-      rowElement.appendChild(well_cell);
-    }
-    table.appendChild(rowElement);
-  }
-
-  return table;
-}
-
-function old_drawPlate(plateObj, acquisition, site, clearFirst) {
-
-  console.log("plateObj", plateObj);
-
-  let container = document.getElementById('plate-div');
-
-  // If for example a new plate have been selected
-  // all old well_images should be removed since plate layout might change
-  // But will not get cleared first if it is an animation
-  if (clearFirst) {
-    removeChildren(container);
-  }
-
-  // first create a new plate consisting of empty well-div's
-  if (document.getElementById('plateTable') == null) {
-    let plateLayout = plateObj.getPlateSize();
-    let table = createEmptyTable(plateLayout.rows, plateLayout.cols);
-    container.appendChild(table);
-  }
-
-  console.log(container);
-  console.log('done create div');
-
-  // now populate well-div's with the wells of the plateobj
-  let wells = plateObj.getWells(acquisition);
-  Object.keys(wells).forEach(well_key => {
-
-    let well = wells[well_key];
-    let channels = plateObj.getChannels(acquisition, well_key, site);
-    let well_cell = document.getElementById(well_key);
-
-    // Try to get existing canvas - if it doesn't exist create it
-    // this way we are only drawing images on top of existing images
-    // and animation becomes smooth
-    let wellCanvas = document.getElementById('wellCanvas' + well_key);
-    if (wellCanvas == null) {
-
-      wellCanvas = document.createElement('canvas');
-      wellCanvas.className = 'wellCanvas';
-      wellCanvas.id = 'wellCanvas' + well_key;
-
-      // TODO fix resizing of canvas
-      // Canvas size should not be set with css-style
-      wellCanvas.width = 100;
-      wellCanvas.height = 100;
-      // wellCanvas.style.border = "2px solid #cfcfcf";
-
-      well_cell.appendChild(wellCanvas);
-    }
-    let zoom = getSelectedZoomValue();
-    let scale = zoom / 100;
-
-    wellCanvas.width = 100 * scale;
-    wellCanvas.height = 100 * scale;
-
-    let context = wellCanvas.getContext('2d');
-    let url = createMergeThumbImgURLFromChannels(channels);
-    let img = document.createElement('img');
-    img.src = url;
-    img.className = 'wellThumbImg';
-    img.id = 'wellThumbImg' + well_key;
-
-    // Get filter values
-    let brightness = getSelectedBrightnessValue() / 100;
-
-    //wellThumbImg
-    img.onload = function () {
-      context.filter = 'brightness(' + brightness + ')'
-      context.drawImage(img, 0, 0);
-    };
-
-    // Create open Viewer click handlers
-    wellCanvas.onclick = function () {
-      openViewer(well_key);
-    }
-
-    // Add tooltip when hoovering an image
-    wellCanvas.setAttribute("data-toggle", "tooltip");
-    wellCanvas.setAttribute("data-placement", "right"); // Placement has to be off element otherwise flicker
-    wellCanvas.setAttribute("data-delay", "0");
-    wellCanvas.setAttribute("data-animation", false);
-    wellCanvas.setAttribute("data-html", true);
-    wellCanvas.title = plateObj.getFormattedWellMeta(acquisition, well_key);
-
-  })
-
-  // Activate tooltips (all that have tooltip attribute within the resultlist)
-  // Not working because tooltip doesn't get updated
-  // $('#plate-div [data-toggle="tooltip"]').tooltip({
-  //   trigger : 'hover',
-  //   boundary: 'window',
-  //   // onBeforeShow: getWellMeta()
-  // });
-}
-
 
 function getSelectedAcquisitionIndex() {
   let elem = document.getElementById('acquisition-select');
@@ -1057,12 +931,22 @@ function getSelectedBrightnessValue() {
   return parseInt(elem.options[elem.selectedIndex].value);
 }
 
+function getSelectedHideUnpublishedValue() {
+  return document.getElementById('hide-unpublished-cb').checked;
+}
+
 function selectBrightnessFromStoredValue(){
   let brightness = getBrightnessFromStore();
   console.log("brightness", brightness);
   let elem = document.getElementById('brightness-select');
   let index = getIndexFromValue(elem.options, brightness);
   elem.selectedIndex = index;
+}
+
+function selectHideUnpublishedFromStoredValue(){
+  let hideUnpublished = getHideUnpublishedFromStore();
+  console.log("hideUnpublished", hideUnpublished);
+  document.getElementById('hide-unpublished-cb').checked = hideUnpublished;
 }
 
 function setSelectedAcquisition(acquisitionID) {
@@ -1431,7 +1315,7 @@ function createMergeImgURLFromChannels(channels) {
 }
 
 function getWellName(row, col) {
-  let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"];
+  let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P","Q","R","S","T","U","V","W","X","Y","Z","[","\\","]","^","_","`","a","b"]
   return rows[row] + col.toString().padStart(2, 0)
 }
 
@@ -1475,6 +1359,12 @@ function brightnessSelectChanged() {
   let brightness = getSelectedBrightnessValue();
   setBrightnessInStore(brightness);
   redrawPlate();
+}
+
+function hideUnpublishedSelectChanged() {
+  let hideUnpublished = getSelectedHideUnpublishedValue();
+  setHideUnpublishedInStore(hideUnpublished);
+  location.reload();
 }
 
 function acquisitionSelectChanged() {
@@ -1576,7 +1466,7 @@ function drawImageAnalysisTable(rows) {
   // Before drawing table add ("File-Links")
   rows = addFileLinksColumn(rows)
 
-  // Truncate "result" column 
+  // Truncate "result" column
   rows = truncateColumn(rows, "result", 100);
 
   drawTable(rows, "image_analyses-table-div");
@@ -1629,7 +1519,7 @@ function addFileLinksColumn(rows) {
 
   BASE_URL = window.PIPELINEGUI_URL + "/";
 
-  // Add header to new cell 
+  // Add header to new cell
   let cols = rows[0];
   result_col_index = cols.indexOf("result");
 
@@ -1811,11 +1701,28 @@ function getBrightnessFromStore() {
   return brightness;
 }
 
+function getHideUnpublishedFromStore() {
+  let hideUnpublished = getCookieData("hideUnpublished");
+
+  if (hideUnpublished == null) {
+    hideUnpublished = getDefaultHideUnpublished();
+  }
+  return hideUnpublished;
+}
+
 function getDefaultBrightness(){
   return 100;
 }
 
+function getDefaultHideUnpublished(){
+  return true;
+}
+
 function setBrightnessInStore(brightness) {
   setCookieData("brightness", brightness);
+}
+
+function setHideUnpublishedInStore(hideUnpublished) {
+  setCookieData("hideUnpublished", hideUnpublished);
 }
 

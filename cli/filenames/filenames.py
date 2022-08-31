@@ -6,6 +6,7 @@ from filenames.pharmbio_filename_v4 import parse_path_and_file as parse_path_and
 from filenames.external_filename_v1 import parse_path_and_file as parse_path_and_file_v5
 from filenames.external_filename_v2 import parse_path_and_file as parse_path_and_file_v6
 from filenames.external_filename_v3 import parse_path_and_file as parse_path_and_file_v7
+from filenames.external_filename_v4 import parse_path_and_file as parse_path_and_file_v8
 
 def parse_path_and_file(filename):
 
@@ -20,7 +21,7 @@ def parse_path_and_file(filename):
     metadata = parse_path_and_file_v3(filename)
     if metadata is not None:
         return metadata
-    
+
     metadata = parse_path_and_file_v4(filename)
     if metadata is not None:
         return metadata
@@ -28,12 +29,16 @@ def parse_path_and_file(filename):
     metadata = parse_path_and_file_v5(filename)
     if metadata is not None:
         return metadata
-    
+
     metadata = parse_path_and_file_v6(filename)
     if metadata is not None:
         return metadata
 
     metadata = parse_path_and_file_v7(filename)
+    if metadata is not None:
+        return metadata
+    
+    metadata = parse_path_and_file_v8(filename)
     if metadata is not None:
         return metadata
 
