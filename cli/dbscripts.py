@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from argparse import Action
 from distutils.log import debug
 import logging
 import math
@@ -11,7 +12,7 @@ import glob
 import csv
 import psycopg2
 from psycopg2 import pool, extras, extensions
-import pathlib
+import shutil
 
 import settings as imgdb_settings
 import json
@@ -505,7 +506,7 @@ def rename_yokogawa_images(path: str, dry_run: bool=True):
 
         else:
             raise Exception("Could not match filename " + file)
-        
+
 def move_david_images_to_tp_subfolder(path: str, dry_run: bool=True):
 
     files = get_all_image_files(path)
@@ -520,21 +521,21 @@ def move_david_images_to_tp_subfolder(path: str, dry_run: bool=True):
 
         if m:
             tp = m.group(1)
-            
+
             subdir = os.path.join(os.path.dirname(file), 'tp-' + str(tp))
-            
+
             new_path = os.path.join(subdir, os.path.basename(file))
-            
+
             logging.debug(new_path)
-            
+
             if not dry_run:
                 os.makedirs(subdir, exist_ok=True)
                 os.rename(file, new_path)
-            
-            
-            
-            
-            
+
+
+
+
+
             #dirname = os.path.dirname(file)
 
             # new_path = os.path.join(dirname, new_name)
@@ -546,6 +547,39 @@ def move_david_images_to_tp_subfolder(path: str, dry_run: bool=True):
 
         else:
             raise Exception("Could not match filename " + file)
+
+def copy_selected_bbc_images(selection_csv_path: str, dry_run: bool=True):
+
+    all_files = []
+
+    with open(selection_csv_path, 'r') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+
+        for row in reader:
+            dapi = row['Image_PathName_DAPI'].split('/')[1] + "/" + row['Image_FileName_DAPI']
+
+            tubulin = row['Image_PathName_Tubulin'].split('/')[1] + "/" + row['Image_FileName_Tubulin']
+
+            actin =  row['Image_PathName_Actin'].split('/')[1] + "/" + row['Image_FileName_Actin']
+
+
+            all_files.append(dapi)
+            all_files.append(tubulin)
+            all_files.append(actin)
+
+    for file in all_files:
+
+        source = '/share/data/external-datasets/bbbc/BBBC021/' + file
+        dest   = '/share/data/external-datasets/bbbc/BBBC021_selection/' + file
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        shutil.copy2(source, dest)
+        print("done copy: " + dest)
+
+
+
+
+
+
 
 #
 #  Main entry for script
@@ -578,8 +612,10 @@ try:
     #print (select_channels(2))
 
     #insert_csv("channel_map", "channel_map.tsv")
-    
-    move_david_images_to_tp_subfolder("/share/data/external-datasets/david/exp180-subset/", True)
+
+    #move_david_images_to_tp_subfolder("/share/data/external-datasets/david/exp180-subset/", True)
+
+    copy_selected_bbc_images("/share/data/notebook-homes/anders-home/BBC_from_EBBA/Selected_images_labels.csv")
 
     #rename_yokogawa_images("/share/data/external-datasets/Yokogawa-demo/Yokogawa/0220504T101520_20xDemo", True)
 

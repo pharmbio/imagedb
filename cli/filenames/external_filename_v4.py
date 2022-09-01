@@ -54,7 +54,7 @@ def parse_path_and_file(path):
 
     # Return if wrong extension
     extension = match.group(9)
-    valid_extensions = (".tif", ".tiff", ".png", ".jpg", ".jpeg") # Needs to be tuple, not list
+    valid_extensions = ("tif", "tiff", "png", "jpg", "jpeg") # Needs to be tuple, not list
     if not extension.lower().endswith(valid_extensions):
       return None
 
