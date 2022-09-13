@@ -131,6 +131,18 @@ INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
 (3,	1,	'HOECHST',		'channel_map_3'),
 (3,	2,	'PHA',	'channel_map_3');
 
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
+(8,	1,	'HOECHST',		'channel_map_3'),
+(8,	2,	'PHA',	'channel_map_3');
+
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
+(8,	1,	'CELL',		'channel_map_8'),
+(8,	2,	'CASP',		'channel_map_8'),
+(8,	3,	'TOTO3',		'channel_map_8'),
+(8,	4,	'HOECHST',		'channel_map_8'),
+(8,	5,	'MITO',		'channel_map_8'),
+(8,	6,	'DIOC6',	'channel_map_8');
+
 
 
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
@@ -140,6 +152,11 @@ CREATE TABLE channel_map_mapping (
 );
 CREATE INDEX  ix_channel_map_mapping_plate_acquisition_name ON channel_map_mapping(plate_acquisition_name);
 CREATE INDEX  ix_channel_map_mapping_channel_map ON channel_map_mapping(channel_map);
+
+INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALUES
+('exp180-subset', 8);
+
+UPDATE "plate_acquisition" SET channel_map_id = '8' WHERE name = 'exp180-subset';
 
 
 CREATE OR REPLACE VIEW images_all_view AS
@@ -267,6 +284,24 @@ CREATE TABLE image_sub_analyses (
 CREATE INDEX  ix_image_sub_analyses_analysis_id ON image_sub_analyses(analysis_id);
 CREATE INDEX  ix_image_sub_analyses_start ON image_sub_analyses(start);
 CREATE INDEX  ix_image_sub_analyses_finish ON image_sub_analyses(finish);
+
+
+DROP TABLE IF EXISTS image_analyses_automation CASCADE;
+CREATE TABLE image_analyses_automation (
+    id                    serial,
+    pipeline_name         text,
+    cell_line             text,
+    channel_map           int
+);
+
+CREATE INDEX  ix_image_analyses_automation_pipeline_name ON image_analyses_automation(pipeline_name);
+CREATE INDEX  ix_image_analyses_automation_cell_line ON image_analyses_automation(cell_line);
+CREATE INDEX  ix_image_analyses_channel_map ON image_analyses_automation(channel_map);
+
+INSERT INTO "image_analyses_automation" ("id", "pipeline_name", "cell_line", "channel_map") VALUES
+(1,	'384-96_QC-batch1',	'["*"]',	'["*"]'),
+(2,	'csv384-96_HMPSC_FEAT_ICFImg_Cellpose_v1_n50_c150_ft0.8',	'["U2OS", "A549", "MCF7", "HOG", "VERO E6", "VERO", "RD", "RD18", "RH30"]',	'[2]');
+
 
 
 DROP TABLE IF EXISTS imageset;
@@ -545,6 +580,14 @@ CREATE INDEX  project_description_idx ON project USING GIN (to_tsvector('english
 INSERT INTO project (name)
 SELECT DISTINCT(project) FROM images;
 
+-- Until project database GUI is editable a view is replacing table
+CREATE OR REPLACE VIEW project AS
+  SELECT DISTINCT(project) AS name, '' AS description
+  FROM plate_acquisition
+  WHERE project IS NOT NULL
+
+
+
 
 DROP TABLE IF EXISTS experiment CASCADE;
 CREATE TABLE experiment (
@@ -562,6 +605,19 @@ CREATE INDEX  experiment_description_idx ON experiment USING GIN (to_tsvector('e
 INSERT INTO experiment (name, project, creation_time, description) VALUES
 ('version_1',	'2020_11_04_CPJUMP1',	current_timestamp, 'Description here'),
 ('version_2',	'2020_11_04_CPJUMP1', current_timestamp,'Description here');
+
+
+DROP TABLE IF EXISTS plate_design CASCADE;
+CREATE TABLE plate_design (
+    name                    text PRIMARY KEY,
+    config                  jsonb,
+    creation_time           timestamp,
+    description             text
+);
+
+CREATE INDEX  plate_design_description_idx ON plate_design USING GIN (to_tsvector('english', description));
+
+
 
 
 CREATE OR REPLACE VIEW well_all_view AS

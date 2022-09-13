@@ -52,14 +52,14 @@ def get_plate(plate_name):
         query = ("SELECT " + ",".join(return_cols) +
                  " FROM images_minimal_view"
                  " WHERE plate_barcode = %s"
-                 " ORDER BY well, site, channel")
+                 " ORDER BY timepoint, plate_acquisition_id, well, site, channel")
 
         logging.debug("query" + query)
 
         cursor = conn.cursor()
-        
+
         logging.info(cursor.mogrify(query, (plate_name, )))
-        
+
         cursor.execute(query, (plate_name, ))
 
         # create a list with all results as key-values
@@ -94,9 +94,9 @@ def get_plate(plate_name):
             put_connection(conn)
 
 
-def list_all_plates():
+def list_all_plates(hide_unpublished):
 
-    logging.info("inside list_all_plates")
+    logging.info("inside list_all_plates, hide_unpublished=" + str(hide_unpublished))
 
     conn = None
     try:
@@ -105,10 +105,9 @@ def list_all_plates():
 
         query = ("SELECT DISTINCT name, plate_barcode, project, id "
                  " FROM plate_acquisition "
-                 " WHERE timepoint = 1"
                  " ORDER BY project, name, plate_barcode, id")
 
-        logging.debug("query" + str(query))
+        logging.info("query" + str(query))
 
         cursor = conn.cursor()
         cursor.execute(query)
@@ -154,7 +153,7 @@ def list_plate_acquisitions():
 
 def list_image_analyses(plate_barcode="", plate_acq_id=""):
 
-    logging.info("plate_barcode=" + plate_barcode) 
+    logging.info("plate_barcode=" + plate_barcode)
 
     barcode_filter = ""
     if plate_barcode != "":
@@ -166,14 +165,14 @@ def list_image_analyses(plate_barcode="", plate_acq_id=""):
 
 
     query = ("SELECT * "
-             "FROM image_analyses_v1 " + 
-             barcode_filter + 
-             plate_acq_id_filter + 
+             "FROM image_analyses_v1 " +
+             barcode_filter +
+             plate_acq_id_filter +
              "ORDER BY id DESC "
              "LIMIT 1000")
 
     return select_from_db(query)
-    
+
 
 def list_image_sub_analyses():
 

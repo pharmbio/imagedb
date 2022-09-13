@@ -2,10 +2,7 @@ import re
 import os
 import logging
 
-# file examples
-# /share/data/external-datasets/bbbc/BBBC021/Week4_27861/D07_s1_w192A46E20-C4C2-4748-B19D-541F77829FFA.tif
-# /share/data/external-datasets/bbbc/BBBC021/Week5_28961/Week5_130707_E04_s2_w2C65C4A21-EF2A-4E99-BF05-C07F5B1C529E.tif
-
+from numpy import char
 
 def parse_path_and_file(path):
 
@@ -15,7 +12,7 @@ def parse_path_and_file(path):
     # https://regex101.com/
 
     # project, plate
-    match = re.search('.*/external-datasets/.*\/(.*)\/(.*)\/.*', path)
+    match = re.search('.*/external-datasets/(.*)\/(.*)\/(.*)\/.*', path)
     if match is None:
       return None
     project = match.group(1)
@@ -27,36 +24,44 @@ def parse_path_and_file(path):
 
 
     # well, site, channel, thumb, guid, extension
+    # r10c03f01p01-ch2sk15fk1fl1.tiff
     match = re.search('.*\/'           # any until last /
-      + '(.*_)?' # optional text delimited by _ (1)
-      + '([A-Z0-9]*)'  # well (2)
-      + '_s([0-9]*)'   # wellsample (3)
-      + '_w([0-9]*)'  # Channel (color channel?) (4)
-      + '([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})'  # Image GUID [5]
-      + '\.(.*)', path)   # Extension [6]
+      + 'r([0-9]*)'   # row (1)
+      + 'c([0-9]*)'   # col (2)
+      + 'f([0-9]*)'   # field? (3)
+      + 'p([0-9]*)'   # ??? (4)
+      + '\-ch([0-9]*)' # channel (5)
+      + 'sk([0-9]*)'  # timepoint (6)
+      + 'fk([0-9]*)'  # ???? (7)
+      + 'fl([0-9]*)'  # ???? (8)
+      + '\.(.*)', path)   # Extension [9]
+
+    logging.debug("match: " + str(match))
 
     if match is None:
       return None
 
-    well = match.group(2)
+
+    row = int(match.group(1))
+    col = match.group(2)
+
+    row_as_char = chr(row + 64)
+
+    well = row_as_char + col
     site = match.group(3)
-    channel = match.group(4)
-    guid = match.group(5)
+    channel = match.group(5)
+    timepoint = match.group(6)
 
     # Return if wrong extension
-    extension = match.group(6)
-    print("extension" + extension)
-    valid_extensions = (".tif", ".tiff", ".png", ".jpg", ".jpeg") # Needs to be tuple, not list
-    if not extension.lower().endswith( valid_extensions ):
-      print("no ext")
+    extension = match.group(9)
+    valid_extensions = ("tif", "tiff", "png", "jpg", "jpeg") # Needs to be tuple, not list
+    if not extension.lower().endswith(valid_extensions):
       return None
 
     # logging
     logging.debug("well" + well)
     logging.debug("site" + str(site))
     logging.debug("channel" + str(channel))
-    logging.debug("guid" + str(guid))
-    logging.debug("extensionid" + str(extension))
 
 
     metadata = {
@@ -72,9 +77,9 @@ def parse_path_and_file(path):
       'wellsample': site,
       'channel': channel,
       'is_thumbnail': False,
-      'guid': guid,
+      'guid': None,
       'extension': extension,
-      'timepoint': 1,
+      'timepoint': timepoint,
       'channel_map_id': 1,
       'microscope': "Unknown"
     }
@@ -98,10 +103,7 @@ if __name__ == '__main__':
     # Testparse
   #  retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/jonne/384-pilot-4x/2020-08-21/233/384-pilot-4x_D06_w13BB03CA4-CE8C-4DE8-AFE2-1321765D3AAE.tif")
   #  retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/jonne/384-pilot-4x-4/2020-09-02/262/384-pilot-4x-4_G16_w156A3DA15-CEF2-49C6-B647-3A4321D9B8DC.tif")
-    retval = parse_path_and_file("/share/data/external-datasets/bbbc/BBBC021/Week4_27861/D07_s1_w192A46E20-C4C2-4748-B19D-541F77829FFA.tif")
-    retval = parse_path_and_file("/share/data/external-datasets/bbbc/BBBC021/Week5_28961/Week5_130707_E04_s2_w2C65C4A21-EF2A-4E99-BF05-C07F5B1C529E.tif")
-    print("retval: " + str(retval))
-    retval = parse_path_and_file("/share/data/external-datasets/bbbc/BBBC021_selection/Week2_24361/Week2_180607_B11_s1_w1456B555E-C3A4-4DE8-9433-7411898AE6D8.tif")
+    retval = parse_path_and_file("/share/data/external-datasets/david/exp180-subset/tp-1/r10c46f01p01-ch6sk1fk1fl1.tiff")
     print("retval: " + str(retval))
 
     # .*\/(.*)\/(.*)\/.*

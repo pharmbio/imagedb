@@ -41,7 +41,9 @@ class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=ab
 
         logging.debug("form_data:" + str(form_data))
 
-        results = list_all_plates()
+        hide_unpublished = self.get_argument("hide-unpublished-cb")
+
+        results = list_all_plates(hide_unpublished)
         logging.debug(results)
         self.finish({'results':results})
 
