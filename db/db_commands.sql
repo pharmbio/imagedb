@@ -288,20 +288,31 @@ CREATE INDEX  ix_image_sub_analyses_finish ON image_sub_analyses(finish);
 
 DROP TABLE IF EXISTS image_analyses_automation CASCADE;
 CREATE TABLE image_analyses_automation (
-    id                    serial,
-    pipeline_name         text,
+    project               text,
     cell_line             text,
+    pipeline_name         text,
     channel_map           int
 );
 
-CREATE INDEX  ix_image_analyses_automation_pipeline_name ON image_analyses_automation(pipeline_name);
+CREATE INDEX  ix_image_analyses_automation_project ON image_analyses_automation(project);
 CREATE INDEX  ix_image_analyses_automation_cell_line ON image_analyses_automation(cell_line);
+CREATE INDEX  ix_image_analyses_automation_pipeline_name ON image_analyses_automation(pipeline_name);
 CREATE INDEX  ix_image_analyses_channel_map ON image_analyses_automation(channel_map);
 
-INSERT INTO "image_analyses_automation" ("id", "pipeline_name", "cell_line", "channel_map") VALUES
-(1,	'384-96_QC-batch1',	'["*"]',	'["*"]'),
-(2,	'csv384-96_HMPSC_FEAT_ICFImg_Cellpose_v1_n50_c150_ft0.8',	'["U2OS", "A549", "MCF7", "HOG", "VERO E6", "VERO", "RD", "RD18", "RH30"]',	'[2]');
 
+DROP TABLE IF EXISTS image_analyses_automation_submitted CASCADE;
+CREATE TABLE image_analyses_automation_submitted (
+    plate_acq_id          int,
+    time                  timestamp
+);
+
+ALTER TABLE image_analyses_automation_submitted ADD CONSTRAINT constr_primary_key_image_analyses_automation_submitted_plate_acq_id PRIMARY KEY (plate_acq_id);
+
+INSERT INTO image_analyses_automation_submitted (plate_acq_id)
+  SELECT id FROM plate_acquisition
+
+DELETE FROM image_analyses_automation_submitted
+WHERE plate_acq_id = 2199
 
 
 DROP TABLE IF EXISTS imageset;
@@ -392,14 +403,6 @@ CREATE TABLE analysis_pipelines (
     meta        jsonb
 );
 
-
-CREATE TABLE pipeline_automation (
-    id                SERIAL,
-    match_pattern     text,
-    pipeline          text
-);
-
-CREATE INDEX  ix_pipeline_automation_id ON pipeline_automation(id);
 
 
 INSERT INTO "analysis_pipelines" ("name", "meta") VALUES

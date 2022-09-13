@@ -46,7 +46,7 @@ def parse_path_and_file(path):
     # Return if wrong extension
     extension = match.group(6)
     print("extension" + extension)
-    valid_extensions = (".tif", ".tiff", ".png", ".jpg", ".jpeg") # Needs to be tuple, not list
+    valid_extensions = ("tif", "tiff", "png", "jpg", "jpeg") # Needs to be tuple, not list
     if not extension.lower().endswith( valid_extensions ):
       print("no ext")
       return None
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     retval = parse_path_and_file("/share/data/external-datasets/bbbc/BBBC021/Week4_27861/D07_s1_w192A46E20-C4C2-4748-B19D-541F77829FFA.tif")
     retval = parse_path_and_file("/share/data/external-datasets/bbbc/BBBC021/Week5_28961/Week5_130707_E04_s2_w2C65C4A21-EF2A-4E99-BF05-C07F5B1C529E.tif")
     print("retval: " + str(retval))
-    retval = parse_path_and_file("/share/data/external-datasets/bbbc/BBBC021_selection/Week2_24361/Week2_180607_B11_s1_w1456B555E-C3A4-4DE8-9433-7411898AE6D8.tif")
+    retval = parse_path_and_file("/share/data/external-datasets/bbbc/BBBC021_selection/Week5_28921/Week5_130707_B05_s2_w1F5518E16-4A9B-4630-B7D3-DF9E55CD423C.tif")
     print("retval: " + str(retval))
 
     # .*\/(.*)\/(.*)\/.*
