@@ -1,0 +1,22 @@
+{
+  "IMAGES_ROOT_DIR": "/share/mikro/IMX/MDC_pharmbio/",
+  "IMAGES_CACHE_DIR": "/share/imagedb/image-cache",
+  "IMAGES_THUMB_DIR": "/share/imagedb/thumbs/",
+  "ERROR_LOG_DIR":  "/share/imagedb/",
+  "DB_USER": "postgres",
+  "DB_PASS": "pharmbiorules",
+  "DB_PORT": 5432,
+  "DB_HOSTNAME": "imagedb-pg-postgresql.services.svc.cluster.local",
+  "DB_NAME": "imagedb",
+  "EXHAUSTIVE_INITIAL_POLL": "true",
+  "POLL_DIRS_MARGIN_DAYS": 2,
+  "POLL_INTERVAL": 300,
+  "LATEST_FILE_CHANGE_MARGIN": 7200,
+  "PROJ_ROOT_DIRS": [ "/share/mikro/IMX/MDC_pharmbio/"
+                     ],
+  "CONTINUOUS_POLLING": "true",
+  "ADMINER_URL": "https://imagedb-adminer.k8s-prod.pharmb.io/?pgsql=imagedb-pg-postgresql.services.svc.cluster.local&username=postgres&db=imagedb&ns=public",
+  "PIPELINEGUI_URL": "https://pipelinegui.k8s-prod.pharmb.io",
+  "PIPELINEGUI_STATIC_RESULTS_DIR": "/cpp_work/results"
+}
+
