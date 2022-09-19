@@ -314,6 +314,24 @@ INSERT INTO image_analyses_automation_submitted (plate_acq_id)
 DELETE FROM image_analyses_automation_submitted
 WHERE plate_acq_id = 2199
 
+UPDATE image_analyses
+SET meta = '{"type": "cp-qc"}'
+WHERE id IN (
+   SELECT id
+   FROM image_analyses
+   WHERE pipeline_name LIKE '%QC%'
+   AND meta IS null
+)
+
+UPDATE image_analyses
+SET meta = '{"type": "cp-features"}'
+WHERE id IN (
+   SELECT id
+   FROM image_analyses
+   WHERE pipeline_name LIKE '%FEAT%'
+   AND meta IS null
+)
+
 
 DROP TABLE IF EXISTS imageset;
 CREATE TABLE imageset (
