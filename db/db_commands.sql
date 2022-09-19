@@ -339,6 +339,7 @@ CREATE OR REPLACE VIEW image_analyses_v1 AS
   SELECT
         image_analyses.id AS id,
         image_analyses.pipeline_name AS pipeline_name,
+        plate_acquisition.project AS project,
         plate_acquisition.id AS plate_acquisition_id,
         plate_acquisition.plate_barcode AS plate_barcode,
         image_analyses.start at time zone 'cet' AS start,

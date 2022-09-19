@@ -1,6 +1,8 @@
 # Merge image directories (Usually because interrupted IMX session)
 
 1. Move overlapping images from destination folder to "Trash" folder
+   On QNAP:
+   `mkdir -p /share/mikro/IMX/MDC_pharmbio/trash/<project>/<plate>`
    `mv /share/mikro/IMX/MDC_pharmbio/project/wildcard-can-be-used /share/mikro/IMX/MDC_pharmbio/trash/`
 
 2. Delete overlapping images from database
