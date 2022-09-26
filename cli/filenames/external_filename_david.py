@@ -81,7 +81,8 @@ def parse_path_and_file(path):
       'extension': extension,
       'timepoint': timepoint,
       'channel_map_id': 1,
-      'microscope': "Unknown"
+      'microscope': "Unknown",
+      'parser': os.path.basename(__file__)
     }
 
     return metadata

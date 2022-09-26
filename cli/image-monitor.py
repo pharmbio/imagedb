@@ -14,7 +14,7 @@ from psycopg2 import pool
 import json
 from datetime import datetime, timedelta
 
-from filenames.filenames import parse_path_and_file
+import filenames.filename_parser
 import image_tools
 import settings as imgdb_settings
 
@@ -299,7 +299,7 @@ def add_plate_to_db(images):
     # Loop all Images
     for idx, image in enumerate(images):
 
-        img_meta = parse_path_and_file(image)
+        img_meta = filenames.filename_parser.parse_path_and_file(image)
 
         # img meta should never be None
         if img_meta is None:
@@ -474,6 +474,7 @@ def import_plate_images_and_meta(plate_dir: str):
 
 # directories that doesn't have images or is throwing error when processed
 blacklist: list[str] = []
+blacklist.append('/share/mikro/IMX/MDC_pharmbio/trash/')
 
 # processed filenames and timestamp when processed
 processed: dict[str, float]= dict()

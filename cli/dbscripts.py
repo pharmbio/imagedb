@@ -2,6 +2,7 @@
 
 from argparse import Action
 from distutils.log import debug
+
 import logging
 import math
 import os
@@ -11,19 +12,26 @@ import traceback
 import glob
 import csv
 import psycopg2
-from psycopg2 import pool, extras, extensions
+import psycopg2.pool
+import psycopg2.extras
+import psycopg2.extensions
 import shutil
+import pathlib
+
 
 import settings as imgdb_settings
 import json
 
 __connection_pool = None
 
-def get_connection() -> extensions.connection:
+def get_connection() -> psycopg2.extensions.connection:
+    """
+    TODO this could be chenged to @contextmanager
+    """
 
     global __connection_pool
     if __connection_pool is None:
-        __connection_pool = pool.SimpleConnectionPool(1, 2, user = imgdb_settings.DB_USER,
+        __connection_pool = psycopg2.pool.SimpleConnectionPool(1, 2, user = imgdb_settings.DB_USER,
                                               password = imgdb_settings.DB_PASS,
                                               host = imgdb_settings.DB_HOSTNAME,
                                               port = imgdb_settings.DB_PORT,
@@ -88,6 +96,8 @@ def filter_list_remove_files_suffix(input_list, suffix):
 
 def update_analysis_filelist(dry_run=True):
 
+    conn = None
+
     try:
         conn = get_connection()
 
@@ -143,6 +153,8 @@ def update_analysis_filelist(dry_run=True):
 
 
 def update_sub_analysis_filelist(dry_run=True):
+
+    conn = None
 
     try:
         conn = get_connection()
@@ -200,6 +212,8 @@ def update_sub_analysis_filelist(dry_run=True):
 
 
 def update_analysis_pipelines_meta(dry_run=True):
+
+    conn = None
 
     try:
         conn = get_connection()
@@ -259,6 +273,8 @@ def update_analysis_pipelines_meta(dry_run=True):
 
 
 def update_barcode(dry_run=True):
+
+    conn = None
 
     try:
         conn = get_connection()
@@ -325,6 +341,8 @@ def update_barcode(dry_run=True):
 
 def select_images_from_plate_acq(acq_id: int):
 
+    conn = None
+
     try:
 
         #start = time.time()
@@ -359,7 +377,49 @@ def select_images_from_plate_acq(acq_id: int):
         if conn is not None:
             put_connection(conn)
 
+def select_folder_from_acq_id(acq_id: int):
+    row = select_plate_acq_row_from_id(acq_id)
+    return row[0]['folder']
+
+
+def select_plate_acq_row_from_id(acq_id: int):
+
+    conn = None
+
+    try:
+
+        #start = time.time()
+        conn = get_connection()
+
+        query = """
+                SELECT *
+                FROM plate_acquisition
+                WHERE id = %s
+                """
+
+        cursor = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+        start = time.time()
+        cursor.execute(query, (acq_id, ))
+        results = cursor.fetchall()
+        cursor.close()
+
+        put_connection(conn)
+        conn = None
+
+        logging.info(f"elapsed: {time.time() - start}")
+
+        return results
+
+    except (Exception, psycopg2.DatabaseError) as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        if conn is not None:
+            put_connection(conn)
+
 def select_latest_plate_acq():
+
+    conn = None
 
     try:
 
@@ -395,6 +455,8 @@ def select_latest_plate_acq():
 
 
 def select_channels(map_id: int):
+
+    conn = None
 
     try:
 
@@ -575,10 +637,47 @@ def copy_selected_bbc_images(selection_csv_path: str, dry_run: bool=True):
         shutil.copy2(source, dest)
         print("done copy: " + dest)
 
+def create_move_to_trash_commands(plate_acq_id):
+
+    sql_cmds = []
+
+    sql_images = f"""
+                 UPDATE images
+                 SET path = replace(path, '/share/mikro/IMX/MDC_pharmbio/', '/share/mikro/IMX/MDC_pharmbio/trash/')
+                 WHERE plate_acquisition_id = {plate_acq_id};
+
+                 UPDATE images
+                 SET project = 'trash'
+                 WHERE plate_acquisition_id = {plate_acq_id};
+                 """
+
+    sql_cmds.append(sql_images)
+
+    sql_plate_acq = f"""
+                    UPDATE plate_acquisition
+                    SET folder = replace(folder, '/share/mikro/IMX/MDC_pharmbio/', '/share/mikro/IMX/MDC_pharmbio/trash/')
+                    WHERE id = {plate_acq_id};
+
+                    UPDATE plate_acquisition
+                    SET project = 'trash'
+                    WHERE id = {plate_acq_id};
+                    """
+
+    sql_cmds.append(sql_plate_acq)
 
 
+    bash_cmds = []
+    folder = select_folder_from_acq_id(plate_acq_id)
+    src = folder
+    dest = folder.replace('/share/mikro/IMX/MDC_pharmbio/', '/share/mikro/IMX/MDC_pharmbio/trash/')
+    dest_parent = os.path.dirname(os.path.abspath(dest))
+    mkdestdir = f"mkdir -p {dest_parent}"
+    move_images = f"mv {src} {dest_parent}/"
 
+    bash_cmds.append(mkdestdir)
+    bash_cmds.append(move_images)
 
+    return sql_cmds, bash_cmds
 
 
 #
@@ -595,7 +694,7 @@ try:
 
     rootLogger = logging.getLogger()
 
-    print("Hello")
+    logging.debug("Hello")
 
     #update_barcode(dry_run=False)
     #update_sub_analysis_filelist(dry_run=True)
@@ -615,9 +714,24 @@ try:
 
     #move_david_images_to_tp_subfolder("/share/data/external-datasets/david/exp180-subset/", True)
 
-    copy_selected_bbc_images("/share/data/notebook-homes/anders-home/BBC_from_EBBA/Selected_images_labels.csv")
+    #copy_selected_bbc_images("/share/data/notebook-homes/anders-home/BBC_from_EBBA/Selected_images_labels.csv")
 
     #rename_yokogawa_images("/share/data/external-datasets/Yokogawa-demo/Yokogawa/0220504T101520_20xDemo", True)
+
+    # Create move to trash command
+    all_sql = []
+    all_bash = []
+    sql_cmds, bash_cmds = create_move_to_trash_commands(1539)
+    all_sql.extend(sql_cmds)
+    all_bash.extend(bash_cmds)
+
+
+
+    for cmd in all_bash:
+        print(cmd)
+
+    for cmd in all_sql:
+        print(cmd)
 
 
 except Exception as e:

@@ -40,6 +40,9 @@ def parse_path_and_file(path):
       + '.+?'     # don't know
       + '(\.tiff?)?', path)   # Extension (6)
 
+    if match is None:
+      return None
+
 
     row = match.group(1)
     col = match.group(2)
@@ -77,7 +80,8 @@ def parse_path_and_file(path):
       'extension': ".tif",
       'timepoint': 1,
       'channel_map_id': 6,
-      'microscope': "Unknown"
+      'microscope': "Unknown",
+      'parser': os.path.basename(__file__)
     }
 
     return metadata

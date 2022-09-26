@@ -11,11 +11,10 @@ import glob
 from unittest import result
 import psycopg2
 import psycopg2.extras
-from psycopg2 import pool
-import json
+import psycopg2.pool
 from datetime import datetime, timedelta
 
-from filenames.filenames import parse_path_and_file
+from filenames import filename_parser
 from image_tools import makeThumb
 from image_tools import read_tiff_info
 import settings as imgdb_settings
@@ -49,9 +48,9 @@ def delete_image_from_db(path, dry_run=False):
     logging.debug("Inside delete_image_from_db, path: " + str(path))
 
     conn = None
-    
+
     try:
-        
+
         # Build query
         query = ("DELETE FROM images WHERE path = %s")
         logging.debug("query" + str(query))
@@ -78,9 +77,9 @@ def select_image_path(plate_acquisition_id, well, site, channel):
     #logging.debug("Inside select_image_path(plate_acquisition_id, well, site, channel)" + str(channel))
 
     conn = None
-    
+
     try:
-        
+
         query = ("SELECT path, well "
                         "FROM images "
                         "WHERE plate_acquisition_id = %s "
@@ -136,7 +135,7 @@ def deal_with_orfans():
     orfans = find_orfan_images()
 
     # Save orfan images as textfile
-    with open('orfans.txt', 'w+') as orfan_file:   
+    with open('orfans.txt', 'w+') as orfan_file:
         for line in orfans:
             orfan_file.write('%s\n' %line)
 
@@ -166,11 +165,11 @@ def deal_with_dupes():
         if modtime_path_0 > modtime_path_1:
             logging.info("Leavin image path_0, modtime: " + str(modtime_path_0) + ", path: " + str(path_0))
             logging.info("Delete image path_1, modtime: " + str(modtime_path_1) + ", path: " + str(path_1))
-        else:           
+        else:
             logging.info("Leavin image path_1, modtime: " + str(modtime_path_1) + ", path: " + str(path_1))
             logging.info("Delete image path_0, modtime: " + str(modtime_path_0) + ", path: " + str(path_0))
-            
-            
+
+
 
 
 def find_orfan_images():
@@ -191,7 +190,7 @@ def find_orfan_images():
         counter = 0
         for row in cursor:
             path = row['path']
-            
+
             if counter % 10000 == 0:
                 logging.debug("files verified counter: " + str(counter))
 
@@ -225,7 +224,7 @@ def add_more_plate_acq():
 
         counter = 0
         for row in cursor:
-            
+
             plate_barcode = row['plate_barcode']
             timepoint = row['timepoint']
             imaged_timepoint = row['imaged']
@@ -252,15 +251,15 @@ def select_or_insert_plate_acq(plate_barcode, microscope, timepoint, imaged_time
 
     if plate_acq_id is None:
         plate_acq_id = insert_plate_acq(plate_barcode, microscope, timepoint, imaged_timepoint, folder)
-    
+
     return plate_acq_id
 
 def select_channel_map_id(plate_barcode, timepoint):
 
     conn = None
-    
+
     try:
-        
+
         query = ("SELECT channel_map_id "
                 "FROM plate_acquisition "
                 "WHERE plate_barcode = %s "
@@ -273,7 +272,7 @@ def select_channel_map_id(plate_barcode, timepoint):
                               ))
         channel_map_id = cursor.fetchone()
         cursor.close()
-        
+
         return channel_map_id
 
     except Exception as err:
@@ -285,9 +284,9 @@ def select_channel_map_id(plate_barcode, timepoint):
 def select_plate_acq_id(plate_barcode, timepoint, folder):
 
     conn = None
-    
+
     try:
-        
+
         query = ("SELECT id "
                         "FROM plate_acquisition "
                         "WHERE plate_barcode = %s "
@@ -302,7 +301,7 @@ def select_plate_acq_id(plate_barcode, timepoint, folder):
                               ))
         plate_acq_id = cursor.fetchone()
         cursor.close()
-        
+
         return plate_acq_id
 
     except Exception as err:
@@ -310,13 +309,13 @@ def select_plate_acq_id(plate_barcode, timepoint, folder):
         raise err
     finally:
         put_connection(conn)
-        
+
 def select_finished_plate_acq_folder():
 
     conn = None
-    
+
     try:
-        
+
         query = ("SELECT folder "
                  "FROM plate_acquisition "
                  "WHERE finished IS NOT NULL")
@@ -324,12 +323,12 @@ def select_finished_plate_acq_folder():
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(query)
-        
+
         # get result as list instead of tuples
         result = [r[0] for r in cursor.fetchall()]
-        
+
         cursor.close()
-        
+
         return result
 
     except Exception as err:
@@ -346,7 +345,7 @@ def insert_plate_acq(plate_barcode, microscope, timepoint, imaged_timepoint, fol
 
         channel_map_id = select_channel_map_id(plate_barcode, timepoint)
 
-        
+
         query = "INSERT INTO plate_acquisition(plate_barcode, imaged, microscope, channel_map_id, timepoint, folder) VALUES(%s, %s, %s, %s, %s, %s) RETURNING id"
         conn = get_connection()
 
@@ -373,7 +372,7 @@ def insert_plate_acq(plate_barcode, microscope, timepoint, imaged_timepoint, fol
         raise err
     finally:
         put_connection(conn)
-        
+
 
 def find_dirs_containing_img_files_recursive(path):
     """Yield lowest level directories containing image files as Path (not starting with '.')
@@ -387,7 +386,7 @@ def find_dirs_containing_img_files_recursive(path):
             if entry.path.lower().endswith(('.png','.tif','tiff')):
                 yield(Path(entry.path).parent)
                 break
-            
+
 
 
 
@@ -421,17 +420,17 @@ try:
 
     #update_plate_acq()
     # add_more_plate_acq()
-    
-    # get all image dirs within root dirs 
+
+    # get all image dirs within root dirs
     #img_dirs = set(find_dirs_containing_img_files_recursive("/share/mikro/IMX/MDC_pharmbio/"))
-    
-    
-    
-    
+
+
+
+
     print("elapsed: " + str(time.time() - start))
-    
-    
-    
+
+
+
 
 
 except Exception as e:

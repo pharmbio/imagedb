@@ -9,7 +9,7 @@
    `DELETE FROM images WHERE plate_acquisition_id = <acc_id> AND well = <well>`
 
 3. Move files from source folder tp destination
-   `mv /share/mikro/IMX/MDC_pharmbio/project/source/* /share/mikro/IMX/MDC_pharmbio/project/dest/`
+   `DELETE FROM images WHERE plate_acquisition_id = <acc_id> AND well = <well>`
 
 4. Set finished column to NULL in database in table plate_acquisition
    `UPDATE plate_acquisition SET finished = NULL WHERE plate_acquisition_id = <acc_id>`

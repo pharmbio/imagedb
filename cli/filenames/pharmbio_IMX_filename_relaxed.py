@@ -15,6 +15,7 @@ def parse_path_and_file(path):
     match = re.search('/MDC_pharmbio/(.+?)/(.+?)/([0-9]{4})-([0-9]{2})-([0-9]{2})', path) # /project/plate/date (yyyy-mm-dd)
     if match is None:
       return None
+
     project = match.group(1)
     plate = match.group(2)
     date_year = match.group(3)
@@ -35,6 +36,9 @@ def parse_path_and_file(path):
       + '(_thumb)?'     # Thumbnail (4)
       + '([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})'  # Image GUID [5]
       + '(\.tiff?)?', path)   # Extension [6]
+
+    if match is None:
+      return None
 
     well = match.group(1)
 
@@ -84,7 +88,8 @@ def parse_path_and_file(path):
       'extension': ".tif",
       'timepoint': 1,
       'channel_map_id': 1,
-      'microscope': "ImageXpress"
+      'microscope': "ImageXpress",
+      'parser': os.path.basename(__file__)
     }
 
     return metadata
@@ -107,3 +112,6 @@ if __name__ == '__main__':
   #  retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/jonne/384-pilot-4x-4/2020-09-02/262/384-pilot-4x-4_G16_w156A3DA15-CEF2-49C6-B647-3A4321D9B8DC.tif")
     retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/Covid19-Profiling/MRC5-CellDensity-384/2020-06-25/224/MRC5-CellDensity-384_I04_thumbE7E3B2C3-9420-452B-ACB6-89128BDC69BB.tif")
     print(str(retval))
+
+    retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/kinase378-v1/kinase378-v1-FA-P015240-HOG-48h-P2-L5-r1/2022-03-11/965/kinase378-v1-FA-P015240-HOG-48h-P2-L5-r1_B02_s8_w3_thumb3DF2C4AE-602A-46F6-84B2-9B31D1981B60.tif")
+    print("retval = " + str(retval))

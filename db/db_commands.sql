@@ -143,6 +143,13 @@ INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
 (8,	5,	'MITO',		'channel_map_8'),
 (8,	6,	'DIOC6',	'channel_map_8');
 
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
+(9,	1,	'HOECHST',		'channel_map_9'),
+(9,	4,	'MITO',	     	'channel_map_9'),
+(9,	3,	'PHAandWGA', 			'channel_map_9'),
+(9,	5,	'SYTO', 			'channel_map_9'),
+(9,	2,	'CONC',  'channel_map_9');
+
 
 
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
