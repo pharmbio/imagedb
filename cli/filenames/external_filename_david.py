@@ -12,11 +12,11 @@ def parse_path_and_file(path):
     # https://regex101.com/
 
     # project, plate
-    match = re.search('.*/external-datasets/(.*)\/(.*)\/(.*)\/.*', path)
+    match = re.search('.*/external-datasets/david/(exp.*)/Images/tp.*/.*', path)
     if match is None:
       return None
-    project = match.group(1)
-    plate = match.group(2)
+    project = 'david'
+    plate = match.group(1)
 
 
     logging.debug("project: " + project)
@@ -104,8 +104,11 @@ if __name__ == '__main__':
     # Testparse
   #  retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/jonne/384-pilot-4x/2020-08-21/233/384-pilot-4x_D06_w13BB03CA4-CE8C-4DE8-AFE2-1321765D3AAE.tif")
   #  retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/jonne/384-pilot-4x-4/2020-09-02/262/384-pilot-4x-4_G16_w156A3DA15-CEF2-49C6-B647-3A4321D9B8DC.tif")
-    retval = parse_path_and_file("/share/data/external-datasets/david/exp180-subset/tp-1/r10c46f01p01-ch6sk1fk1fl1.tiff")
+    retval = parse_path_and_file("/share/data/external-datasets/david/exp180/tp-1/Images/r10c46f01p01-ch6sk1fk1fl1.tiff")
     print("retval: " + str(retval))
+    retval = parse_path_and_file("/share/data/external-datasets/david/exp180/Images/tp-12/r04c03f01p01-ch2sk12fk1fl1.tiff")
+    print("retval: " + str(retval))
+    
 
     # .*\/(.*)\/(.*)\/.*
     # .*\/(.*)_s(.*)_w([0-9]+)([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})(.*)\.(.*)
