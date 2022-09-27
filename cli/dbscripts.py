@@ -510,19 +510,7 @@ def get_complete_imgset_from_plate_acq(acq_id: int):
 
     #     counter += 1
     #     print(counter)
-
-def get_all_image_files(dir):
-    # get all files
-    logging.info(dir)
-
-    image_files = []
-    for file in os.listdir(dir):
-        if file.lower().endswith( (".tif", ".png", ".tiff") ):
-            absolute_file = os.path.join(dir, file)
-            image_files.append(absolute_file)
-
-    return image_files
-
+    
 def rename_yokogawa_images(path: str, dry_run: bool=True):
 
     files = get_all_image_files(path)
@@ -568,6 +556,20 @@ def rename_yokogawa_images(path: str, dry_run: bool=True):
 
         else:
             raise Exception("Could not match filename " + file)
+    
+        
+def get_all_image_files(dir):
+
+    print('get_all_image_files: {dir}')
+
+    image_files = []
+    for file in os.listdir(dir):
+        if file.lower().endswith( (".tif", ".png", ".tiff") ):
+            absolute_file = os.path.join(dir, file)
+            image_files.append(absolute_file)
+
+    return image_files
+
 
 def move_david_images_to_tp_subfolder(path: str, dry_run: bool=True):
 
@@ -577,38 +579,23 @@ def move_david_images_to_tp_subfolder(path: str, dry_run: bool=True):
 
     for file in files:
 
-        #os.rename(file, file.replace('_c', '_w'))
+        match = re.search('.*sk([0-9]*).*.tiff', os.path.basename(file))
 
-        m = re.search('.*sk([0-9]*).*.tiff', os.path.basename(file))
+        if match:
+            tp = match.group(1)
 
-        if m:
-            tp = m.group(1)
-
-            subdir = os.path.join(os.path.dirname(file), 'tp-' + str(tp))
+            subdir = os.path.join(os.path.dirname(file), f'tp-{tp}')
 
             new_path = os.path.join(subdir, os.path.basename(file))
 
-            logging.debug(new_path)
+            print('new: {new_path}')
 
             if not dry_run:
                 os.makedirs(subdir, exist_ok=True)
                 os.rename(file, new_path)
 
-
-
-
-
-            #dirname = os.path.dirname(file)
-
-            # new_path = os.path.join(dirname, new_name)
-
-            # print("new path:" + new_path)
-
-            # if not dry_run:
-            #     os.rename(file, new_path)
-
         else:
-            raise Exception("Could not match filename " + file)
+            raise Exception("Could not match filename {file}")
 
 def copy_selected_bbc_images(selection_csv_path: str, dry_run: bool=True):
 

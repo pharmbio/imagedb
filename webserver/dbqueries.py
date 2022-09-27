@@ -27,7 +27,10 @@ def put_connection(pooled_connection):
 
     global __connection_pool
     if __connection_pool:
-        __connection_pool.putconn(pooled_conneget_plate(plate_name):
+        __connection_pool.putconn(pooled_connection)
+
+
+def get_plate(plate_name):
     logging.info("inside get_plate, plate_name:" + plate_name)
 
     conn = None
