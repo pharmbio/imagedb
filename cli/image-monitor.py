@@ -9,6 +9,7 @@ import time
 import traceback
 import glob
 from typing import Dict, List
+from unittest import result
 import psycopg2
 from psycopg2 import pool
 import json
@@ -179,6 +180,41 @@ def select_plate_acq_id(image_path):
     finally:
         put_connection(conn)
 
+def getChannelMapID(project, plate_acq_name, imaged_timepoint):
+    conn = None
+
+    try:
+        
+        query = (
+                 "SELECT channel_map "
+                 "FROM channel_map_mapping "
+                 "WHERE project = %s "
+                 "AND "
+                 "( plate_acquisition_name = %s OR plate_acquisition_name = '*')"
+                 )
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(query, (project, plate_acq_name))
+        result = cursor.fetchone()
+        cursor.close()
+        
+        # set default if nothing speciffic for this plate or plate_acquisition
+        if result:
+            channel_map_id = result[0]
+        else:
+            channel_map_id = 2
+            
+        logging.info(f"channel_map_id = {channel_map_id}")
+        
+        return channel_map_id
+
+    except Exception as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        put_connection(conn)
+    
 
 def insert_plate_acq(img_meta):
 
@@ -188,12 +224,10 @@ def insert_plate_acq(img_meta):
         imaged_timepoint = datetime(int(img_meta['date_year']), int(
             img_meta['date_month']), int(img_meta['date_day_of_month']))
         folder = os.path.dirname(img_meta['path'])
-
-        # Set default channel_map_id and change it to new one if after a certain date
-        channel_map_id = 1
-        if imaged_timepoint >= datetime(2020, 9, 1):
-            channel_map_id = 2
-
+            
+        # get channel map for speciffic projects/plates
+        channel_map_id = getChannelMapID(img_meta['project'], img_meta['plate'], imaged_timepoint)
+        
         query = "INSERT INTO plate_acquisition(plate_barcode, name, project, imaged, microscope, channel_map_id, timepoint, folder) VALUES(%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"
         conn = get_connection()
         cursor = conn.cursor()

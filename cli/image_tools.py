@@ -109,7 +109,7 @@ def any2lzw(in_path, out_path):
 
   logging.info("Done img2png")
 
-def any2png(in_path, out_path, compression_level):
+def any2png(in_path, out_path, compression_level=4):
   os.makedirs(os.path.dirname(out_path),exist_ok=True)
   cv2_any2png(in_path, out_path, compression_level)
 
