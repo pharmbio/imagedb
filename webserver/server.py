@@ -7,6 +7,7 @@ import os
 import logging
 import tornado
 import tornado.web
+import tornado.ioloop
 
 from handlers.query_handlers import (ListAllPlatesQueryHandler,
                                      GetPlateQueryHandler,

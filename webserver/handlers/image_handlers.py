@@ -8,6 +8,7 @@ import json
 import os
 
 import tornado.web
+import tornado.escape
 from imageutils import (merge_channels, tif2png)
 import settings as imgdb_settings
 
