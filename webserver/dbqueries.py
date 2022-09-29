@@ -2,7 +2,7 @@
 import logging
 import json
 import psycopg2
-from psycopg2 import pool
+import psycopg2.pool
 import settings as imgdb_settings
 import platemodel
 
