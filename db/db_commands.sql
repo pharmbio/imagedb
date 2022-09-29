@@ -153,11 +153,13 @@ INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
 
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
 CREATE TABLE channel_map_mapping (
+  project text,
   plate_acquisition_name  text,
   channel_map     int
 );
 CREATE INDEX  ix_channel_map_mapping_plate_acquisition_name ON channel_map_mapping(plate_acquisition_name);
 CREATE INDEX  ix_channel_map_mapping_channel_map ON channel_map_mapping(channel_map);
+CREATE INDEX  ix_channel_map_mapping_project ON channel_map_mapping(channprojectel_map);
 
 INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALUES
 ('exp180-subset', 8);
@@ -170,6 +172,10 @@ INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALU
 UPDATE plate_acquisition
    SET channel_map_id = channel_map_mapping.channel_map
    FROM channel_map_mapping WHERE plate_acquisition.name = channel_map_mapping.plate_acquisition_name;
+
+UPDATE plate_acquisition
+   SET channel_map_id = channel_map_mapping.channel_map
+   FROM channel_map_mapping WHERE plate_acquisition.project = channel_map_mapping.project;
 
 
 CREATE OR REPLACE VIEW images_all_view AS
