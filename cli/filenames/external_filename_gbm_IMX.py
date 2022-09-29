@@ -20,7 +20,7 @@ def parse_path_and_file(path):
       logging.debug("None match")
       return None
     project = match.group(1)
-    plate = match.group(2)
+    plate = match.group(2).replace('/', '-')
     timepoint = match.group(3)
 
 
@@ -29,14 +29,14 @@ def parse_path_and_file(path):
 
 
     # well, site, channel, thumb, guid, extension
-    match = re.search('.*\/'           # any until last /
+    match = re.search('.*/'           # any until last /
       + '(.*_)?' # optional text delimited by _ (1)
       + '([A-Z0-9]*)'  # well (2)
       + '_s([0-9]*)'   # wellsample (3)
       + '_w([0-9]*)'  # Channel (color channel?) (4)
       + '(_thumb)?'   # thumb
       + '([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})?'  # Image GUID (optional) [5]
-      + '\.(.*)', path)   # Extension [6]
+      + r'\.(.*)', path)   # Extension [6]
 
     if match is None:
       return None
