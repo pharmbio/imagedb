@@ -151,7 +151,6 @@ INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
 (9,	2,	'CONC',  'channel_map_9');
 
 
-
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
 CREATE TABLE channel_map_mapping (
   plate_acquisition_name  text,
@@ -163,7 +162,14 @@ CREATE INDEX  ix_channel_map_mapping_channel_map ON channel_map_mapping(channel_
 INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALUES
 ('exp180-subset', 8);
 
-UPDATE "plate_acquisition" SET channel_map_id = '8' WHERE name = 'exp180-subset';
+INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALUES
+('exp180', 8);
+
+---> Import channel-map map
+---> Then Update:
+UPDATE plate_acquisition
+   SET channel_map_id = channel_map_mapping.channel_map
+   FROM channel_map_mapping WHERE plate_acquisition.name = channel_map_mapping.plate_acquisition_name;
 
 
 CREATE OR REPLACE VIEW images_all_view AS
@@ -686,12 +692,6 @@ CREATE OR REPLACE VIEW well_all_view AS
 
 
 -- Some misc commands
-
----> Import channel-map map
----> Then Update:
-UPDATE plate_acquisition
-   SET channel_map_id = channel_map_mapping.channel_map
-   FROM channel_map_mapping WHERE plate_acquisition.name = channel_map_mapping.plate_acquisition_name;
 
 
 -- Add readonly user

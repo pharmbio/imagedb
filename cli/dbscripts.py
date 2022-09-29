@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-
-from argparse import Action
-from distutils.log import debug
-
 import logging
 import math
 import os
@@ -510,7 +506,7 @@ def get_complete_imgset_from_plate_acq(acq_id: int):
 
     #     counter += 1
     #     print(counter)
-    
+
 def rename_yokogawa_images(path: str, dry_run: bool=True):
 
     files = get_all_image_files(path)
@@ -556,11 +552,11 @@ def rename_yokogawa_images(path: str, dry_run: bool=True):
 
         else:
             raise Exception("Could not match filename " + file)
-    
-        
+
+
 def get_all_image_files(dir):
 
-    print('get_all_image_files: {dir}')
+    print(f'get_all_image_files: {dir}')
 
     image_files = []
     for file in os.listdir(dir):
@@ -588,7 +584,7 @@ def move_david_images_to_tp_subfolder(path: str, dry_run: bool=True):
 
             new_path = os.path.join(subdir, os.path.basename(file))
 
-            print('new: {new_path}')
+            print(f'new: {new_path}')
 
             if not dry_run:
                 os.makedirs(subdir, exist_ok=True)
@@ -699,26 +695,22 @@ try:
 
     #insert_csv("channel_map", "channel_map.tsv")
 
-    #move_david_images_to_tp_subfolder("/share/data/external-datasets/david/exp180-subset/", True)
+    move_david_images_to_tp_subfolder("/share/data/external-datasets/david/exp183/Images", False)
 
     #copy_selected_bbc_images("/share/data/notebook-homes/anders-home/BBC_from_EBBA/Selected_images_labels.csv")
 
     #rename_yokogawa_images("/share/data/external-datasets/Yokogawa-demo/Yokogawa/0220504T101520_20xDemo", True)
 
-    # Create move to trash command
-    all_sql = []
-    all_bash = []
-    sql_cmds, bash_cmds = create_move_to_trash_commands(1539)
-    all_sql.extend(sql_cmds)
-    all_bash.extend(bash_cmds)
-
-
-
-    for cmd in all_bash:
-        print(cmd)
-
-    for cmd in all_sql:
-        print(cmd)
+    # # Create move to trash command
+    # all_sql = []
+    # all_bash = []
+    # sql_cmds, bash_cmds = create_move_to_trash_commands(1539)
+    # all_sql.extend(sql_cmds)
+    # all_bash.extend(bash_cmds)
+    # for cmd in all_bash:
+    #     print(cmd)
+    # for cmd in all_sql:
+    #     print(cmd)
 
 
 except Exception as e:

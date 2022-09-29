@@ -46,6 +46,7 @@ def get_plate(plate_name):
                        'well',
                        'site',
                        'channel',
+                       'dye',
                        'cell_line'
                        ]
 

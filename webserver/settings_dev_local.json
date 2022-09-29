@@ -5,8 +5,8 @@
   "ERROR_LOG_DIR":  "/share/imagedb/",
   "DB_USER": "postgres",
   "DB_PASS": "example",
-  "DB_PORT": 5432,
-  "DB_HOSTNAME": "imagedb",
+  "DB_PORT": 15433,
+  "DB_HOSTNAME": "anything.k8s-prod.pharmb.io",
   "DB_NAME": "imagedb",
 
   "EXHAUSTIVE_INITIAL_POLL": "true",

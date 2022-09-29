@@ -80,7 +80,7 @@ def auto_white_balance(im, p=.6):
 
     return im
 
-async def merge_channels(channels, outdir, overwrite_existing=False):
+async def merge_channels(channels, outdir, overwrite_existing=True):
     ''' For now in image veiewer read image as 8 bit grayscale cv2.IMREAD_GRAYSCALE
         instead of 16 bit cv2.IMREAD_UNCHANGED (can't see difference in img viewer and saves 90% of size)
         and also dont create np array with np.uint16'''

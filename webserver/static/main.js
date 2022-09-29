@@ -76,12 +76,30 @@ class Plate {
   }
 
   getChannelNames(acquisition_id) {
-    // Get channel keys for the first sites object of the first well of first acquisition in plate object
+    // Get channel keys for the first sites object of the first well of slected acquisition in plate object
     let nCount = 0;
     let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
     let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
-    let channelNames = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites[firstSiteKey].channels);
+    let channels = this.getChannels(acquisition_id, firstWellKey, firstSiteKey);
+
+    let channelNames = [];
+    for(const [key, value] of Object.entries(channels)){
+      channelNames.push(value.dye);
+    }
+
+    console.log("channelNames", channelNames);
+
     return channelNames;
+  }
+
+  getAvailableChannels(acquisition_id) {
+    // Get channel keys for the first sites object of the first well of slected acquisition in plate object
+    let nCount = 0;
+    let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
+    let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
+    let channels = this.getChannels(acquisition_id, firstWellKey, firstSiteKey);
+
+    return channels;
   }
 
   getChannels(acquisition_id, well_name, site) {
@@ -1228,32 +1246,62 @@ function updatePlateAcqLabel(plateObj) {
   document.getElementById('plate-acq-label').title = "Acq-id: " + plate_acq_id;
 }
 
+function getChannelIdFromDye(dye, channels){
+
+  for(const [key, value] of Object.entries(channels)){
+    channel_name = value.dye;
+    channel_id = value.id;
+    if(dye === channel_name){
+      return channel_id;
+    }
+  }
+  return 0
+}
+
 function updateChannelSelect(plateObj, selected_channel) {
   let elemSelect = document.getElementById('channel-select');
 
   // reset
   elemSelect.options.length = 0;
 
-  let nCount = plateObj.countChannels(getSelectedAcquisitionId());
+  let channels = plateObj.getAvailableChannels(getSelectedAcquisitionId());
 
-  console.log("channelcount", nCount);
+  let nCount = Object.keys(channels).length;
 
-  // First add default (Merge channels options)
-  if (nCount === 1) {
-    elemSelect.options[0] = new Option("1", "1");
-  } else if (nCount === 2) {
-    elemSelect.options[0] = new Option("1-2");
-  } else if (nCount >= 3) {
-    elemSelect.options[0] = new Option("1-3");
+  // // First add default (Merge channels options)
+  // if (nCount === 1) {
+  //   elemSelect.options[0] = new Option("1", "1");
+  // } else if (nCount === 2) {
+  //   elemSelect.options[0] = new Option("H,M", "1,2");
+  // } else if (Set()) {
+
+  // }
+
+  let channel_names = plateObj.getChannelNames(getSelectedAcquisitionId())
+  let is_subset = ['HOECHST','MITO', 'PHAandWGA'].every(val => channel_names.includes(val))
+  if(is_subset){
+    b = getChannelIdFromDye('HOECHST', channels);
+    r = getChannelIdFromDye('MITO', channels);
+    g = getChannelIdFromDye('PHAandWGA', channels);
+    elemSelect.add( new Option("H,M,P", "" + b + "," + r + "," + g) );
+  }
+
+  is_subset = ['HOECHST','MITO', 'DIOC6'].every(val => channel_names.includes(val))
+  if(is_subset){
+    b = getChannelIdFromDye('HOECHST', channels);
+    r = getChannelIdFromDye('MITO', channels);
+    g = getChannelIdFromDye('DIOC6', channels);
+    elemSelect.options[0] = new Option("H,M,D", "" + b + "," + r + "," + g);
   }
 
   // add as many options as channels
-  let channel_names = plateObj.getChannelNames(getSelectedAcquisitionId());
-  for (let n = 1; n <= nCount; n++) {
-    channel_name = channel_names[n - 1];
-    channel_option_text = "" + n + "-" + channel_name
+  for(const [key, value] of Object.entries(channels)){
+    channel_name = value.dye;
+    channel_id = value.id;
+    option_text = "" + value.id + "-" + channel_name
+    option_value = channel_id;
     selected = (selected_channel == channel_name) ? true : false
-    elemSelect.add(new Option(channel_option_text, n, selected, selected));
+    elemSelect.add(new Option(option_text, option_value, selected));
   }
 }
 
@@ -1265,22 +1313,28 @@ function removeChildren(domObject) {
 
 function createMergeThumbImgURLFromChannels(channels) {
 
-  let selected_channel = String(getSelectedChannelValue());
+  console.log(channels, channels);
+  if(!channels){
+    return "/static/images/empty.png";
+  }
+
+  let value = String(getSelectedChannelValue());
+
+  let selected = value.split(',');
 
   let url = null;
-  if (selected_channel === '1-2') {
-    let key_ch1 = Object.keys(channels)[0];
-    let key_ch2 = Object.keys(channels)[1];
-    url = "/api/image-merge-thumb/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + 'undefined' + "/channels.png";
-  } else if (selected_channel === '1-3') {
-    let key_ch1 = Object.keys(channels)[0];
-    let key_ch2 = Object.keys(channels)[1];
-    let key_ch3 = Object.keys(channels)[2];
-    url = "/api/image-merge-thumb/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + channels[key_ch3].path + "/channels.png";
+  if (selected.length == 2) {
+    channel_blue = selected[0];
+    channel_red = selected[1];
+    url = "/api/image-merge-thumb/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + 'undefined' + "/channels.png";
+  } else if (selected.length == 3) {
+    channel_blue = selected[0];
+    channel_red = selected[1];
+    channel_green = selected[2];
+    url = "/api/image-merge-thumb/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + channels[channel_green].path + "/channels.png";
   } else {
-    let channelIndex = parseInt(selected_channel, 10) - 1;
-    let key_chx = Object.keys(channels)[channelIndex];
-    url = "/api/image-merge-thumb/ch1/" + channels[key_chx].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+    let channel_grey = selected[0];
+    url = "/api/image-merge-thumb/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }
 
   return url;
@@ -1293,22 +1347,23 @@ function createMergeImgURLFromChannels(channels) {
     return "/static/images/empty.png";
   }
 
-  let selected_channel = String(getSelectedChannelValue());
+  let value = String(getSelectedChannelValue());
+
+  let selected = value.split(',');
 
   let url = null;
-  if (selected_channel === '1-2') {
-    let key_ch1 = Object.keys(channels)[0];
-    let key_ch2 = Object.keys(channels)[1];
-    url = "/api/image-merge/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + 'undefined' + "/channels.png";
-  } else if (selected_channel === '1-3') {
-    let key_ch1 = Object.keys(channels)[0];
-    let key_ch2 = Object.keys(channels)[1];
-    let key_ch3 = Object.keys(channels)[2];
-    url = "/api/image-merge/ch1/" + channels[key_ch1].path + "/ch2/" + channels[key_ch2].path + "/ch3/" + channels[key_ch3].path + "/channels.png";
+  if (selected.length == 2) {
+    channel_blue = selected[0];
+    channel_red = selected[1];
+    url = "/api/image-merge/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + 'undefined' + "/channels.png";
+  } else if (selected.length == 3) {
+    channel_blue = selected[0];
+    channel_red = selected[1];
+    channel_green = selected[2];
+    url = "/api/image-merge/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + channels[channel_green].path + "/channels.png";
   } else {
-    let channelIndex = parseInt(selected_channel, 10) - 1;
-    let key_chx = Object.keys(channels)[channelIndex];
-    url = "/api/image-merge/ch1/" + channels[key_chx].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+    let channel_grey = selected[0];
+    url = "/api/image-merge/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
   }
 
   return url;

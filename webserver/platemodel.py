@@ -48,15 +48,17 @@ class Site:
 
     def add_data(self, image_meta):
         channel_id = image_meta['channel']
+        channel_dye = image_meta['dye']
         # get or create a new object with this key
-        channel = self.channels.setdefault(channel_id, Channel(channel_id))
+        channel = self.channels.setdefault(channel_id, Channel(channel_id, channel_dye))
         channel.add_data(image_meta)
 
 
 class Channel:
 
-    def __init__(self, id):
+    def __init__(self, id, dye):
         self.id = id
+        self.dye = dye
         self.path = ''
         self.image_meta = dict()
 
