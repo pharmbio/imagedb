@@ -1318,26 +1318,31 @@ function createMergeThumbImgURLFromChannels(channels) {
     return "/static/images/empty.png";
   }
 
-  let value = String(getSelectedChannelValue());
+  try{
+    let value = String(getSelectedChannelValue());
 
-  let selected = value.split(',');
+    let selected = value.split(',');
 
-  let url = null;
-  if (selected.length == 2) {
-    channel_blue = selected[0];
-    channel_red = selected[1];
-    url = "/api/image-merge-thumb/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + 'undefined' + "/channels.png";
-  } else if (selected.length == 3) {
-    channel_blue = selected[0];
-    channel_red = selected[1];
-    channel_green = selected[2];
-    url = "/api/image-merge-thumb/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + channels[channel_green].path + "/channels.png";
-  } else {
-    let channel_grey = selected[0];
-    url = "/api/image-merge-thumb/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
-  }
+    let url = null;
+    if (selected.length == 2) {
+      channel_blue = selected[0];
+      channel_red = selected[1];
+      url = "/api/image-merge-thumb/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + 'undefined' + "/channels.png";
+    } else if (selected.length == 3) {
+      channel_blue = selected[0];
+      channel_red = selected[1];
+      channel_green = selected[2];
+      url = "/api/image-merge-thumb/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + channels[channel_green].path + "/channels.png";
+    } else {
+      let channel_grey = selected[0];
+      url = "/api/image-merge-thumb/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+    }
 
-  return url;
+    return url;
+  }catch(err){
+    console.error(err);
+    return "/static/images/empty.png";
+   }
 }
 
 function createMergeImgURLFromChannels(channels) {
@@ -1347,26 +1352,31 @@ function createMergeImgURLFromChannels(channels) {
     return "/static/images/empty.png";
   }
 
-  let value = String(getSelectedChannelValue());
+  try{
+    let value = String(getSelectedChannelValue());
 
-  let selected = value.split(',');
+    let selected = value.split(',');
 
-  let url = null;
-  if (selected.length == 2) {
-    channel_blue = selected[0];
-    channel_red = selected[1];
-    url = "/api/image-merge/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + 'undefined' + "/channels.png";
-  } else if (selected.length == 3) {
-    channel_blue = selected[0];
-    channel_red = selected[1];
-    channel_green = selected[2];
-    url = "/api/image-merge/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + channels[channel_green].path + "/channels.png";
-  } else {
-    let channel_grey = selected[0];
-    url = "/api/image-merge/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
-  }
+    let url = null;
+    if (selected.length == 2) {
+      channel_blue = selected[0];
+      channel_red = selected[1];
+      url = "/api/image-merge/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + 'undefined' + "/channels.png";
+    } else if (selected.length == 3) {
+      channel_blue = selected[0];
+      channel_red = selected[1];
+      channel_green = selected[2];
+      url = "/api/image-merge/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + channels[channel_green].path + "/channels.png";
+    } else {
+      let channel_grey = selected[0];
+      url = "/api/image-merge/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+    }
 
-  return url;
+    return url;
+  }catch(err){
+    console.error(err);
+    return "/static/images/empty.png";
+   }
 }
 
 function getWellName(row, col) {
