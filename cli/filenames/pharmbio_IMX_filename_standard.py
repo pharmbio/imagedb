@@ -65,6 +65,13 @@ def parse_path_and_file(path):
     return None
 
 if __name__ == '__main__':
+        #
+    # Configure logging
+    #
+    logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                        datefmt='%H:%M:%S',
+                        level=logging.DEBUG)
+  
     # Testparse
     retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/PolinaG-U2OS/181212-U2OS-20X-BpA-HD-DB-high/2018-12-12/1/181212-U2OS-20X-BpA-HD-DB-high_E02_s7_w3_thumbCFB5B241-4E5B-4AB4-8861-A9B6E8F9FE00.tif")
     retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/kinase378-v1/kinase378-v1-FA-P015232-A549-48h-P1-L3-r1/2022-01-31/906/kinase378-v1-FA-P015232-A549-48h-P1-L3-r1_B02_s3_w5F56592B1-3477-465C-B118-87465E0163A1.tif")

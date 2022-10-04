@@ -72,6 +72,12 @@ def parse_path_and_file(path):
     return None
 
 if __name__ == '__main__':
+    #
+    # Configure logging
+    #
+    logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                        datefmt='%H:%M:%S',
+                        level=logging.DEBUG)
     # Testparse
     retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/exp-TimeLapse/A549-20X-DB-HD-BpA-pilot1/2019-03-27/84/TimePoint_1/A549-20X-DB-HD-BpA-pilot1_B02_s1_w1_thumb1E64F2F4-E1E8-410C-9891-A491D91FC73C.tif")
     print("retval = " + str(retval))
