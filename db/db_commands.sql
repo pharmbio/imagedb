@@ -150,6 +150,13 @@ INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
 (9,	5,	'SYTO', 			'channel_map_9'),
 (9,	2,	'CONC',  'channel_map_9');
 
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
+(10,	1,	'HOECHST',		'channel_map_10_squid'),
+(10,	2,	'SYTO', 			'channel_map_10_squid'),
+(10,	3,	'PHAandWGA', 			'channel_map_10_squid'),
+(10,	4,	'MITO',	     	'channel_map_10_squid'),
+(10,	5,	'CONC',  'channel_map_10_squid');
+
 
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
 CREATE TABLE channel_map_mapping (
@@ -166,6 +173,9 @@ INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALU
 
 INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALUES
 ('exp180', 8);
+
+INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALUES
+('cell-density-martin-2022-09-23', 10);
 
 ---> Import channel-map map
 ---> Then Update:
@@ -270,12 +280,16 @@ CREATE TABLE image_analyses (
     error                 timestamp,
     meta                  jsonb,
     depends_on_id         jsonb, -- if the analysis depends on another analysis being done, otherwise null
-    result                jsonb
+    result                jsonb,
+    submitted             timestamp,
+    priority              int
 );
 
 CREATE INDEX  ix_image_analyses_plate_acquisition_id ON image_analyses(plate_acquisition_id);
 CREATE INDEX  ix_image_analyses_start ON image_analyses(start);
 CREATE INDEX  ix_image_analyses_finish ON image_analyses(finish);
+CREATE INDEX  ix_image_analyses_submitted ON image_analyses(submitted);
+CREATE INDEX  ix_image_analyses_priority ON image_analyses(priority);
 
 -- UPDATE image_analyses
 -- SET meta = jsonb_set(coalesce(meta,{}),'{type}','"cp_features"',true)
@@ -297,12 +311,14 @@ CREATE TABLE image_sub_analyses (
     error                 timestamp,
     meta                  jsonb,
     depends_on_sub_id     jsonb, -- if the analysis depends on another analysis being done, otherwise null
-    result                jsonb
+    result                jsonb,
+    priority              int
 );
 
 CREATE INDEX  ix_image_sub_analyses_analysis_id ON image_sub_analyses(analysis_id);
 CREATE INDEX  ix_image_sub_analyses_start ON image_sub_analyses(start);
 CREATE INDEX  ix_image_sub_analyses_finish ON image_sub_analyses(finish);
+CREATE INDEX  ix_image_sub_analyses_priority ON image_sub_analyses(priority);
 
 
 DROP TABLE IF EXISTS image_analyses_automation CASCADE;
@@ -547,6 +563,41 @@ CREATE INDEX  ix_plate_painted ON plate(painted);
 
 -- INSERT INTO plate (plate_barcode)
 -- SELECT DISTINCT(plate_barcode) FROM images;
+
+
+CREATE OR REPLACE VIEW plate_v1 AS
+  SELECT
+    plate.size,
+    plate.seeded,
+    plate.cell_line,
+    plate.cells_per_well,
+    plate.type AS plate_type,
+    plate.treatment,
+    plate.treatment_units,
+    plate.painted,
+    plate.painted_type,
+    plate_layout.well_id,
+    plate_layout.layout_id,
+    plate_layout.solvent,
+    plate_layout.stock_conc,
+    plate_layout.pert_type,
+    plate_layout.batch_id,
+    plate_layout.cmpd_vol,
+    plate_layout.well_vol,
+    plate_layout.cmpd_conc,
+    compound.batchid,
+    compound.name AS compound_name,
+    compound.cbkid,
+    compound.libid,
+    compound.libtxt,
+    compound.smiles,
+    compound.inchi,
+    compound.inkey
+  FROM plate
+LEFT JOIN plate_layout ON (plate.layout_id = plate_layout.layout_id)
+LEFT JOIN compound ON plate_layout.batch_id = compound.batchid;
+
+
 
 -- well...
 DROP TABLE IF EXISTS well CASCADE;

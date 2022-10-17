@@ -35,7 +35,7 @@ def parse_path_and_file(path):
   if match is None:
     return None
 
-  logging.debug(f'match: {match.groups()}')
+  logging.debug(f'match: {match.groups() }')
   
   row = match.group(8)
   col = int(match.group(9))
@@ -47,7 +47,7 @@ def parse_path_and_file(path):
 
   site_x = int(match.group(10))
   site_y = int(match.group(11))
-  site = (site_x + 1) * (site_y + 1)
+  site = (site_y * 3) + (site_x + 1)
 
   metadata = {
       'path': path,
