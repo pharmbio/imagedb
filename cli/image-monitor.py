@@ -21,7 +21,7 @@ import settings as imgdb_settings
 
 __connection_pool = None
 
-IMAGE_EXTENSIONS = (".tif", ".tiff", ".png", ".jpg", ".jpeg")
+IMAGE_EXTENSIONS = (".tif", ".tiff", ".png", ".jpg", ".jpeg", ".bmp")
 
 def get_connection():
 
