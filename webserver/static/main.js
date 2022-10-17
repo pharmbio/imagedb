@@ -48,12 +48,12 @@ class Plate {
       }
     }
 
-    if (nMaxRow > 16 || nMaxCol > 26) {
+    if (nMaxRow > 16 || nMaxCol > 24) {
       console.log("1536");
       return { "rows": 32, "cols": 48, "sites": siteNames };
     }
 
-    if (nMaxRow > 8 || nMaxCol > 16) {
+    if (nMaxRow > 8 || nMaxCol > 12) {
       console.log("384");
       return { "rows": 16, "cols": 24, "sites": siteNames };
     }
