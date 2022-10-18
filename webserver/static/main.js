@@ -63,10 +63,8 @@ class Plate {
   }
 
   getAvailableSites(acquisition_id) {
-    // get names of the sites of the first acquisition and first well
-    let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0];
-    let firstWellKey = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells)[0];
-    let sites = this.plateObj.acquisitions[firstPlateAcqKey].wells[firstWellKey].sites;
+    let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
+    let sites = this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites;
 
     let siteNames = [];
     for (let site of Object.values(sites)) {
