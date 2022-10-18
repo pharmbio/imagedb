@@ -567,6 +567,7 @@ CREATE INDEX  ix_plate_painted ON plate(painted);
 
 CREATE OR REPLACE VIEW plate_v1 AS
   SELECT
+    plate.barcode,
     plate.size,
     plate.seeded,
     plate.cell_line,
