@@ -5,6 +5,7 @@ from filenames import pharmbio_squid_filename_v1
 from filenames import pharmbio_IMX_filename_standard
 from filenames import pharmbio_IMX_filename_older
 from filenames import pharmbio_IMX_filename_relaxed
+from filenames import external_filename_christa
 from filenames import external_filename_cpjump
 from filenames import external_filename_david
 from filenames import external_filename_IMX
@@ -16,6 +17,7 @@ parsers.append(pharmbio_squid_filename_test)
 parsers.append(pharmbio_IMX_filename_standard)
 parsers.append(pharmbio_IMX_filename_older)
 parsers.append(pharmbio_IMX_filename_relaxed)
+parsers.append(external_filename_christa)
 parsers.append(external_filename_gbm_IMX)
 parsers.append(external_filename_IMX)
 parsers.append(external_filename_cpjump)

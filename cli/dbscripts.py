@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from select import select
 import logging
 import math
 import os
@@ -11,9 +12,10 @@ import psycopg2
 import psycopg2.pool
 import psycopg2.extras
 import psycopg2.extensions
-import shutil
+shutil
 import pathlib
-
+from pyarrow import csv, parquet
+from datetime import datetime
 
 import settings as imgdb_settings
 import json
@@ -554,17 +556,23 @@ def rename_yokogawa_images(path: str, dry_run: bool=True):
             raise Exception("Could not match filename " + file)
 
 
-def get_all_image_files(dir):
+def get_all_files(dir, suffix):
 
-    print(f'get_all_image_files: {dir}')
+    print(f'get_all_files ({suffix}): {dir}')
 
     image_files = []
     for file in os.listdir(dir):
-        if file.lower().endswith( (".tif", ".png", ".tiff") ):
+        if file.lower().endswith( suffix ):
             absolute_file = os.path.join(dir, file)
             image_files.append(absolute_file)
 
     return image_files
+
+def get_all_image_files(dir):
+
+    suffix = (".tif", ".png", ".tiff")
+
+    return get_all_files(dir, suffix)
 
 
 def move_david_images_to_tp_subfolder(path: str, dry_run: bool=True):
@@ -578,8 +586,7 @@ def move_david_images_to_tp_subfolder(path: str, dry_run: bool=True):
         match = re.search('.*sk([0-9]*).*.tiff', os.path.basename(file))
 
         if match:
-            tp = match.group(1)
-
+            tp = match.grou
             subdir = os.path.join(os.path.dirname(file), f'tp-{tp}')
 
             new_path = os.path.join(subdir, os.path.basename(file))
@@ -662,6 +669,66 @@ def create_move_to_trash_commands(plate_acq_id):
 
     return sql_cmds, bash_cmds
 
+def select_analyses_paths(proj_name, type):
+
+    query = f"""
+            SELECT results
+            FROM image_analyses_per_plate
+            WHERE project LIKE %s
+            AND meta->>'type' = %s
+            AND analysis_date IS NOT NULL
+            ORDER BY plate_barcode
+        """
+
+    params = [proj_name, type]
+
+    return select_from_db(query, params)
+
+
+def select_from_db(query, params):
+
+    conn = None
+
+    try:
+
+        #start = time.time()
+        conn = get_connection()
+        cursor = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+
+        start = time.time()
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        cursor.close()
+
+        put_connection(conn)
+        conn = None
+
+        logging.info(f"elapsed: {time.time() - start}")
+
+        return results
+
+    except (Exception, psycopg2.DatabaseError) as err:
+        logging.exception("Message")
+        raise err
+    finally:
+        if conn is not None:
+            put_connection(conn)
+
+def convert_csv_to_parquet():
+    infile = "/share/data/cellprofiler/automation/results/P015234/1535/2381/featICF_nuclei.csv"
+    outfile = infile + ".parquet"
+    file_to_data_frame_to_parquet(infile, outfile)
+
+def file_to_data_frame_to_parquet(local_file: str, parquet_file: str) -> None:
+    logging.debug(f"inside file_to_data_frame_to_parquet, file: {local_file}")
+    table = csv.read_csv(local_file)
+    logging.debug(table)
+    exit()
+    logging.debug(f"done read file into table")
+    logging.debug(f"save as parquet")
+    parquet.write_table(table, parquet_file)
+    logging.debug(f"done save as parquet")
+
 
 #
 #  Main entry for script
@@ -679,6 +746,16 @@ try:
 
     logging.debug("Hello")
 
+    paths = select_analyses_paths('kinase%', 'cp-features')
+
+    for row in paths:
+        path = row['results']
+        files = get_all_files(path, ('.csv'))
+        logging.debug(files)
+
+
+    #convert_csv_to_parquet()
+
     #update_barcode(dry_run=False)
     #update_sub_analysis_filelist(dry_run=True)
     #update_analysis_filelist(dry_run=True)
@@ -695,7 +772,7 @@ try:
 
     #insert_csv("channel_map", "channel_map.tsv")
 
-    move_david_images_to_tp_subfolder("/share/data/external-datasets/david/exp183/Images", False)
+    #move_david_images_to_tp_subfolder("/share/data/external-datasets/david/exp183/Images", False)
 
     #copy_selected_bbc_images("/share/data/notebook-homes/anders-home/BBC_from_EBBA/Selected_images_labels.csv")
 
