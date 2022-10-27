@@ -31,7 +31,7 @@ def parse_path_and_file(path):
       + '(.*_)?' # optional text delimited by _ (1)
       + '([A-Z0-9]*)_'  # well (2([0-9]*)'  
       + 'z([0-9]*)_'  # z (2([0-9]*)'  
-      + 'w([0-9]*)'  # z (2([0-9]*)' 
+      + 'w([0-9]*)'  # channel
       + '\.(.*)', path)   # Extension [6]
 
     if match is None:
@@ -66,12 +66,12 @@ def parse_path_and_file(path):
       'plate': plate,
       'plate_acq_name': path,
       'well': well,
-      'wellsample': 1,
+      'wellsample': z,
       'channel': channel,
       'is_thumbnail': False,
       'guid': 'no-guid',
       'extension': extension,
-      'timepoint': z,
+      'timepoint': 1,
       'channel_map_id': 1,
       'microscope': "Unknown",
       'parser': os.path.basename(__file__)
