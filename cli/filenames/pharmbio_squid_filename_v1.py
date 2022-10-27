@@ -16,11 +16,12 @@ __pattern_path_and_file = re.compile('^'
                                        + '([0-9]{4})-([0-9]{2})-([0-9]{2})_(.*?)/' # date (yyyy, mm, dd) (3,4,5) and (time 6)
                                        + '([0-9]+)/'   # timepoint (7)
                                        + '([A-Z])([0-9]+)_'  # well (8,9)
-                                       + '([0-9]+)_'   # site x (10)
-                                       + '([0-9]+)_'   # site y (11)                                       
-                                       + '(.*?)_' # imaging-type, e,g, Florecense (12)                                    
-                                       + '([0-9]+)_nm_Ex' # Channel (wavelength) (13)
-                                       + '(\..*)'      # Extension [14]
+                                       + '([0-9]+)_'   # site index (10)
+                                       + '([0-9]+)_'   # site x (11)
+                                       + '([0-9]+)_'   # site y (12)
+                                       + '(.*?)_' # imaging-type, e,g, Florecense (13)
+                                       + '([0-9]+)_nm_Ex' # Channel (wavelength) (14)
+                                       + '(\..*)'      # Extension [15]
                                      ,
                                      re.IGNORECASE)  # Windows has case-insensitive filenames
 
@@ -31,23 +32,23 @@ def parse_path_and_file(path):
   match = re.search(__pattern_path_and_file, path)
 
   logging.debug(f'match: {match}')
-  
+
   if match is None:
     return None
 
   logging.debug(f'match: {match.groups() }')
-  
-  row = match.group(8)
-  col = int(match.group(9))
-  well = f'{row}{col:02}'
 
-  channel_name = match.group(13)
+  row = match.group(8)
+  col = match.group(9)
+  well = f'{row}{col}'
+
+  channel_name = match.group(14)
   channels = ['405', '488', '561', '638', '730']
   channel_pos = channels.index(channel_name) + 1
 
-  site_x = int(match.group(10))
-  site_y = int(match.group(11))
-  site = (site_y * 3) + (site_x + 1)
+  site = int(match.group(10))
+  site_x = int(match.group(11))
+  site_y = int(match.group(12))
 
   metadata = {
       'path': path,
@@ -64,7 +65,7 @@ def parse_path_and_file(path):
       'channel': channel_pos,
       'is_thumbnail': False,
       'guid': None,
-      'extension': match.group(14),
+      'extension': match.group(15),
       'timepoint': match.group(7),
       'channel_map_id': 2,
       'microscope': "squid",
@@ -87,5 +88,5 @@ if __name__ == '__main__':
                         level=logging.DEBUG)
 
     retval = parse_path_and_file(
-        "/share/mikro/squid/test/cell-density-martin-2022-09-23_2022-10-03_12-58-54.710491/0/D16_2_2_Fluorescence_638_nm_Ex.tiff")
+        "/share/mikro/squid/test/cell-density-martin-2022-09-23_2022-10-03_12-58-54.710491/0/D16_1_2_2_Fluorescence_638_nm_Ex.tiff")
     print("retval = " + str(retval))

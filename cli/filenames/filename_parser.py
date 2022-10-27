@@ -40,6 +40,8 @@ def parse_path_and_file(filename):
 
 
 if __name__ == '__main__':
+    
+    # python3.10 -m filenames.filename_parser
 
     #
     # Configure logging
@@ -63,4 +65,7 @@ if __name__ == '__main__':
     print("\nretval = " + str(retval))
 
     retval = parse_path_and_file("/share/data/external-datasets/gbm/gbm-120/20220921 IF15 8x25-48/P9-3013-R2/2022-09-24/11288/TimePoint_1/20220921 IF15 8x25-48_O24_s9_w5B8BD893C-A366-45E3-B67F-7D5A3C32DCE3.tif")
+    print("\nretval = " + str(retval))
+    
+    retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/specs1K-v2/P101022-col2-and-3/TimePoint_1/P101022 col 2 and 3_I02_s8_w5.TIF")
     print("\nretval = " + str(retval))

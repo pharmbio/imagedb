@@ -55,6 +55,7 @@ def parse_path_and_file(path):
     'project': match.group(1),
     'magnification': match.group(8),
     'plate': match.group(2),
+    'plate_acq_name': path,
     'well': match.group(10),
     'wellsample': match.group(11),
     'channel': channel,

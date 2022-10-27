@@ -80,6 +80,7 @@ def parse_path_and_file(path):
       'project': project,
       'magnification': '?x',
       'plate': plate,
+      'plate_acq_name': path,
       'well': well,
       'wellsample': site,
       'channel': channel,
