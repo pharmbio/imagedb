@@ -1284,6 +1284,14 @@ function updateChannelSelect(plateObj, selected_channel) {
     elemSelect.add( new Option("H,M,P", "" + b + "," + r + "," + g) );
   }
 
+  is_subset = ['HOECHST','PHAandWGA', 'SYTO'].every(val => channel_names.includes(val))
+  if(is_subset){
+    b = getChannelIdFromDye('HOECHST', channels);
+    r = getChannelIdFromDye('PHAandWGA', channels);
+    g = getChannelIdFromDye('SYTO', channels);
+    elemSelect.add( new Option("H,P,S", "" + b + "," + r + "," + g) );
+  }
+
   is_subset = ['HOECHST','MITO', 'DIOC6'].every(val => channel_names.includes(val))
   if(is_subset){
     b = getChannelIdFromDye('HOECHST', channels);
