@@ -10,6 +10,7 @@ from filenames import external_filename_cpjump
 from filenames import external_filename_david
 from filenames import external_filename_IMX
 from filenames import external_filename_gbm_IMX
+from filenames import external_filename_rXcXfXpX_chXskXfkXflX
 
 parsers = []
 parsers.append(pharmbio_squid_filename_v1)
@@ -22,6 +23,7 @@ parsers.append(external_filename_gbm_IMX)
 parsers.append(external_filename_IMX)
 parsers.append(external_filename_cpjump)
 parsers.append(external_filename_david)
+parsers.append(external_filename_rXcXfXpX_chXskXfkXflX)
 
 def parse_path_and_file(filename):
 
@@ -68,4 +70,7 @@ if __name__ == '__main__':
     print("\nretval = " + str(retval))
     
     retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/specs1K-v2/P101022-col2-and-3/TimePoint_1/P101022 col 2 and 3_I02_s8_w5.TIF")
+    print("\nretval = " + str(retval))
+    
+    retval = parse_path_and_file("share/data/external-datasets/compoundcenter/specs1K-v2/YML2_1_3__2022-11-02T10_35_46-Measurement 1/Images/r02c02f04p01-ch4sk1fk1fl1.tiff")
     print("\nretval = " + str(retval))
