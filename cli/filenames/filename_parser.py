@@ -10,7 +10,7 @@ from filenames import external_filename_cpjump
 from filenames import external_filename_david
 from filenames import external_filename_IMX
 from filenames import external_filename_gbm_IMX
-from filenames import external_filename_rXcXfXpX_chXskXfkXflX
+from filenames import external_filename_opera_rXcXfXpX_chXskXfkXflX
 
 parsers = []
 parsers.append(pharmbio_squid_filename_v1)
@@ -23,7 +23,7 @@ parsers.append(external_filename_gbm_IMX)
 parsers.append(external_filename_IMX)
 parsers.append(external_filename_cpjump)
 parsers.append(external_filename_david)
-parsers.append(external_filename_rXcXfXpX_chXskXfkXflX)
+parsers.append(external_filename_opera_rXcXfXpX_chXskXfkXflX)
 
 def parse_path_and_file(filename):
 

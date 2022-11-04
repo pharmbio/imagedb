@@ -17,7 +17,7 @@ def parse_path_and_file(path):
     
     logging.debug("inside parse_path_and_file")
     
-    match = re.search('.*/external-datasets/(.+?)/(.+?)/(.+?)__([0-9]{4})-([0-9]{2})-([0-9]{2}T.*)/Images/', path) # /project/plate/date (yyyy-mm-dd)
+    match = re.search('.*/external-datasets/(.+?)/(.+?)/(.+?)__([0-9]{4})-([0-9]{2})-([0-9]{2})T.*/Images/', path) # /project/plate/date (yyyy-mm-dd)
     logging.debug(f'match {match}')
     if match is None:
       return None
