@@ -184,7 +184,7 @@ def getChannelMapID(project, plate_acq_name, imaged_timepoint):
     conn = None
 
     try:
-        
+
         query = (
                  "SELECT channel_map "
                  "FROM channel_map_mapping "
@@ -198,15 +198,15 @@ def getChannelMapID(project, plate_acq_name, imaged_timepoint):
         cursor.execute(query, (project, plate_acq_name))
         result = cursor.fetchone()
         cursor.close()
-        
+
         # set default if nothing speciffic for this plate or plate_acquisition
         if result:
             channel_map_id = result[0]
         else:
             channel_map_id = 2
-            
+
         logging.info(f"channel_map_id = {channel_map_id}")
-        
+
         return channel_map_id
 
     except Exception as err:
@@ -214,7 +214,7 @@ def getChannelMapID(project, plate_acq_name, imaged_timepoint):
         raise err
     finally:
         put_connection(conn)
-    
+
 
 def insert_plate_acq(img_meta):
 
@@ -224,10 +224,10 @@ def insert_plate_acq(img_meta):
         imaged_timepoint = datetime(int(img_meta['date_year']), int(
             img_meta['date_month']), int(img_meta['date_day_of_month']))
         folder = os.path.dirname(img_meta['path'])
-            
+
         # get channel map for speciffic projects/plates
         channel_map_id = getChannelMapID(img_meta['project'], img_meta['plate'], imaged_timepoint)
-        
+
         query = "INSERT INTO plate_acquisition(plate_barcode, name, project, imaged, microscope, channel_map_id, timepoint, folder) VALUES(%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"
         conn = get_connection()
         cursor = conn.cursor()
@@ -315,15 +315,24 @@ def addImageToImagedb(img_meta):
 
     # Only create thumb if not exists already
     # make inside try-catch so a corrupted image doesn't stop it all
+    # also try 3 times with some sleep in between to allow for images that are not
+    # completely uploaded
     if not os.path.exists(thumb_path):
-        try:
-            image_tools.makeThumb(img_meta['path'], thumb_path, False)
-        except Exception as e:
-            logging.error("Exception making thumb image: %s", e)
-            logging.error("image: " + str(img_meta['path']))
-            logging.error("thumb_path: " + str(thumb_path))
-            logging.error(
-                "Continuing since we don't want to break on a single bad image")
+
+        #logging.debug(f'makethumb: {thumb_path}')
+        attempts = 0
+        while attempts < 3:
+            try:
+                image_tools.makeThumb(img_meta['path'], thumb_path, False)
+                break
+            except Exception as e:
+                logging.error("Exception making thumb image: %s", e)
+                logging.error("image: " + str(img_meta['path']))
+                logging.error("thumb_path: " + str(thumb_path))
+                logging.error(f'will retry x times in x seconds, attempt {attempts}')
+                logging.error("After that Continuing since we don't want to break on a single bad image")
+                attempts += 1
+                time.sleep(10)
 
 def add_plate_to_db(images):
     global processed
