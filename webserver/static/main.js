@@ -275,6 +275,7 @@ function drawPlatesListSidebar(queryResults) {
     let plate_item = document.createElement('li');
     let link = document.createElement('a');
     let linktext = acq_name;
+    let linkpopup_text = acq_name + " id: " + acq_id;
     link.className = "text-info";
     link.href = "";
 
@@ -282,7 +283,7 @@ function drawPlatesListSidebar(queryResults) {
     link.setAttribute("data-placement", "top"); // Placement has to be off element otherwise flicker
     link.setAttribute("data-delay", "0");
     link.setAttribute("data-animation", false);
-    link.title = linktext;
+    link.title = linkpopup_text;
 
     let content = document.createTextNode(linktext);
     link.appendChild(content);

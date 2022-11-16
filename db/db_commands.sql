@@ -157,6 +157,10 @@ INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
 (10,	4,	'MITO',	     	'channel_map_10_squid'),
 (10,	5,	'CONC',  'channel_map_10_squid');
 
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
+(11,	1,	'HOECHST',		'channel_map_11_only3'),
+(11,	2,	'MITO', 			'channel_map_11_only3'),
+(11,	3,	'PHAandWGA', 			'channel_map_11_only3');
 
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
 CREATE TABLE channel_map_mapping (
@@ -177,6 +181,13 @@ INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALU
 INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALUES
 ('cell-density-martin-2022-09-23', 10);
 
+INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALUES
+('BioTek-FA-U2OS-24h', 11);
+
+INSERT INTO "channel_map_mapping" ("plate_acquisition_name", "channel_map") VALUES
+('Bluewasher-FA-U2OS-24h', 11);
+
+
 ---> Import channel-map map
 ---> Then Update:
 UPDATE plate_acquisition
@@ -186,6 +197,7 @@ UPDATE plate_acquisition
 UPDATE plate_acquisition
    SET channel_map_id = channel_map_mapping.channel_map
    FROM channel_map_mapping WHERE plate_acquisition.project = channel_map_mapping.project;
+
 
 
 CREATE OR REPLACE VIEW images_all_view AS
