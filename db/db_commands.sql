@@ -162,6 +162,13 @@ INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
 (11,	2,	'MITO', 			'channel_map_11_only3'),
 (11,	3,	'PHAandWGA', 			'channel_map_11_only3');
 
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
+(12,	1,	'HOECHST',		'channel_map_12_IMX_comp_cent'),
+(12,	2,	'CONC', 			'channel_map_12_IMX_comp_cent'),
+(12,	3,	'SYTO', 			'channel_map_12_IMX_comp_cent'),
+(12,	4,	'MITO',	     	'channel_map_10_squid'),
+(12,	5,	'PHAandWGA',  'channel_map_12_IMX_comp_cent');
+
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
 CREATE TABLE channel_map_mapping (
   project text,

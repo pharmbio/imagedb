@@ -5,25 +5,11 @@ This is where most of the logic goes.
 This file has the ListAllPlatesQueryHandler, which parses the search form and does database
 queries.
 """
-import json
 import logging
-
+import jsonpickle
 import tornado.web
 
 from dbqueries import list_all_plates, get_plate, list_image_analyses
-
-
-def make_totally_real_query(data):
-    """
-    Makes a totally real query to a totally real database and returns totally
-    real data for testing
-    """
-    import random
-    real_data = []
-    for i in range(random.randint(3,14)):
-        real_data += ["bild_%i" % random.randint(16,1853)]
-    return real_data
-
 
 class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
     """
@@ -34,7 +20,6 @@ class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=ab
         """
         try:
             form_data = self.request.body_arguments
-
         except Exception as e:
             logging.error("Exception: %s", e)
             form_data = []
@@ -67,7 +52,11 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
         # Serialize to json the data with the plates dict containing the platemodel objects
         # use other function than tornado default json serializer since we are serializing
         # custom objects
-        json_string = json.dumps(data, default=lambda x: x.__dict__).replace("</", "<\\/")
+        
+        #json_string = json.dumps(data, default=lambda x: x.__dict__)
+        
+        json_string = jsonpickle.encode(data)
+        json_string = json_string.replace("</", "<\\/")
 
         self.write(json_string)
 

@@ -3,6 +3,7 @@ import logging
 import json
 import psycopg2
 import psycopg2.pool
+import psycopg2.extras
 import settings as imgdb_settings
 import platemodel
 
@@ -57,21 +58,27 @@ def get_plate(plate_name):
 
         logging.debug("query" + query)
 
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
 
         logging.info(cursor.mogrify(query, (plate_name, )))
 
         cursor.execute(query, (plate_name, ))
 
+        logging.info("after exec")
+
         # create a list with all results as key-values
-        resultlist = [dict(zip([key[0] for key in cursor.description], row)) for row in cursor]
+        #resultlist = [dict(zip([key[0] for key in cursor.description], row)) for row in cursor]
+
+        resultlist = cursor.fetchall()
+
+        logging.info("after dict")
 
         # Close/Release connection
         cursor.close()
         put_connection(conn)
         conn = None
 
-        logging.debug("len(resultlist):" + str(len(resultlist)))
+        logging.info("len(resultlist):" + str(len(resultlist)))
 
         # create a nested json object of all images.
         # A plate object containing all plate_acquisitions. The plate_acquisitions containing all wells and then
@@ -83,8 +90,46 @@ def get_plate(plate_name):
             plate = plates_dict.setdefault(plate_id, platemodel.Plate(plate_id))
             plate.add_data(image)
 
-        result_dict = {"plates": plates_dict}
 
+        #
+        # Add plate layout meta to result
+        #
+
+        conn = get_connection()
+
+        query = ("SELECT * " +
+                 " FROM plate_v1"
+                 " WHERE barcode = %s"
+                 " ORDER BY well_id")
+
+        logging.debug("query" + query)
+
+        cursor = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
+        logging.info(cursor.mogrify(query, (plate_name, )))
+
+        cursor.execute(query, (plate_name, ))
+        
+        #rows = [dict(zip([key[0] for key in cursor.description], row)) for row in cursor]
+
+        rows = cursor.fetchall()
+
+        # Close/Release connection
+        cursor.close()
+        put_connection(conn)
+        conn = None
+
+        # create a dict with well_id as key to metadata
+        layout_dict = {}
+        for row in rows:
+            well_id = row['well_id']
+            layout_dict[well_id] = row
+
+        # add layout to plate
+        plate = plates_dict[plate_name]
+        plate.add_layout(layout_dict)
+
+        result_dict = {"plates": plates_dict}
+        logging.info("done with get_plate, plate_name:" + plate_name)
         return result_dict
 
     except (Exception, psycopg2.DatabaseError) as err:

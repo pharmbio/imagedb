@@ -49,6 +49,27 @@ ul li a {
     padding: 0;
 }
 
+.wellDiv{
+    position: relative;
+}
+
+.siteDiv{
+}
+
+.infoDotDiv{
+    position: absolute;
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-top: 4px;
+    right: 0;
+    border: 1px solid grey;
+    height: 18px;
+    width: 18px;
+    background-color: rgb(235, 202, 17);
+    border-radius: 50%;
+    display: inline-block;
+}
+
 /*
 .plateThumbImg {
     width: 50px;

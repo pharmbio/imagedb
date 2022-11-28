@@ -12,7 +12,7 @@ import logging
 __pattern_path_and_file = re.compile('^'
                                      + '.*/squid/'  # any until /squid/
                                        + '(.*?)/'   # project (1)
-                                       + '(.*?)_'    # plate (2)
+                                       + '(.*?)[/_]'    # plate (2)
                                        + '([0-9]{4})-([0-9]{2})-([0-9]{2})_(.*?)/' # date (yyyy, mm, dd) (3,4,5) and (time 6)
                                        + '([0-9]+)/'   # timepoint (7)
                                        + '([A-Z])([0-9]+)_'  # well (8,9)
@@ -90,3 +90,10 @@ if __name__ == '__main__':
     retval = parse_path_and_file(
         "/share/mikro/squid/test/cell-density-martin-2022-09-23_2022-10-03_12-58-54.710491/0/D16_1_2_2_Fluorescence_638_nm_Ex.tiff")
     print("retval = " + str(retval))
+
+    retval = parse_path_and_file(
+        "	/share/mikro/squid/test/Agilent/test_2022-09-26_13-12-22.804556/0/D16_1_2_2_Fluorescence_638_nm_Ex.tiff")
+    print("retval = " + str(retval))
+
+
+#

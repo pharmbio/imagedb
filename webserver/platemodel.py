@@ -6,12 +6,16 @@ class Plate:
     def __init__(self, id):
         self.id = id
         self.acquisitions = dict()
+        self.layout = dict()
 
     def add_data(self, image_meta):
         plate_acquisition_id = image_meta['plate_acquisition_id']
         # get or create a new object with this key
         plate_acquisition = self.acquisitions.setdefault(plate_acquisition_id, PlateAcquisition(plate_acquisition_id))
         plate_acquisition.add_data(image_meta)
+
+    def add_layout(self, dict_of_wells):
+        self.layout = dict_of_wells
 
 
 class PlateAcquisition:
