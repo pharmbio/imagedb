@@ -200,6 +200,10 @@
                 <option value="5000">5000%</option>
               </select>
 
+              <!-- Save button -->
+              <button id="saveimgbutton" type="button" class="btn btn-primary" on>Save image</button>
+
+
               <!-- Scalebar -->
               <div class="form-group form-check" style="margin-bottom: 0px;margin-left: 5px">
                 <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="scalebar-cbx">
@@ -293,6 +297,7 @@
       $("#animation-speed-select").change(viewerAnimationSpeedSelectChanged);
       $("#animate-cbx").change(viewerAnimateCbxChanged);
       $("#scalebar-cbx").change(viewerScalebarCbxChanged);
+      $("#saveimgbutton").click(saveViewerImage);
 
       // Create disabled slider to be updated later
       $("#acquisition-slider").ionRangeSlider({

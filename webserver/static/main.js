@@ -285,7 +285,18 @@
         plate_list = document.createElement('ul');
         proj_item.appendChild(plate_list);
       }
-
+/*
+      // create a new sublist for each sub-project (if subproj is different, than proj)
+      if(subproj != proj){
+        if(last_subproj != subproj){
+          let subproj_item = document.createElement('li');
+          subproj_item.innerHTML = "<span style='cursor: pointer;''>" + subproj + "</span>";
+          list.appendChild(proj_item);
+          plate_list = document.createElement('ul');
+          proj_item.appendChild(plate_list);
+        }
+      }
+*/
       // Create a list item for the plate
       let plate_item = document.createElement('li');
       let link = document.createElement('a');
@@ -588,6 +599,44 @@
         }
       }
     }
+  }
+
+  function saveViewerImage(){
+
+    console.log("inside saveViewerImage");
+
+    // const canvasUrl = viewer.drawer.canvas.toDataURL("image/png");
+    // const createEl = document.createElement('a');
+    // createEl.href = canvasUrl;
+    // createEl.download = "download-this-canvas";
+    // createEl.click();
+    // createEl.remove();
+
+      // get what to redraw
+      let acquisition = getSelectedAcquisition();
+      let plate_name = getLoadedPlate().getName();
+      console.log("acquisition", acquisition);
+
+      // Image viewer hack since it only takes a single site
+      let site = getSelectedSite()[0];
+      console.log("site", site);
+      let well_name = getSelectedWell();
+      console.log("well_name", well_name);
+      let channels = getLoadedPlate().getChannels(acquisition, well_name, site);
+      console.log("channels", channels);
+      let imgURL = createMergeImgURLFromChannels(channels);
+
+      console.log("imgUrl", imgURL);
+
+      const createEl = document.createElement('a');
+      createEl.href = imgURL;
+      img_name = "img_" + plate_name + "_acqid_" + acquisition + "_" + well_name + "_site_" + site + "_merged"
+      createEl.download = img_name;
+      createEl.click();
+      createEl.remove();
+
+      //window.open(imgURL);
+
   }
 
   function loadAcquisitionImagesIntoViewer(skipIndex) {
