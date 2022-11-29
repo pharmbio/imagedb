@@ -193,7 +193,7 @@
 
   function initMainWindow(plateBarcode, acquisitionID) {
     selectBrightnessFromStoredValue();
-    selectHideUnpublishedFromStoredValue();
+    selectShowHiddenFromStoredValue();
     apiListPlates();
 
     console.log("plateBarcode", plateBarcode);
@@ -224,7 +224,7 @@
     document.getElementById("left-sidebar-spinner").style.visibility = "visible";
 
     let formData = new FormData(document.getElementById('query-form'));
-    formData.append("hide-unpublished-cb", getSelectedHideUnpublishedValue() );
+    formData.append("show-hidden-cb", getSelectedShowHiddenValue() );
 
     fetch('/api/list-plates', {
       method: 'POST',
@@ -274,8 +274,9 @@
       // Create a list with all projects
       let proj = result.project;
       let plate_barcode = result.plate_barcode;
-      let acq_name = result.acq_name;
-      let acq_id = result.acq_id;
+      let acq_name = result.name;
+      let acq_id = result.id;
+      let hidden = result.hidden;
 
       // create a new sublist for each project
       if (last_proj !== proj) {
@@ -1097,8 +1098,8 @@
     return parseInt(elem.options[elem.selectedIndex].value);
   }
 
-  function getSelectedHideUnpublishedValue() {
-    return document.getElementById('hide-unpublished-cb').checked;
+  function getSelectedShowHiddenValue() {
+    return document.getElementById('show-hidden-cb').checked;
   }
 
   function selectBrightnessFromStoredValue(){
@@ -1109,10 +1110,10 @@
     elem.selectedIndex = index;
   }
 
-  function selectHideUnpublishedFromStoredValue(){
-    let hideUnpublished = getHideUnpublishedFromStore();
-    console.log("hideUnpublished", hideUnpublished);
-    document.getElementById('hide-unpublished-cb').checked = hideUnpublished;
+  function selectShowHiddenFromStoredValue(){
+    let showHidden = getShowHiddenFromStore();
+    console.log("showHidden", showHidden);
+    document.getElementById('show-hidden-cb').checked = showHidden;
   }
 
   function setSelectedAcquisition(acquisitionID) {
@@ -1579,9 +1580,9 @@
     redrawPlate();
   }
 
-  function hideUnpublishedSelectChanged() {
-    let hideUnpublished = getSelectedHideUnpublishedValue();
-    setHideUnpublishedInStore(hideUnpublished);
+  function showHiddenSelectChanged() {
+    let showHidden = getSelectedShowHiddenValue();
+    setShowHiddenInStore(showHidden);
     location.reload();
   }
 
@@ -1966,20 +1967,20 @@
     return brightness;
   }
 
-  function getHideUnpublishedFromStore() {
-    let hideUnpublished = getCookieData("hideUnpublished");
+  function getShowHiddenFromStore() {
+    let showHidden = getCookieData("showHidden");
 
-    if (hideUnpublished == null) {
-      hideUnpublished = getDefaultHideUnpublished();
+    if (showHidden == null) {
+      showHidden = getDefaultShowHidden();
     }
-    return hideUnpublished;
+    return showHidden;
   }
 
   function getDefaultBrightness(){
     return 100;
   }
 
-  function getDefaultHideUnpublished(){
+  function getDefaultShowHidden(){
     return true;
   }
 
@@ -1987,7 +1988,7 @@
     setCookieData("brightness", brightness);
   }
 
-  function setHideUnpublishedInStore(hideUnpublished) {
-    setCookieData("hideUnpublished", hideUnpublished);
+  function setShowHiddenInStore(showHidden) {
+    setCookieData("showHidden", showHidden);
   }
 

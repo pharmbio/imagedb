@@ -15,6 +15,11 @@ class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=ab
     """
     The query handler handles form posts and returns list of results
     """
+    def prepare(self):
+        header = "Content-Type"
+        body = "application/json"
+        self.set_header(header, body)
+
     def post(self):
         """Handles POST requests.
         """
@@ -26,11 +31,14 @@ class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=ab
 
         logging.debug("form_data:" + str(form_data))
 
-        hide_unpublished = self.get_argument("hide-unpublished-cb")
+        show_hidden = self.get_argument("show-hidden-cb")
 
-        results = list_all_plates(hide_unpublished)
-        logging.debug(results)
-        self.finish({'results':results})
+        results = list_all_plates(show_hidden)
+
+        retval = {"results": results}
+        json_string = jsonpickle.encode(retval)
+
+        self.write(json_string)
 
 
 class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
@@ -52,9 +60,9 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
         # Serialize to json the data with the plates dict containing the platemodel objects
         # use other function than tornado default json serializer since we are serializing
         # custom objects
-        
+
         #json_string = json.dumps(data, default=lambda x: x.__dict__)
-        
+
         json_string = jsonpickle.encode(data)
         json_string = json_string.replace("</", "<\\/")
 

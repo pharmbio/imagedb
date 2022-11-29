@@ -108,7 +108,7 @@ def get_plate(plate_name):
         logging.info(cursor.mogrify(query, (plate_name, )))
 
         cursor.execute(query, (plate_name, ))
-        
+
         #rows = [dict(zip([key[0] for key in cursor.description], row)) for row in cursor]
 
         rows = cursor.fetchall()
@@ -140,39 +140,32 @@ def get_plate(plate_name):
             put_connection(conn)
 
 
-def list_all_plates(hide_unpublished):
+def list_all_plates(show_hidden):
 
-    logging.info("inside list_all_plates, hide_unpublished=" + str(hide_unpublished))
+    logging.info("inside list_all_plates, show_hidden=" + str(show_hidden))
 
     conn = None
     try:
 
         conn = get_connection()
 
-        query = ("SELECT DISTINCT name, plate_barcode, project, id "
+        query = ("SELECT DISTINCT name, plate_barcode, project, id, hidden "
                  " FROM plate_acquisition "
                  " ORDER BY project, name, plate_barcode, id")
 
         logging.info("query" + str(query))
 
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
         cursor.execute(query)
 
-        resultlist = []
-
-        for row in cursor:
-            resultlist.append({'acq_name': row[0],
-                               'plate_barcode': row[1],
-                               'project': row[2],
-                               'acq_id': row[3]
-                               })
+        resultlist = cursor.fetchall()
 
         # Close/Release connection
         cursor.close()
         put_connection(conn)
         conn = None
 
-        logging.debug(json.dumps(resultlist, indent=2))
+        #logging.debug(json.dumps(resultlist, indent=2))
 
         return resultlist
 
