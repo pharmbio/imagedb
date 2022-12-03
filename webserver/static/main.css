@@ -53,6 +53,10 @@ ul li a {
     position: relative;
 }
 
+.tooltip{
+    font-size: 1.3rem;
+ }
+
 .siteDiv{
 }
 

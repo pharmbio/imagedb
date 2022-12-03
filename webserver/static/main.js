@@ -333,11 +333,11 @@
       let plate_item = document.createElement('li');
       let link = document.createElement('a');
       let linktext = acq_name;
-      let linkpopup_text = acq_name + "<br>acq-id: " + acq_id + "<br>project: " + proj;
+      let linkpopup_text = acq_name + " acq-id: " + acq_id + " project: " + proj;
       link.className = "text-info";
       link.href = "";
 
-      link.setAttribute("data-toggle", "tooltip");
+      //link.setAttribute("data-toggle", "tooltip");
       link.setAttribute("data-placement", "top"); // Placement has to be off element otherwise flicker
       link.setAttribute("data-delay", "0");
       link.setAttribute("data-animation", false);
@@ -742,9 +742,11 @@
 
   function createEmptyTable(rows, cols, sites, plateObj=null) {
     console.log('inside create empty plate');
+    let isShowCompounds = getSelectedShowCompoundsValue();
     let table = document.createElement('table');
     table.id = 'plateTableOne';
     table.className = 'plateTable';
+
 
     // First add header row
     let headerRow = document.createElement('tr');
@@ -815,6 +817,11 @@
             info_div.title = title;
             info_div.style.backgroundColor = color_from_cbkid(well_meta.cbkid);
 
+            if(isShowCompounds){
+              info_div.style.visibility = 'visible';
+            }else{
+              info_div.style.visibility = 'hidden';
+            }
 
             if(well_meta && well_meta.cbkid){
               console.log('cbkid', well_meta.cbkid);
@@ -862,7 +869,7 @@
   }
 
   function color_from_cbkid(id){
-    color = '#5d5656'; //'#6c6c6c';
+    color = '#5d5d5d99'; //'#6c6c6c';
     if(id in compColors){
       color = compColors[id];
       console.log('color', color);
@@ -1113,6 +1120,7 @@
   }
 
   function getSelectedShowCompoundsValue() {
+    console.log("compoundscb", document.getElementById('show-compounds-cb').checked);
     return document.getElementById('show-compounds-cb').checked;
   }
 
@@ -1606,10 +1614,31 @@
   }
 
   function showCompoundsSelectChanged() {
+    console.log('showCompoundsSelectChanged');
     let value = getSelectedShowCompoundsValue();
     setShowCompoundsInStore(value);
-    redrawPlate();
+    setVisibility('infoDotDiv', value);
   }
+
+  function setVisibility(className, value){
+
+    Array.from(document.getElementsByClassName(className)).forEach(
+      function(element, index, array) {
+
+        if(value == true){
+          //element.style.display = "inline-block";
+          element.style.visibility = "visible";
+        }
+        else{
+          //element.style.display = "none";
+          element.style.visibility = "hidden";
+        }
+      }
+    );
+  }
+
+
+
 
   function acquisitionSelectChanged() {
     updateToolbarWithNewAcquisition();
