@@ -386,8 +386,7 @@
     $('#result-list [data-toggle="tooltip"]').tooltip({
       trigger: 'hover',
       boundary: 'window'
-    });
-
+    })
   }
 
   function apiLoadPlateBarcode(barcode) {
@@ -744,7 +743,7 @@
   function createEmptyTable(rows, cols, sites, plateObj=null) {
     console.log('inside create empty plate');
     let table = document.createElement('table');
-    table.id = 'plateTable';
+    table.id = 'plateTableOne';
     table.className = 'plateTable';
 
     // First add header row
@@ -790,6 +789,7 @@
 
         let well_div = document.createElement("div");
         well_div.className = "wellDiv"
+        well_div.id = "awelldiv"
         let site_div = document.createElement("div");
         site_div.className
 
@@ -798,14 +798,23 @@
           let well_meta = plateObj.getWellLayoutMeta(well_name);
           if(well_meta){
             let info_div = document.createElement("div");
-            info_div.className = "infoDotDiv text-info";
+            info_div.className = "infoDotDiv";
             info_div.id = well_name + "_infodiv";
 
             info_div.setAttribute("data-toggle", "tooltip");
             info_div.setAttribute("data-placement", "top"); // Placement has to be off element otherwise flicker
             info_div.setAttribute("data-delay", "0");
             info_div.setAttribute("data-animation", false);
-            info_div.title = well_name
+            info_div.setAttribute("data-html", true);
+
+            let title = "Well: "      + well_meta.well_id + "<br>" + 
+                        "cbkid: "     + well_meta.cbkid   + "<br>" + 
+                        "batchid: " + well_meta.cell_line   + "<br>" + 
+                        "cell-line: " + well_meta.cell_line;
+
+            info_div.title = title;
+            info_div.style.backgroundColor = color_from_cbkid(well_meta.cbkid);
+
 
             if(well_meta && well_meta.cbkid){
               console.log('cbkid', well_meta.cbkid);
@@ -835,9 +844,31 @@
 
       }
       table.appendChild(rowElement);
+
     }
 
     return table;
+  }
+
+  const compColors = {
+    "[fenb]": "#6666ff",
+    "[ca-O]": "#d9d9d9",
+    "[dmso]": "#ffec51",
+    "[berb]": "#ff0000",
+    "[flup]": "#cab968",
+    "[tetr]": "#d9b28c",
+    "[sorb]": "#c6ff1a",
+    "[etop]": "#66ff66"
+  }
+
+  function color_from_cbkid(id){
+    color = '#5d5656'; //'#6c6c6c';
+    if(id in compColors){
+      color = compColors[id];
+      console.log('color', color);
+    }
+    
+    return color;
   }
 
   function highlight_all(plateObj, cbkid){
@@ -847,7 +878,6 @@
 
     let wells = [];
     for (const [key, value] of Object.entries(layout)) {
-      //console.log(`${key}: ${value}`);
       if(value.cbkid == cbkid){
         wells.push(key);
       }
@@ -865,7 +895,8 @@
 
         if(wells.includes(dot_well_id)){
           console.log('dot_well_id', dot_well_id);
-          element.style.border = '5px solid white';
+          element.style.border = '6px solid white';
+          //element.parentElement.style.border = '3px solid white';
         }
       }
     );
@@ -919,57 +950,6 @@
     }
     return table;
 
-  }
-
-
-  function createEmptyTable_old(rows, cols) {
-    let table = document.createElement('table');
-    table.id = 'plateTable';
-    table.className = 'plateTable';
-
-    // First add header row
-    let headerRow = document.createElement('tr');
-    for (let col = 1; col <= cols; col++) {
-      // If first col then add empty cell before (to match column headers)
-      if (col === 1) {
-        let empty_cell = document.createElement('td');
-        empty_cell.innerHTML = "";
-        empty_cell.className = 'headerCell';
-        headerRow.appendChild(empty_cell);
-      }
-      let row = 0;
-      let well_name = getWellName(row, col);
-      let header_cell = document.createElement('td');
-      header_cell.innerHTML = well_name.substring(1);
-      header_cell.className = 'headerCell';
-      headerRow.appendChild(header_cell);
-    }
-    table.appendChild(headerRow);
-
-    // Now add rows and columns
-    for (let row = 0; row < rows; row++) {
-      let rowElement = document.createElement('tr');
-      for (let col = 1; col <= cols; col++) {
-
-        let well_name = getWellName(row, col);
-
-        // Add column header before first column cell
-        if (col === 1) {
-          let header_cell = document.createElement('td');
-          header_cell.innerHTML = well_name.charAt(0);
-          header_cell.className = 'headerCell';
-          rowElement.appendChild(header_cell);
-        }
-
-        let well_cell = document.createElement('td');
-        well_cell.id = well_name;
-        well_cell.className = 'wellCell';
-        rowElement.appendChild(well_cell);
-      }
-      table.appendChild(rowElement);
-    }
-
-    return table;
   }
 
   function drawPlate(plateObj, acquisition, sites, clearFirst) {
@@ -1077,13 +1057,13 @@
 
           }
 
-          // Add tooltip when hoovering an image
-          // siteCanvas.setAttribute("data-toggle", "tooltip");
-          // siteCanvas.setAttribute("data-placement", "right"); // Placement has to be off element otherwise flicker
-          // siteCanvas.setAttribute("data-delay", "0");
-          // siteCanvas.setAttribute("data-animation", false);
-          // siteCanvas.setAttribute("data-html", true);
-          siteCanvas.title = site_key; //plateObj.getFormattedWellMeta(acquisition, well_key);
+          // // Add tooltip when hoovering an image
+          //  siteCanvas.setAttribute("data-toggle", "tooltip");
+          //  siteCanvas.setAttribute("data-placement", "right"); // Placement has to be off element otherwise flicker
+          //  siteCanvas.setAttribute("data-delay", "0");
+          //  siteCanvas.setAttribute("data-animation", false);
+          //  siteCanvas.setAttribute("data-html", true);
+          //  siteCanvas.title = site_key; //plateObj.getFormattedWellMeta(acquisition, well_key);
         }
 
       }
@@ -1091,12 +1071,10 @@
     })
 
     // Activate tooltips (all that have tooltip attribute within the resultlist)
-    // Not working because tooltip doesn't get updated
-    // $('#plate-div [data-toggle="tooltip"]').tooltip({
-    //   trigger : 'hover',
-    //   boundary: 'window',
-    //   // onBeforeShow: getWellMeta()
-    // });
+     $('#plate-div [data-toggle="tooltip"]').tooltip({
+       trigger : 'hover',
+       boundary: 'window'
+     });
 
   }
 

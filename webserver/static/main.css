@@ -63,9 +63,9 @@ ul li a {
     margin-top: 4px;
     right: 0;
     border: 1px solid grey;
-    height: 18px;
-    width: 18px;
-    background-color: rgb(235, 202, 17);
+    height: 26px;
+    width: 26px;
+    background-color: #5d5656;
     border-radius: 50%;
     display: inline-block;
 }
