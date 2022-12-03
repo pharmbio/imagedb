@@ -21,7 +21,15 @@ def parse_path_and_file(path):
     subdir_not_used = match.group(1) # the first subdir in external-datasets data is not used for any annotation
     project = match.group(2)
     plate = match.group(3)
-
+    
+    # match = re.search('(P[0-9]{6})_.*', plate)
+    # if match:
+    #   plate_acq_name = plate
+    #   plate = match.group(1)
+    # else:
+    #   plate_acq_name = path
+      
+    plate_acq_name = plate
 
     logging.debug("project: " + project)
     logging.debug("plate: " + plate)
@@ -68,7 +76,7 @@ def parse_path_and_file(path):
       'project': project,
       'magnification': '?x',
       'plate': plate,
-      'plate_acq_name': path,
+      'plate_acq_name': plate_acq_name,
       'well': well,
       'wellsample': site,
       'channel': channel,

@@ -194,6 +194,7 @@
   function initMainWindow(plateBarcode, acquisitionID) {
     selectBrightnessFromStoredValue();
     selectShowHiddenFromStoredValue();
+    selectShowCompoundsFromStoredValue();
     apiListPlates();
 
     console.log("plateBarcode", plateBarcode);
@@ -224,7 +225,7 @@
     document.getElementById("left-sidebar-spinner").style.visibility = "visible";
 
     let formData = new FormData(document.getElementById('query-form'));
-    formData.append("show-hidden-cb", getSelectedShowHiddenValue() );
+    //formData.append("show-hidden-cb", getSelectedShowHiddenValue() );
 
     fetch('/api/list-plates', {
       method: 'POST',
@@ -259,29 +260,59 @@
     drawPlatesListSidebar(queryResults);
   }
 
-  function drawPlatesListSidebar(queryResults) {
+  function drawPlatesListSidebar(queryResults){
 
     let list = document.getElementById('result-list');
 
     // Clear menu
     removeChildren(list);
 
-    let last_proj = "";
+    // Add menuitem name (same as project, except latest_acq) to result
+    queryResults.forEach(function (row) {
+      row['menuitemname'] = row.project;
+    });
+
+    // if not showHidden, filter out hidden
+    if(getSelectedShowHiddenValue() == false){
+      queryResults = queryResults.filter(item => item.hidden != true);
+    }
+  
+    // add "latest" sidebar item by adding plate aquisitions to top of
+    // list with "latest" as project name
+
+    // make copy of result array and sort it by acq_id
+    acq_sorted = queryResults.slice().sort((a, b) => {
+      return a.id - b.id;
+    });
+
+    // get top 20 results
+    top_results = acq_sorted.slice(-20).reverse();
+
+    // insert copy of 20 latesq acq-id in top of restlts with "latest" as proj-name
+    top_results.forEach(function (row) {
+      row.menuitemname = 'Latest acquisitions'
+    });
+    
+    console.log('top_results', top_results);
+
+    queryResults = top_results.concat(queryResults)
+
+    let last_menuitemname = "";
     let plate_list = null;
     // Create sidebar as nested lists from query result
     queryResults.forEach(result => {
 
       // Create a list with all projects
+      let menuitemname = result.menuitemname;
       let proj = result.project;
       let plate_barcode = result.plate_barcode;
       let acq_name = result.name;
       let acq_id = result.id;
-      let hidden = result.hidden;
 
       // create a new sublist for each project
-      if (last_proj !== proj) {
+      if (last_menuitemname !== menuitemname) {
         let proj_item = document.createElement('li');
-        proj_item.innerHTML = "<span style='cursor: pointer;''>" + proj + "</span>";
+        proj_item.innerHTML = "<span style='cursor: pointer;''>" + menuitemname + "</span>";
         list.appendChild(proj_item);
         plate_list = document.createElement('ul');
         proj_item.appendChild(plate_list);
@@ -302,7 +333,7 @@
       let plate_item = document.createElement('li');
       let link = document.createElement('a');
       let linktext = acq_name;
-      let linkpopup_text = acq_name + " id: " + acq_id;
+      let linkpopup_text = acq_name + "<br>acq-id: " + acq_id + "<br>project: " + proj;
       link.className = "text-info";
       link.href = "";
 
@@ -310,6 +341,7 @@
       link.setAttribute("data-placement", "top"); // Placement has to be off element otherwise flicker
       link.setAttribute("data-delay", "0");
       link.setAttribute("data-animation", false);
+      link.setAttribute("data-html", true);
       link.title = linkpopup_text;
 
       let content = document.createTextNode(linktext);
@@ -324,7 +356,7 @@
 
       // add plate item to projects plate_list
       plate_list.appendChild(plate_item);
-      last_proj = proj;
+      last_menuitemname = menuitemname;
     });
 
     //
@@ -1102,6 +1134,10 @@
     return document.getElementById('show-hidden-cb').checked;
   }
 
+  function getSelectedShowCompoundsValue() {
+    return document.getElementById('show-compounds-cb').checked;
+  }
+
   function selectBrightnessFromStoredValue(){
     let brightness = getBrightnessFromStore();
     console.log("brightness", brightness);
@@ -1114,6 +1150,11 @@
     let showHidden = getShowHiddenFromStore();
     console.log("showHidden", showHidden);
     document.getElementById('show-hidden-cb').checked = showHidden;
+  }
+
+  function selectShowCompoundsFromStoredValue(){
+    let value = getShowCompoundsFromStore();
+    document.getElementById('show-compounds-cb').checked = value;
   }
 
   function setSelectedAcquisition(acquisitionID) {
@@ -1581,9 +1622,15 @@
   }
 
   function showHiddenSelectChanged() {
-    let showHidden = getSelectedShowHiddenValue();
-    setShowHiddenInStore(showHidden);
+    let value = getSelectedShowHiddenValue();
+    setShowHiddenInStore(value);
     location.reload();
+  }
+
+  function showCompoundsSelectChanged() {
+    let value = getSelectedShowCompoundsValue();
+    setShowCompoundsInStore(value);
+    redrawPlate();
   }
 
   function acquisitionSelectChanged() {
@@ -1959,21 +2006,27 @@
   }
 
   function getBrightnessFromStore() {
-    let brightness = getCookieData("brightness");
-
-    if (brightness == null) {
-      brightness = getDefaultBrightness();
+    let value = getCookieData("brightness");
+    if (value == null) {
+      value = getDefaultBrightness();
     }
-    return brightness;
+    return value;
   }
 
   function getShowHiddenFromStore() {
-    let showHidden = getCookieData("showHidden");
-
-    if (showHidden == null) {
-      showHidden = getDefaultShowHidden();
+    let value = getCookieData("showHidden");
+    if (value == null) {
+      value = getDefaultShowHidden();
     }
-    return showHidden;
+    return value;
+  }
+
+  function getShowCompoundsFromStore() {
+    let value = getCookieData("showCompounds");
+    if (value == null) {
+      value = getDefaultShowCompounds();
+    }
+    return value;
   }
 
   function getDefaultBrightness(){
@@ -1984,11 +2037,19 @@
     return true;
   }
 
-  function setBrightnessInStore(brightness) {
-    setCookieData("brightness", brightness);
+  function getDefaultShowCompounds(){
+    return false;
   }
 
-  function setShowHiddenInStore(showHidden) {
-    setCookieData("showHidden", showHidden);
+  function setBrightnessInStore(value) {
+    setCookieData("brightness", value);
+  }
+
+  function setShowHiddenInStore(value) {
+    setCookieData("showHidden", value);
+  }
+
+  function setShowCompoundsInStore(value) {
+    setCookieData("showCompounds", value);
   }
 

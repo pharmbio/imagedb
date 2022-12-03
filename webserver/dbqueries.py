@@ -140,9 +140,9 @@ def get_plate(plate_name):
             put_connection(conn)
 
 
-def list_all_plates(show_hidden):
+def list_all_plates():
 
-    logging.info("inside list_all_plates, show_hidden=" + str(show_hidden))
+    logging.info("inside list_all_plates")
 
     conn = None
     try:

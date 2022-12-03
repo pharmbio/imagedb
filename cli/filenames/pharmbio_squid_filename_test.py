@@ -11,14 +11,14 @@ import logging
 
 __pattern_path_and_file = re.compile('^'
                                      + '.*/squid/'  # any until /squid/
-                                       + '(.*?)/'   # project (1)
+                                       + '(squid-testplates)/'   # project (1)
                                        + '(.*?)_'    # plate (2)
                                        + '([0-9]{4})-([0-9]{2})-([0-9]{2})_(.*?)/' # date (yyyy, mm, dd) (3,4,5) and (time 6)
                                        + '([0-9]+)/'   # timepoint (7)
                                        + '([A-Z])([0-9]+)_'  # well (8,9)
                                        + '([0-9]+)_'   # site x (10)
-                                       + '([0-9]+)_'   # site y (11)                                       
-                                       + '(.*?)_' # imaging-type, e,g, Florecense (12)                                    
+                                       + '([0-9]+)_'   # site y (11)
+                                       + '(.*?)_' # imaging-type, e,g, Florecense (12)
                                        + '([0-9]+)_nm_Ex' # Channel (wavelength) (13)
                                        + '(\..*)'      # Extension [14]
                                      ,
@@ -31,12 +31,12 @@ def parse_path_and_file(path):
   match = re.search(__pattern_path_and_file, path)
 
   logging.debug(f'match: {match}')
-  
+
   if match is None:
     return None
 
   logging.debug(f'match: {match.groups() }')
-  
+
   row = match.group(8)
   col = int(match.group(9))
   well = f'{row}{col:02}'
@@ -66,7 +66,7 @@ def parse_path_and_file(path):
       'guid': None,
       'extension': match.group(14),
       'timepoint': match.group(7),
-      'channel_map_id': 2,
+      'channel_map_id': 10,
       'microscope': "squid",
       'parser': os.path.basename(__file__)
   }

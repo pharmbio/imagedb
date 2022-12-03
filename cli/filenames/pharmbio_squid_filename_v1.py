@@ -67,7 +67,7 @@ def parse_path_and_file(path):
       'guid': None,
       'extension': match.group(15),
       'timepoint': match.group(7),
-      'channel_map_id': 2,
+      'channel_map_id': 10,
       'microscope': "squid",
       'parser': os.path.basename(__file__)
   }

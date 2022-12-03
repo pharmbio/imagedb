@@ -31,9 +31,7 @@ class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=ab
 
         logging.debug("form_data:" + str(form_data))
 
-        show_hidden = self.get_argument("show-hidden-cb")
-
-        results = list_all_plates(show_hidden)
+        results = list_all_plates()
 
         retval = {"results": results}
         json_string = jsonpickle.encode(retval)

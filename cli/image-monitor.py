@@ -103,7 +103,7 @@ def insert_meta_into_db(img_meta):
 
 def getPlateBarcodeFromPlateAcquisitionName(acquisition_name):
     # extract barcode from plate_name
-    pattern = '.*-(P015\\d{3})(-|$).*'
+    pattern = '(P[0-9]{6})_.*'
     match = re.search(pattern, acquisition_name)
     if match:
         barcode = match.group(1)
