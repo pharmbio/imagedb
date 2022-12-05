@@ -865,7 +865,7 @@ function drawPlatesListSidebar(origPlatesList){
             }
 
             if(well_meta && well_meta.cbkid){
-              console.log('cbkid', well_meta.cbkid);
+              //console.log('cbkid', well_meta.cbkid);
             }
 
             info_div.onmouseover = function(evt){
@@ -913,7 +913,7 @@ function drawPlatesListSidebar(origPlatesList){
     color = '#5d5d5d99'; //'#6c6c6c';
     if(id in compColors){
       color = compColors[id];
-      console.log('color', color);
+      //console.log('color', color);
     }
     
     return color;
@@ -970,7 +970,7 @@ function drawPlatesListSidebar(origPlatesList){
 
     // Now add rows and columns
     nSites = sites.length;
-    console.log("nSites", nSites);
+    //console.log("nSites", nSites);
 
 
     nRows = Math.ceil(Math.sqrt(nSites));

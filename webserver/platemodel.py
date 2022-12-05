@@ -64,9 +64,9 @@ class Channel:
         self.id = id
         self.dye = dye
         self.path = ''
-        self.image_meta = dict()
+        #self.image_meta = dict()
 
     def add_data(self, image_meta):
         self.path = image_meta['path']
-        self.image_meta = image_meta
+        #self.image_meta = image_meta
 

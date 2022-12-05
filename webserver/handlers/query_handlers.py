@@ -34,7 +34,7 @@ class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=ab
         results = list_all_plates()
 
         retval = {"results": results}
-        json_string = jsonpickle.encode(retval)
+        json_string = jsonpickle.encode(retval, unpicklable=False)
 
         self.write(json_string)
 
@@ -61,7 +61,7 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
 
         #json_string = json.dumps(data, default=lambda x: x.__dict__)
 
-        json_string = jsonpickle.encode(data)
+        json_string = jsonpickle.encode(data, unpicklable=False)
         json_string = json_string.replace("</", "<\\/")
 
         self.write(json_string)
