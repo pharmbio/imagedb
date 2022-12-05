@@ -279,6 +279,8 @@ function filterchanged(){
 
 function drawPlatesListSidebar(origPlatesList){
 
+    console.log('origPlatesList', origPlatesList);
+
     // make a copy of platesList
     let platesList = origPlatesList.slice();
 
