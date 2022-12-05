@@ -189,6 +189,7 @@
   }
 
   var loaded_plates = null;
+  var listed_plates = null;
   var animation = null;
 
   function initMainWindow(plateBarcode, acquisitionID) {
@@ -257,78 +258,112 @@
 
   function listPlatesQueryResultLoaded(data) {
     let queryResults = data.results;
+    window.loaded_plates = queryResults;
     drawPlatesListSidebar(queryResults);
   }
 
-  function drawPlatesListSidebar(queryResults){
+  function redrawPlatesListSidebar(){
+      platesList =  window.loaded_plates;
+      if(platesList){
+        drawPlatesListSidebar(platesList);
+      }
+  }
 
+function filterchanged(){
+  let filter = getSearchFilterText();
+  if(filter.length == 0 || filter.length > 1 ){
+    redrawPlatesListSidebar();
+  }
+
+}
+
+function drawPlatesListSidebar(origPlatesList){
+
+    // make a copy of platesList
+    let platesList = origPlatesList.slice();
+
+    // replace list idem with a new clone
     let list = document.getElementById('result-list');
+    document.getElementById('result-list').replaceWith(list.cloneNode());
+    list = document.getElementById('result-list');
 
     // Clear menu
     removeChildren(list);
 
-    // Add menuitem name (same as project, except latest_acq) to result
-    queryResults.forEach(function (row) {
-      row['menuitemname'] = row.project;
-    });
+    // Filter out plates depending on filter textfield
+    let filter = getSearchFilterText().toLowerCase();
+    console.log("filter", filter);
+    if(filter.length > 0){
+      let filteredList = [];
+      platesList.forEach(function (row) {
+        for (let value of Object.values(row)) {
+          valueAsString = String(value).toLowerCase();
+          if(valueAsString.indexOf(filter) > -1){
+            filteredList.push(row);
+            break;
+          }
+        }
+      });
+      console.log("filtered", filteredList);
+      platesList = filteredList;
+    }
 
     // if not showHidden, filter out hidden
     if(getSelectedShowHiddenValue() == false){
-      queryResults = queryResults.filter(item => item.hidden != true);
+      platesList = platesList.filter(item => item.hidden != true);
     }
   
-    // add "latest" sidebar item by adding plate aquisitions to top of
-    // list with "latest" as project name
+    // add "Latest acquisitions" sidebar item by adding plate aquisitions to top of
+    // list with "Latest acquisitions" as project name
 
     // make copy of result array and sort it by acq_id
-    acq_sorted = queryResults.slice().sort((a, b) => {
+    acq_sorted = platesList.slice().sort((a, b) => {
       return a.id - b.id;
     });
 
     // get top 20 results
-    top_results = acq_sorted.slice(-20).reverse();
+    latest_results = acq_sorted.slice(-20).reverse();
 
     // insert copy of 20 latesq acq-id in top of restlts with "latest" as proj-name
-    top_results.forEach(function (row) {
-      row.menuitemname = 'Latest acquisitions'
+    latest_results.forEach(function (row) {
+      row.is_latest_acquisition = true;
     });
-    
-    console.log('top_results', top_results);
 
-    queryResults = top_results.concat(queryResults)
+    platesList = latest_results.concat(platesList)
 
-    let last_menuitemname = "";
-    let plate_list = null;
-    // Create sidebar as nested lists from query result
-    queryResults.forEach(result => {
+
+    // create latest acq item and add it first on list
+    let latest_acq_item = document.createElement('li');
+    latest_acq_item.innerHTML = "<span style='cursor: pointer;''>" + "Latest acquisitions" + "</span>";
+    let plate_list = document.createElement('ul');
+    latest_acq_item.appendChild(plate_list);
+    if(!filter){
+      list.appendChild(latest_acq_item);
+    }
+
+    // create items for all plates (and projects as parents)
+    let last_project = "";
+    platesList.forEach((result, index) => {
 
       // Create a list with all projects
-      let menuitemname = result.menuitemname;
+      let project = result.project;
       let proj = result.project;
       let plate_barcode = result.plate_barcode;
       let acq_name = result.name;
       let acq_id = result.id;
 
-      // create a new sublist for each project
-      if (last_menuitemname !== menuitemname) {
+      if(index < latest_results.length && !filter){
+        // do nothing, we are still att "Latest acquisition" menu
+        last_project = "lksdjfiweurehfkjbkjbs";
+      }
+      else if (last_project !== project) {
         let proj_item = document.createElement('li');
-        proj_item.innerHTML = "<span style='cursor: pointer;''>" + menuitemname + "</span>";
+        proj_item.innerHTML = "<span style='cursor: pointer;''>" + project + "</span>";
         list.appendChild(proj_item);
         plate_list = document.createElement('ul');
         proj_item.appendChild(plate_list);
       }
-/*
-      // create a new sublist for each sub-project (if subproj is different, than proj)
-      if(subproj != proj){
-        if(last_subproj != subproj){
-          let subproj_item = document.createElement('li');
-          subproj_item.innerHTML = "<span style='cursor: pointer;''>" + subproj + "</span>";
-          list.appendChild(proj_item);
-          plate_list = document.createElement('ul');
-          proj_item.appendChild(plate_list);
-        }
-      }
-*/
+
       // Create a list item for the plate
       let plate_item = document.createElement('li');
       let link = document.createElement('a');
@@ -356,7 +391,7 @@
 
       // add plate item to projects plate_list
       plate_list.appendChild(plate_item);
-      last_menuitemname = menuitemname;
+      last_project = project;
     });
 
     //
@@ -375,10 +410,14 @@
       handleDuplicateCheckboxes: false //update any other checkboxes that have the same value
     });
 
+    // This is a tweak to make filter working
+    $('#result-list').bonsai('update');
+
     // Tweak to get clickable project-names instead of only the little arrow
     // the project names are enclosed in <span></span>
     // https://github.com/aexmachina/jquery-bonsai/issues/23
     $('#result-list').on('click', 'span', function () {
+      console.log("click");
       $(this).closest('li').find('> .thumb').click();
     });
 
@@ -1141,6 +1180,10 @@
   function selectShowCompoundsFromStoredValue(){
     let value = getShowCompoundsFromStore();
     document.getElementById('show-compounds-cb').checked = value;
+  }
+
+  function getSearchFilterText(){
+    return document.getElementById('search-textfield').value;
   }
 
   function setSelectedAcquisition(acquisitionID) {

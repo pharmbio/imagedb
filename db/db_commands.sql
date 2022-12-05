@@ -436,7 +436,7 @@ CREATE OR REPLACE VIEW image_analyses_per_plate AS
         to_char(image_analyses.error at time zone 'cet', 'YYYY-MM-DD') AS analysis_error,
         image_analyses.meta AS meta,
         image_analyses.pipeline_name,
-        image_analyses.result::json->'file_list'
+        CONCAT('/share/data/cellprofiler/automation/',image_analyses.result::json->'job_folder') AS results
     FROM
         plate_acquisition
     LEFT JOIN image_analyses ON image_analyses.plate_acquisition_id = plate_acquisition.id
