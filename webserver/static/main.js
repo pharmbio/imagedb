@@ -258,12 +258,12 @@
 
   function listPlatesQueryResultLoaded(data) {
     let queryResults = data.results;
-    window.loaded_plates = queryResults;
+    window.listed_plates = queryResults;
     drawPlatesListSidebar(queryResults);
   }
 
   function redrawPlatesListSidebar(){
-      platesList =  window.loaded_plates;
+      platesList =  window.listed_plates;
       if(platesList){
         drawPlatesListSidebar(platesList);
       }
