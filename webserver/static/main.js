@@ -855,10 +855,12 @@ function drawPlatesListSidebar(origPlatesList){
             info_div.setAttribute("data-animation", false);
             info_div.setAttribute("data-html", true);
 
-            let title = "Well: "      + well_meta.well_id + "<br>" +
-                        "cbkid: "     + well_meta.cbkid   + "<br>" +
-                        "batchid: " + well_meta.cell_line   + "<br>" +
-                        "cell-line: " + well_meta.cell_line;
+            let title = "Well: "            + well_meta.well_id       + "<br>" +
+                        "cbkid: "           + well_meta.cbkid         + "<br>" +
+                        "batchid: "         + well_meta.batch_id      + "<br>" +
+                        "compound_name: "   + well_meta.compound_name + "<br>" +
+                        "pert_type: "       + well_meta.pert_type     + "<br>" +
+                        "cell-line: "       + well_meta.cell_line;
 
             info_div.title = title;
             info_div.style.backgroundColor = color_from_cbkid(well_meta.cbkid);
@@ -1523,6 +1525,14 @@ function drawPlatesListSidebar(origPlatesList){
       r = getChannelIdFromDye('MITO', channels);
       g = getChannelIdFromDye('DIOC6', channels);
       elemSelect.options[0] = new Option("H,M,D", "" + b + "," + r + "," + g);
+    }
+
+    is_subset = ['NUCLEUS','MITO', 'ACTIN'].every(val => channel_names.includes(val))
+    if(is_subset){
+      b = getChannelIdFromDye('NUCLEUS', channels);
+      r = getChannelIdFromDye('MITO', channels);
+      g = getChannelIdFromDye('ACTIN', channels);
+      elemSelect.options[0] = new Option("N,M,A", "" + b + "," + r + "," + g);
     }
 
     // add as many options as channels
