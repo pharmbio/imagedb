@@ -314,19 +314,21 @@ function drawPlatesListSidebar(origPlatesList){
     if(getSelectedShowHiddenValue() == false){
       platesList = platesList.filter(item => item.hidden != true);
     }
-  
+
     // add "Latest acquisitions" sidebar item by adding plate aquisitions to top of
     // list with "Latest acquisitions" as project name
+
+    latest_acq_len = 10
 
     // make copy of result array and sort it by acq_id
     acq_sorted = platesList.slice().sort((a, b) => {
       return a.id - b.id;
     });
 
-    // get top 20 results
-    latest_results = acq_sorted.slice(-20).reverse();
+    // get top xx results
+    latest_results = acq_sorted.slice(-latest_acq_len).reverse();
 
-    // insert copy of 20 latesq acq-id in top of restlts with "latest" as proj-name
+    // insert copy of latesq acq-id in top of restlts with "latest" as proj-name
     latest_results.forEach(function (row) {
       row.is_latest_acquisition = true;
     });
@@ -414,6 +416,9 @@ function drawPlatesListSidebar(origPlatesList){
 
     // This is a tweak to make filter working
     $('#result-list').bonsai('update');
+
+    let bonsai = $('#result-list').data('bonsai');
+    bonsai.expand(latest_acq_item);
 
     // Tweak to get clickable project-names instead of only the little arrow
     // the project names are enclosed in <span></span>
@@ -850,9 +855,9 @@ function drawPlatesListSidebar(origPlatesList){
             info_div.setAttribute("data-animation", false);
             info_div.setAttribute("data-html", true);
 
-            let title = "Well: "      + well_meta.well_id + "<br>" + 
-                        "cbkid: "     + well_meta.cbkid   + "<br>" + 
-                        "batchid: " + well_meta.cell_line   + "<br>" + 
+            let title = "Well: "      + well_meta.well_id + "<br>" +
+                        "cbkid: "     + well_meta.cbkid   + "<br>" +
+                        "batchid: " + well_meta.cell_line   + "<br>" +
                         "cell-line: " + well_meta.cell_line;
 
             info_div.title = title;
@@ -915,7 +920,7 @@ function drawPlatesListSidebar(origPlatesList){
       color = compColors[id];
       //console.log('color', color);
     }
-    
+
     return color;
   }
 
@@ -1655,7 +1660,8 @@ function drawPlatesListSidebar(origPlatesList){
   function showHiddenSelectChanged() {
     let value = getSelectedShowHiddenValue();
     setShowHiddenInStore(value);
-    location.reload();
+    redrawPlatesListSidebar();
+    //location.reload();
   }
 
   function showCompoundsSelectChanged() {
