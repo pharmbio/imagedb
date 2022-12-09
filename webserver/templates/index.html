@@ -186,11 +186,11 @@
       <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
 
         <!-- Search form -->
-        <form id='query-form' onkeyup='filterchanged();' onsubmit='filterchanged();return false;'>
+        <form id='query-form'  onsubmit='return false;'>
           <div class="input-group">
 
-            <input type="text" id="search-textfield" class="form-control input-sm" maxlength="" placeholder="Filter plates" />
-            <button type="submit" class="btn btn-info btn-sm ml-2">Filter</button>
+            <input onkeyup='filterchanged();' type="text" id="search-textfield" class="form-control input-sm" maxlength="" placeholder="Filter plates" />
+            <button type="button" onclick="filterchanged();" class="btn btn-info btn-sm ml-2">Filter</button>
 
             {% raw xsrf_form_html() %}
 

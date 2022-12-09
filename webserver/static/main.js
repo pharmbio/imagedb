@@ -274,7 +274,6 @@ function filterchanged(){
   if(filter.length == 0 || filter.length > 1 ){
     redrawPlatesListSidebar();
   }
-
 }
 
 function drawPlatesListSidebar(origPlatesList){
@@ -328,13 +327,15 @@ function drawPlatesListSidebar(origPlatesList){
     // get top xx results
     latest_results = acq_sorted.slice(-latest_acq_len).reverse();
 
-    // insert copy of latesq acq-id in top of restlts with "latest" as proj-name
+    // insert copy of latesq acq-id in top of restlts with is_latest_acquisition = true
     latest_results.forEach(function (row) {
       row.is_latest_acquisition = true;
     });
 
-    platesList = latest_results.concat(platesList)
-
+    // Don't add latest aqc if filter is on
+    if(!filter){
+      platesList = latest_results.concat(platesList)
+    }
 
     // create latest acq item and add it first on list
     let latest_acq_item = document.createElement('li');
@@ -417,8 +418,14 @@ function drawPlatesListSidebar(origPlatesList){
     // This is a tweak to make filter working
     $('#result-list').bonsai('update');
 
+    // Expand latest_acq by default
     let bonsai = $('#result-list').data('bonsai');
     bonsai.expand(latest_acq_item);
+
+    // If result is < x items expand all
+    if(platesList.length < 10){
+      bonsai.expandAll(list);
+    }
 
     // Tweak to get clickable project-names instead of only the little arrow
     // the project names are enclosed in <span></span>
@@ -858,7 +865,7 @@ function drawPlatesListSidebar(origPlatesList){
             let title = "Well: "            + well_meta.well_id       + "<br>" +
                         "cbkid: "           + well_meta.cbkid         + "<br>" +
                         "batchid: "         + well_meta.batch_id      + "<br>" +
-                        "compound_name: "   + well_meta.compound_name + "<br>" +
+                        "compound-name: "   + well_meta.compound_name + "<br>" +
                         "pert_type: "       + well_meta.pert_type     + "<br>" +
                         "cell-line: "       + well_meta.cell_line;
 
@@ -1193,6 +1200,11 @@ function drawPlatesListSidebar(origPlatesList){
 
   function getSearchFilterText(){
     return document.getElementById('search-textfield').value;
+  }
+
+  function clearFilterText(){
+    document.getElementById('search-textfield').value = "";
+    filterchanged();
   }
 
   function setSelectedAcquisition(acquisitionID) {
@@ -1532,7 +1544,7 @@ function drawPlatesListSidebar(origPlatesList){
       b = getChannelIdFromDye('NUCLEUS', channels);
       r = getChannelIdFromDye('MITO', channels);
       g = getChannelIdFromDye('ACTIN', channels);
-      elemSelect.options[0] = new Option("N,M,A", "" + b + "," + r + "," + g);
+      elemSelect.add (new Option("N,M,A", "" + b + "," + r + "," + g) );
     }
 
     // add as many options as channels
