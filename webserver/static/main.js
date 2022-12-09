@@ -900,6 +900,7 @@ function drawPlatesListSidebar(origPlatesList){
           }
         }
 
+        well_div.title = well_name;
         well_div.appendChild(site_div);
         site_div.appendChild(sites_table);
         well_cell.appendChild(well_div);
