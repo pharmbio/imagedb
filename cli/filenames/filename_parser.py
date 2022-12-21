@@ -2,6 +2,7 @@ import os
 import logging
 from filenames import pharmbio_squid_filename_test
 from filenames import pharmbio_squid_filename_v1
+from filenames import pharmbio_squid_filename_v2
 from filenames import pharmbio_IMX_filename_standard
 from filenames import pharmbio_IMX_filename_older
 from filenames import pharmbio_IMX_filename_relaxed
@@ -13,8 +14,9 @@ from filenames import external_filename_gbm_IMX
 from filenames import external_filename_opera_rXcXfXpX_chXskXfkXflX
 
 parsers = []
-parsers.append(pharmbio_squid_filename_test)
+parsers.append(pharmbio_squid_filename_v2)
 parsers.append(pharmbio_squid_filename_v1)
+parsers.append(pharmbio_squid_filename_test)
 parsers.append(pharmbio_IMX_filename_standard)
 parsers.append(pharmbio_IMX_filename_older)
 parsers.append(pharmbio_IMX_filename_relaxed)
@@ -42,7 +44,7 @@ def parse_path_and_file(filename):
 
 
 if __name__ == '__main__':
-    
+
     # python3.10 -m filenames.filename_parser
 
     #
@@ -68,15 +70,15 @@ if __name__ == '__main__':
 
     retval = parse_path_and_file("/share/data/external-datasets/gbm/gbm-120/20220921 IF15 8x25-48/P9-3013-R2/2022-09-24/11288/TimePoint_1/20220921 IF15 8x25-48_O24_s9_w5B8BD893C-A366-45E3-B67F-7D5A3C32DCE3.tif")
     print("\nretval = " + str(retval))
-    
+
     retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/specs1K-v2/P101022-col2-and-3/TimePoint_1/P101022 col 2 and 3_I02_s8_w5.TIF")
     print("\nretval = " + str(retval))
-    
+
     retval = parse_path_and_file("share/data/external-datasets/compoundcenter/specs1K-v2/YML2_1_3__2022-11-02T10_35_46-Measurement 1/Images/r02c02f04p01-ch4sk1fk1fl1.tiff")
     print("\nretval = " + str(retval))
-    
+
     retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/specs1K-v2/P101022_col2-and-3/TimePoint_1/P101022 col 2 and 3_I02_s8_w5.TIF")
     print("\nretval = " + str(retval))
-    
+
     retval = parse_path_and_file("/share/mikro/squid/squid-testplates/RMS-e04-v1-FA-P1-48h-P1-L1_2022-11-30_15-41-14.542994/0/O9_2_2_0_Fluorescence_561_nm_Ex.tiff")
     print("\nretval = " + str(retval))

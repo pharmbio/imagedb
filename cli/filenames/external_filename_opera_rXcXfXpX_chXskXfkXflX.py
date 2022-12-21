@@ -14,25 +14,20 @@ def parse_path_and_file(path):
     # /share/data/external-datasets/2020_11_04_CPJUMP1/images/BR00116992__2020-11-05T21_31_31-Measurement1/Images/r16c24f09p01-ch3sk1fk1fl1.tiff
 
     # project, plate, date
-    
+
     logging.debug("inside parse_path_and_file")
-    
-    match = re.search('.*/external-datasets/(.+?)/(.+?)/(.+?)__([0-9]{4})-([0-9]{2})-([0-9]{2})T.*/Images/', path) # /project/plate/date (yyyy-mm-dd)
+
+    #match = re.search('.*/external-datasets/(.+?)/(.+?)/(.+?)__([0-9]{4})-([0-9]{2})-([0-9]{2})T.*/Images/', path) # /project/plate/date (yyyy-mm-dd)
+    match = re.search('.*/external-datasets/(.+?)/(.+?)/(.+?)/Images/', path) # /project/plate/date (yyyy-mm-dd)
     logging.debug(f'match {match}')
     if match is None:
       return None
     subdir_not_used = match.group(1)
     project = match.group(2)
     plate = match.group(3)
-    date_year = match.group(4)
-    date_month = match.group(5)
-    date_day_of_month = match.group(6)
 
     logging.debug("project" + project)
     logging.debug("plate" + plate)
-    logging.debug("date_year" + date_year)
-    logging.debug("date_month" + date_month)
-    logging.debug("date_day_of_month" + date_day_of_month)
 
     # well, site, channel, thumb, guid, extension
     match = re.search('.*\/'           # any until last /
@@ -77,9 +72,9 @@ def parse_path_and_file(path):
     metadata = {
       'path': path,
       'filename': os.path.basename(path),
-      'date_year': date_year,
-      'date_month': date_month,
-      'date_day_of_month': date_day_of_month,
+      'date_year': 1970,
+      'date_month': 1,
+      'date_day_of_month': 1,
       'project': project,
       'magnification': '?x',
       'plate': plate,
@@ -92,7 +87,7 @@ def parse_path_and_file(path):
       'extension': extension,
       'timepoint': 1,
       'channel_map_id': 6,
-      'microscope': "Unknown",
+      'microscope': "Opera",
       'parser': os.path.basename(__file__)
     }
 
@@ -115,3 +110,7 @@ if __name__ == '__main__':
     # Testparse
     retval = parse_path_and_file("share/data/external-datasets/compoundcenter/specs1K-v2/YML2_1_3__2022-11-02T10_35_46-Measurement 1/Images/r02c02f04p01-ch4sk1fk1fl1.tiff")
     print(str(retval))
+
+    retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/CBCS-compound-collection/P101056-U2OS-CBCS-JUMP-v1-MoA90-L1-KI-Opera-20X/Images/r13c06f05p01-ch1sk1fk1fl1.tiff")
+    print(str(retval))
+

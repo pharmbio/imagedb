@@ -10,7 +10,8 @@ import logging
 
 __pattern_path_and_file   = re.compile('^'
                             + '.*'        # any
-                            + 'MDC_pharmbio/(.*?)/' # project (1)
+                            + 'MDC_pharmbio/(?:IMX B5/)?'
+                            + '(.*?)/' # project (1)
                             + '(.*?)/' # plate (2)
                             + '([0-9]{4})-([0-9]{2})-([0-9]{2})' # date (yyyy, mm, dd) (3,4,5)
                             # TODO could check for optional timepoint here
@@ -72,13 +73,16 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                         datefmt='%H:%M:%S',
                         level=logging.DEBUG)
-  
+
     # Testparse
     retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/PolinaG-U2OS/181212-U2OS-20X-BpA-HD-DB-high/2018-12-12/1/181212-U2OS-20X-BpA-HD-DB-high_E02_s7_w3_thumbCFB5B241-4E5B-4AB4-8861-A9B6E8F9FE00.tif")
     retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/kinase378-v1/kinase378-v1-FA-P015232-A549-48h-P1-L3-r1/2022-01-31/906/kinase378-v1-FA-P015232-A549-48h-P1-L3-r1_B02_s3_w5F56592B1-3477-465C-B118-87465E0163A1.tif")
     print("retval = " + str(retval))
 
     retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/kinase378-v1/kinase378-v1-FA-P015240-HOG-48h-P2-L5-r1/2022-03-11/965/kinase378-v1-FA-P015240-HOG-48h-P2-L5-r1_B02_s8_w3_thumb3DF2C4AE-602A-46F6-84B2-9B31D1981B60.tif")
+    print("retval = " + str(retval))
+
+    retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/IMX B5/Phil/BFMOALIVE-P1-FA-24h-L1/2022-12-20/10/TimePoint_1/BFMOALIVE-P1-FA-24h-L1_O23_s5_w30CAE0D9F-737D-4BB7-ACA7-969E377EA375.tif")
     print("retval = " + str(retval))
 
 
