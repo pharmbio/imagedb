@@ -92,7 +92,11 @@ if __name__ == '__main__':
     print("retval = " + str(retval))
 
     retval = parse_path_and_file(
-        "	/share/mikro/squid/test/Agilent/test_2022-09-26_13-12-22.804556/0/D16_1_2_2_Fluorescence_638_nm_Ex.tiff")
+        "/share/mikro/squid/test/Agilent/test_2022-09-26_13-12-22.804556/0/D16_1_2_2_Fluorescence_638_nm_Ex.tiff")
+    print("retval = " + str(retval))
+
+    retval = parse_path_and_file(
+        "/share/mikro/squid/Gentle_2022-12-21_15.04.42/B05_s3_x0_y1_Fluorescence_730_nm_Ex.tiff")
     print("retval = " + str(retval))
 
 

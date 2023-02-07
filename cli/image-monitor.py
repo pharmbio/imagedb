@@ -118,14 +118,11 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
     conn = None
     try:
 
-        insert_query = "INSERT INTO images(project, plate_acquisition_id, plate_barcode, plate_acquisition_name, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        insert_query = "INSERT INTO images(plate_acquisition_id, plate_barcode, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         conn = get_connection()
         insert_cursor = conn.cursor()
-        insert_cursor.execute(insert_query, (img_meta['project'],
-                                             plate_acq_id,
-                                             getPlateBarcodeFromPlateAcquisitionName(
-                                                 img_meta['plate']),
-                                             img_meta['plate'],
+        insert_cursor.execute(insert_query, (plate_acq_id,
+                                             getPlateBarcodeFromPlateAcquisitionName(img_meta['plate']),
                                              img_meta['timepoint'],
                                              img_meta['well'],
                                              img_meta['wellsample'],
@@ -180,7 +177,7 @@ def select_plate_acq_id(image_path):
     finally:
         put_connection(conn)
 
-def getChannelMapID(project, plate_acq_name, imaged_timepoint):
+def getChannelMapIDFromMapping(project, plate_acq_name):
     conn = None
 
     try:
@@ -203,7 +200,7 @@ def getChannelMapID(project, plate_acq_name, imaged_timepoint):
         if result:
             channel_map_id = result[0]
         else:
-            channel_map_id = 2
+            channel_map_id = None
 
         logging.info(f"channel_map_id = {channel_map_id}")
 
@@ -226,7 +223,9 @@ def insert_plate_acq(img_meta):
         folder = os.path.dirname(img_meta['path'])
 
         # get channel map for speciffic projects/plates
-        channel_map_id = getChannelMapID(img_meta['project'], img_meta['plate'], imaged_timepoint)
+        specific_ch_map = getChannelMapIDFromMapping(img_meta['project'], img_meta['plate'])
+        if specific_ch_map:
+            img_meta['channel_map_id'] = specific_ch_map
 
         query = "INSERT INTO plate_acquisition(plate_barcode, name, project, imaged, microscope, channel_map_id, timepoint, folder) VALUES(%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"
         conn = get_connection()
@@ -236,7 +235,7 @@ def insert_plate_acq(img_meta):
                                img_meta['project'],
                                imaged_timepoint,
                                img_meta['microscope'],
-                               channel_map_id,
+                               img_meta['channel_map_id'],
                                img_meta['timepoint'],
                                folder
                                ))

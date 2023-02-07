@@ -20,7 +20,6 @@ DROP TABLE IF EXISTS images CASCADE;
 CREATE TABLE images (
     id                      bigserial PRIMARY KEY,
     plate_acquisition_id    serial,
-    project                 text,
     plate_barcode           text,
     timepoint               int,
     well                    text,
@@ -209,16 +208,20 @@ UPDATE plate_acquisition
 
 CREATE OR REPLACE VIEW images_all_view AS
   SELECT
-    images.id,
+    plate_acquisition.project,
     images.plate_acquisition_id,
-    images.plate_acquisition_name,
-    images.project,
-    images.plate_barcode,
+    plate_acquisition.name AS plate_acquisition_name,
+    plate_acquisition.plate_barcode,
+    images.id AS image_id,
     images.timepoint,
     images.well,
     images.site,
     images.channel,
     images.path,
+    plate_acquisition.imaged,
+    plate_acquisition.microscope,
+    plate_acquisition.channel_map_id,
+    channel_map.dye,
     plate.size,
     plate.seeded,
     plate.cell_line,
@@ -243,11 +246,7 @@ CREATE OR REPLACE VIEW images_all_view AS
     compound.libtxt,
     compound.smiles,
     compound.inchi,
-    compound.inkey,
-    plate_acquisition.imaged,
-    plate_acquisition.microscope,
-    plate_acquisition.channel_map_id,
-    channel_map.dye
+    compound.inkey
    FROM (((((images
      LEFT JOIN plate_acquisition ON ((images.plate_acquisition_id = plate_acquisition.id)))
      LEFT JOIN channel_map ON (((plate_acquisition.channel_map_id = channel_map.map_id) AND (images.channel = channel_map.channel))))
@@ -259,7 +258,7 @@ CREATE OR REPLACE VIEW images_minimal_view AS
 SELECT
     images.id,
     images.plate_acquisition_id,
-    images.project,
+    plate_acquisition.project,
     images.plate_barcode,
     images.timepoint,
     images.well,
