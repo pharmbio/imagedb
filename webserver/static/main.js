@@ -1548,6 +1548,14 @@ function drawPlatesListSidebar(origPlatesList){
       elemSelect.add (new Option("N,M,A", "" + b + "," + r + "," + g) );
     }
 
+    is_subset = ['HOECHST','MITO', 'PHA'].every(val => channel_names.includes(val))
+    if(is_subset){
+      b = getChannelIdFromDye('HOECHST', channels);
+      r = getChannelIdFromDye('MITO', channels);
+      g = getChannelIdFromDye('PHA', channels);
+      elemSelect.add (new Option("H,M,P", "" + b + "," + r + "," + g) );
+    }
+
     // add as many options as channels
     for(const [key, value] of Object.entries(channels)){
       channel_name = value.dye;

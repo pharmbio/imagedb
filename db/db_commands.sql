@@ -515,13 +515,17 @@ CREATE TABLE plate_layout (
     well_vol_unit           text,
     pert_type               text,
     cmpd_conc               decimal,
-    cmpd_conc_unit          text
+    cmpd_conc_unit          text,
+    cell_line               text,
+    cells_per_well          numeric
 );
 
 CREATE INDEX  ix_plate_layout_layout_id ON plate_layout(layout_id);
 CREATE INDEX  ix_plate_layout_well_id ON plate_layout(well_id);
 CREATE INDEX  ix_plate_layout_batch_id ON plate_layout(batch_id);
 CREATE INDEX  ix_plate_layout_pert_type ON plate_layout(pert_type);
+CREATE INDEX  ix_plate_layout_cell_line ON plate_layout(cell_line);
+CREATE INDEX  ix_plate_layout_cells_per_well ON plate_layout(cells_per_well);
 
 ALTER TABLE plate_layout ADD CONSTRAINT constr_primary_key_plate_layout_layout_id_well_id PRIMARY KEY (layout_id, well_id);
 
@@ -540,6 +544,8 @@ CREATE OR REPLACE VIEW plate_layout_v1 AS
     plate_layout.pert_type,
     plate_layout.cmpd_conc,
     plate_layout.cmpd_conc_unit,
+    plate_layout.cell_line,
+    plate_layout.cells_per_well,
     compound.batchid,
     compound.cbkid,
     compound.libid,
