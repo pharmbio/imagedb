@@ -13,11 +13,14 @@ from filenames import external_filename_IMX
 from filenames import external_filename_gbm_IMX
 from filenames import external_filename_opera_rXcXfXpX_chXskXfkXflX
 from filenames import pharmbio_nikon_filename_v1
+from filenames import pharmbio_nikon_filename_v2_exported
+
 
 parsers = []
 parsers.append(pharmbio_squid_filename_v2)
 parsers.append(pharmbio_squid_filename_v1)
 parsers.append(pharmbio_nikon_filename_v1)
+parsers.append(pharmbio_nikon_filename_v2_exported)
 parsers.append(pharmbio_squid_filename_test)
 parsers.append(pharmbio_IMX_filename_standard)
 parsers.append(pharmbio_IMX_filename_older)

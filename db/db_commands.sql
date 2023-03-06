@@ -529,6 +529,7 @@ CREATE INDEX  ix_plate_layout_cells_per_well ON plate_layout(cells_per_well);
 
 ALTER TABLE plate_layout ADD CONSTRAINT constr_primary_key_plate_layout_layout_id_well_id PRIMARY KEY (layout_id, well_id);
 
+DROP VIEW plate_layout_v1;
 CREATE OR REPLACE VIEW plate_layout_v1 AS
   SELECT
     plate_layout.layout_id,
@@ -588,14 +589,12 @@ CREATE INDEX  ix_plate_painted ON plate(painted);
 -- INSERT INTO plate (plate_barcode)
 -- SELECT DISTINCT(plate_barcode) FROM images;
 
-
+DROP VIEW plate_v1;
 CREATE OR REPLACE VIEW plate_v1 AS
   SELECT
     plate.barcode,
     plate.size,
     plate.seeded,
-    plate.cell_line,
-    plate.cells_per_well,
     plate.type AS plate_type,
     plate.treatment,
     plate.treatment_units,
@@ -610,6 +609,8 @@ CREATE OR REPLACE VIEW plate_v1 AS
     plate_layout.cmpd_vol,
     plate_layout.well_vol,
     plate_layout.cmpd_conc,
+    plate_layout.cell_line,
+    plate_layout.cells_per_well,
     compound.batchid,
     compound.name AS compound_name,
     compound.cbkid,

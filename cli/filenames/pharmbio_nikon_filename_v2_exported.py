@@ -5,7 +5,9 @@ import logging
 # Adopted from: https://github.com/HASTE-project/haste-image-analysis-container2/tree/master/haste/image_analysis_container2/filenames
 #
 # file example
-# /share/mikro/nikon/RMS-test/batch2-RH30/20230223_183729_719__WellI02_PointI02_0002_ChannelFar\ Red\ Single_Seq8699.tiff
+#
+# /share/mikro/nikon/U20S-test/u2os-test/20230303_200618_678__WellP24_ChannelMITO,PHAandWGA,SYTO,CONC,HOECHST_Seq0360xy9c5.tif
+#
 #
 
 __pattern_path_and_file = re.compile('^'
@@ -14,8 +16,7 @@ __pattern_path_and_file = re.compile('^'
                                        + '(.*?)/'       # plate (2)
                                        + '([0-9]{4})([0-9]{2})([0-9]{2})' # date (yyyy, mm, dd) (3,4,5)
                                        + '.*Well([A-Z])([0-9]+)_'         # well (6,7)
-                                       + '.*Point.*_([0-9]+)_'            # site (8)
-                                       + '.*Channel(.*)_Seq'              # channel (9)
+                                       + '.*_Seq.*xy([0-9]+)c([0-9]+)'     # site (8), channel (9)
                                        + '.*(\..*)'                       # Extension [10]
                                      ,
                                      re.IGNORECASE)  # Windows has case-insensitive filenames
@@ -39,11 +40,9 @@ def parse_path_and_file(path):
   col = match.group(7)
   well = f'{row}{col}'
 
-  channel_name = match.group(9)
-  channels = ['Blue', 'YFP', 'Red', 'Far Red Single', 'FITC']
-  channel_pos = channels.index(channel_name) + 1
-
   site = int(match.group(8))
+
+  channel_pos = int(match.group(9))
 
   metadata = {
       'path': path,
@@ -83,5 +82,5 @@ if __name__ == '__main__':
                         level=logging.DEBUG)
 
     retval = parse_path_and_file(
-        "/share/mikro/nikon/RMS-test/batch2-RH30/20230223_183729_719__WellI02_PointI02_0002_ChannelFar Red Single_Seq8699.tiff")
+        "/share/mikro/nikon/U20S-test/u2os-test/20230303_200618_678__WellP24_ChannelMITO,PHAandWGA,SYTO,CONC,HOECHST_Seq0360xy9c5.tif")
     print("retval = " + str(retval))
