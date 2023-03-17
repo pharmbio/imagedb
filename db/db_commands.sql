@@ -168,6 +168,9 @@ INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
 (12,	4,	'MITO',	     	'channel_map_10_squid'),
 (12,	5,	'PHAandWGA',  'channel_map_12_IMX_comp_cent');
 
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name", "cell_compartment") VALUES
+(20,	1,	'HOECHST',	'channel_map_20_squid_H_only',	'nuclei');
+
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
 CREATE TABLE channel_map_mapping (
   project text,

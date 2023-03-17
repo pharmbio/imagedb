@@ -61,7 +61,7 @@ def parse_path_and_file(path):
       'guid': None,
       'extension': match.group(10),
       'timepoint': 1,
-      'channel_map_id': 10,
+      'channel_map_id': 19,
       'microscope': "nikon",
       'parser': os.path.basename(__file__)
   }

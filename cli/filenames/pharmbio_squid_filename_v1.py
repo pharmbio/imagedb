@@ -5,9 +5,8 @@ import logging
 # Adopted from: https://github.com/HASTE-project/haste-image-analysis-container2/tree/master/haste/image_analysis_container2/filenames
 #
 # file example
-# /share/mikro/squid/test/cell-density-martin-2022-09-23_2022-10-03_12-58-54.710491/0/D16_2_2_Fluorescence_638_nm_Ex.tiff
-#
-
+# /share/mikro/squid/test/cell-density-martin-2022-09-23_2022-10-03_12-58-54.710491/D16_2_2_Fluorescence_638_nm_Ex.tiff
+# /share/mikro/squid/Colo/pilot5-DLD1_2023-03-08_16.19.17/I07_s6_x2_y1_BF_LED_matrix_full.tiff
 
 __pattern_path_and_file = re.compile('^'
                                      + '.*/squid/'  # any until /squid/
@@ -19,8 +18,8 @@ __pattern_path_and_file = re.compile('^'
                                        + '([0-9]+)_'   # site index (10)
                                        + '([0-9]+)_'   # site x (11)
                                        + '([0-9]+)_'   # site y (12)
-                                       + '(.*?)_' # imaging-type, e,g, Florecense (13)
-                                       + '([0-9]+)_nm_Ex' # Channel (wavelength) (14)
+                                       + '(.*?)_' # imaging-type, e,g, Fluorescence, BF (13)
+                                       + '(.*?)' # wavelength or Light source (14)
                                        + '(\..*)'      # Extension [15]
                                      ,
                                      re.IGNORECASE)  # Windows has case-insensitive filenames
@@ -42,9 +41,19 @@ def parse_path_and_file(path):
   col = match.group(9)
   well = f'{row}{col}'
 
-  channel_name = match.group(14)
-  channels = ['405', '488', '561', '638', '730']
-  channel_pos = channels.index(channel_name) + 1
+  imaging_type = match.group(13)
+  logging.debug(imaging_type)
+  if imaging_type == 'Fluorescence':
+    channel_name = match.group(14).split('_nm')[0]
+    channels = ['405', '488', '561', '638', '730']
+    channel_pos = channels.index(channel_name) + 1
+    channel_map_id = 10
+  elif imaging_type == 'BF':
+    channel_pos = 1
+    channel_map_id = 21
+  else:
+     channel_pos = 1
+     channel_map_id = 21
 
   site = int(match.group(10))
   site_x = int(match.group(11))
@@ -67,7 +76,7 @@ def parse_path_and_file(path):
       'guid': None,
       'extension': match.group(15),
       'timepoint': match.group(7),
-      'channel_map_id': 10,
+      'channel_map_id': channel_map_id,
       'microscope': "squid",
       'parser': os.path.basename(__file__)
   }
@@ -99,5 +108,9 @@ if __name__ == '__main__':
         "/share/mikro/squid/Gentle_2022-12-21_15.04.42/B05_s3_x0_y1_Fluorescence_730_nm_Ex.tiff")
     print("retval = " + str(retval))
 
+    retval = parse_path_and_file(
+        "/share/mikro/squid/Colo/pilot5-DLD1_2023-03-08_16.19.17/I07_s6_x2_y1_BF_LED_matrix_full.tiff")
+    print("retval = " + str(retval))
+    
 
 #

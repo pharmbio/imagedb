@@ -2,7 +2,7 @@ import os
 import logging
 from filenames import pharmbio_squid_filename_test
 from filenames import pharmbio_squid_filename_v1
-from filenames import pharmbio_squid_filename_v2
+from filenames import pharmbio_squid_filename_v2_standard
 from filenames import pharmbio_IMX_filename_standard
 from filenames import pharmbio_IMX_filename_older
 from filenames import pharmbio_IMX_filename_relaxed
@@ -17,7 +17,7 @@ from filenames import pharmbio_nikon_filename_v2_exported
 
 
 parsers = []
-parsers.append(pharmbio_squid_filename_v2)
+parsers.append(pharmbio_squid_filename_v2_standard)
 parsers.append(pharmbio_squid_filename_v1)
 parsers.append(pharmbio_nikon_filename_v1)
 parsers.append(pharmbio_nikon_filename_v2_exported)
