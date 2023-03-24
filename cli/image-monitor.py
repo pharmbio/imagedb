@@ -22,6 +22,7 @@ import settings as imgdb_settings
 __connection_pool = None
 
 IMAGE_EXTENSIONS = (".tif", ".tiff", ".png", ".jpg", ".jpeg", ".bmp")
+EXCLUDED_EXTENSIONS = (".ome.tiff")
 
 def get_connection():
 
@@ -75,7 +76,7 @@ def get_all_image_files(dir):
 
     image_files = []
     for file in os.listdir(dir):
-        if file.lower().endswith( IMAGE_EXTENSIONS ):
+        if file.lower().endswith( IMAGE_EXTENSIONS ) and not file.lower().endswith( EXCLUDED_EXTENSIONS ):
             absolute_file = os.path.join(dir, file)
             image_files.append(absolute_file)
 
@@ -570,7 +571,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
         logging.info(f"len(img_dirs): {len(img_dirs)}")
 
-        # remove blacklisted (Directories with unparsable images that were found since start of program)
+        # remove blacklisted from list(Directories with unparsable images that were found since start of program)
         for path in set(img_dirs):
             if str(path) in blacklist:
                 img_dirs.remove(path)
