@@ -14,10 +14,11 @@ __pattern_path_and_file = re.compile('^'
                                      + '.*/nikon/'      # any until /nikon/
                                        + '(.*?)/'       # project (1)
                                        + '(.*?)/'       # plate (2)
-                                       + '([0-9]{4})([0-9]{2})([0-9]{2})' # date (yyyy, mm, dd) (3,4,5)
-                                       + '.*Well([A-Z])([0-9]+)_'         # well (6,7)
-                                       + '.*_Seq.*xy([0-9]+)c([0-9]+)'     # site (8), channel (9)
-                                       + '.*(\..*)'                       # Extension [10]
+                                       + '(.*?/)?'   # Optional subdir (3), e.g. /single_images/ 
+                                       + '([0-9]{4})([0-9]{2})([0-9]{2})' # date (yyyy, mm, dd) (4,5,6)
+                                       + '.*Well([A-Z])([0-9]+)_'         # well (7,8)
+                                       + '.*_Seq.*xy([0-9]+)c([0-9]+)'     # site (9), channel (10)
+                                       + '.*(\..*)'                       # Extension [11]
                                      ,
                                      re.IGNORECASE)  # Windows has case-insensitive filenames
 
@@ -36,20 +37,20 @@ def parse_path_and_file(path):
 
   logging.debug(f'match: {match.groups() }')
 
-  row = match.group(6)
-  col = match.group(7)
+  row = match.group(7)
+  col = match.group(8)
   well = f'{row}{col}'
 
-  site = int(match.group(8))
+  site = int(match.group(9))
 
-  channel_pos = int(match.group(9))
+  channel_pos = int(match.group(10))
 
   metadata = {
       'path': path,
       'filename': os.path.basename(path),
-      'date_year': int(match.group(3)),
-      'date_month': int(match.group(4)),
-      'date_day_of_month': int(match.group(5)),
+      'date_year': int(match.group(4)),
+      'date_month': int(match.group(5)),
+      'date_day_of_month': int(match.group(6)),
       'project': match.group(1),
       'magnification': '20x',
       'plate': match.group(2),
@@ -59,7 +60,7 @@ def parse_path_and_file(path):
       'channel': channel_pos,
       'is_thumbnail': False,
       'guid': None,
-      'extension': match.group(10),
+      'extension': match.group(11),
       'timepoint': 1,
       'channel_map_id': 19,
       'microscope': "nikon",

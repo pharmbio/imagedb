@@ -442,7 +442,7 @@ def find_dirs_containing_img_files_recursive(path: str):
             yield from find_dirs_containing_img_files_recursive(entry.path)
         if entry.is_file():
             # return parent path if file is imagefile, then break scandir-loop
-            if entry.path.lower().endswith( IMAGE_EXTENSIONS ):
+            if entry.path.lower().endswith( IMAGE_EXTENSIONS ) and not entry.path.lower().endswith( EXCLUDED_EXTENSIONS ):
                 yield(Path(entry.path).parent)
                 break
 
