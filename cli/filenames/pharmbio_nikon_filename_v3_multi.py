@@ -18,7 +18,7 @@ __pattern_path_and_file = re.compile('^'
                                        + '([0-9]{4})([0-9]{2})([0-9]{2})' # date (yyyy, mm, dd) (4,5,6)
                                        + '.*Well([A-Z])([0-9]+)_'         # well (7,8)
                                        + 'Point.*_([0-9]+)_'       #  site (9)
-                                       + '.*_Seq([0-9]+)c([0-9]+)' #  channel (10)
+                                       + '.*_Seq[0-9]+c([0-9]+)' #  channel (10)
                                        + '.*(\..*)'                 # Extension [11]
                                      ,
                                      re.IGNORECASE)  # Windows has case-insensitive filenames
@@ -85,5 +85,5 @@ if __name__ == '__main__':
 
     
     retval = parse_path_and_file(
-        "/share/mikro2/nikon/ColoPaint/PB000040-run2/single_images/20230322_134539_695__WellP24_PointP24_0001_ChannelMITO,PHAandWGA,SYTO,CONC,HOECHST_Seq0001c1.tif")
+        "/share/mikro2/nikon/ColoPaint/PB000040-run2/single_images/20230322_134539_695__WellP24_PointP24_0001_ChannelMITO,PHAandWGA,SYTO,CONC,HOECHST_Seq0001c3.tif")
     print("retval = " + str(retval))
