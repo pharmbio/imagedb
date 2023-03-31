@@ -55,9 +55,9 @@ def parse_path_and_file(path):
   metadata = {
       'path': path,
       'filename': os.path.basename(path),
-      'date_year': 0,
-      'date_month': 0,
-      'date_day_of_month': 0,
+      'date_year': date_create.year,
+      'date_month': date_create.month,
+      'date_day_of_month': date_create.day,
       'project': match.group(1),
       'magnification': '20x',
       'plate': match.group(2),
