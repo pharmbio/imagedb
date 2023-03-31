@@ -1,6 +1,5 @@
 import os
 import logging
-from filenames import pharmbio_squid_filename_test
 from filenames import pharmbio_squid_filename_v1
 from filenames import pharmbio_squid_filename_v2_standard
 from filenames import pharmbio_IMX_filename_standard
@@ -12,18 +11,19 @@ from filenames import external_filename_david
 from filenames import external_filename_IMX
 from filenames import external_filename_gbm_IMX
 from filenames import external_filename_opera_rXcXfXpX_chXskXfkXflX
-from filenames import pharmbio_nikon_filename_v3_multi
 from filenames import pharmbio_nikon_filename_v1
 from filenames import pharmbio_nikon_filename_v2_exported
+from filenames import pharmbio_nikon_filename_v3_multi
+from filenames import pharmbio_nikon_filename_v4_multi
 
 
 parsers = []
-parsers.append(pharmbio_squid_filename_v2_standard)
 parsers.append(pharmbio_squid_filename_v1)
-parsers.append(pharmbio_nikon_filename_v3_multi)
+parsers.append(pharmbio_squid_filename_v2_standard)
 parsers.append(pharmbio_nikon_filename_v1)
 parsers.append(pharmbio_nikon_filename_v2_exported)
-parsers.append(pharmbio_squid_filename_test)
+parsers.append(pharmbio_nikon_filename_v3_multi)
+parsers.append(pharmbio_nikon_filename_v4_multi)
 parsers.append(pharmbio_IMX_filename_standard)
 parsers.append(pharmbio_IMX_filename_older)
 parsers.append(pharmbio_IMX_filename_relaxed)
@@ -89,3 +89,7 @@ if __name__ == '__main__':
 
     retval = parse_path_and_file("/share/mikro/squid/squid-testplates/RMS-e04-v1-FA-P1-48h-P1-L1_2022-11-30_15-41-14.542994/0/O9_2_2_0_Fluorescence_561_nm_Ex.tiff")
     print("\nretval = " + str(retval))
+    
+    retval = parse_path_and_file( "/share/mikro2/nikon/RMS-test/batch4-RH30-test2/single_images/RMS-P01_WellsD8_Points01c5.tif")
+    print("\nretval = " + str(retval))
+    

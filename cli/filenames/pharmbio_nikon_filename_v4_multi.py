@@ -93,3 +93,9 @@ if __name__ == '__main__':
     retval = parse_path_and_file(
         "/share/mikro2/nikon/RMS-test/batch4-RH30-test2/single_images/RMS-P01_WellsI10_Points00c5.tif")
     print("retval = " + str(retval))
+    
+    retval = parse_path_and_file(
+        "/share/mikro2/nikon/RMS-test/batch4-RH30-test2/single_images/RMS-P01_WellsD8_Points01c5.tif")
+    print("retval = " + str(retval))
+    
+    
