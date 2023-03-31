@@ -46,11 +46,9 @@ def parse_path_and_file(path):
 
   channel_pos = int(match.group(7))
   
-  # file creation timestamp in float
+  # file creation timestamp
   c_time = os.path.getctime(path)
-
   date_create = datetime.datetime.fromtimestamp(c_time)
-  print('Created on:', date_create)
 
   metadata = {
       'path': path,
