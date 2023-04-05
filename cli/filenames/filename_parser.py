@@ -15,6 +15,7 @@ from filenames import pharmbio_nikon_filename_v1
 from filenames import pharmbio_nikon_filename_v2_exported
 from filenames import pharmbio_nikon_filename_v3_multi
 from filenames import pharmbio_nikon_filename_v4_multi
+from filenames import pharmbio_nikon_filename_v5_multi
 
 
 parsers = []
@@ -24,6 +25,7 @@ parsers.append(pharmbio_nikon_filename_v1)
 parsers.append(pharmbio_nikon_filename_v2_exported)
 parsers.append(pharmbio_nikon_filename_v3_multi)
 parsers.append(pharmbio_nikon_filename_v4_multi)
+parsers.append(pharmbio_nikon_filename_v5_multi)
 parsers.append(pharmbio_IMX_filename_standard)
 parsers.append(pharmbio_IMX_filename_older)
 parsers.append(pharmbio_IMX_filename_relaxed)

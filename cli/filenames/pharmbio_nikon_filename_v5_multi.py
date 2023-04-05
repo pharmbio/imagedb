@@ -16,8 +16,8 @@ __pattern_path_and_file = re.compile('^'
                                        + '(.*?)/'       # project (1)
                                        + '(.*?)/'       # plate (2)
                                        + '(.*?/)?'   # Optional subdir (3), e.g. /single_images/ 
-                                       + '.*?_Wells([A-Z])([0-9]+)_'         # well (4,5)
-                                       + 'Points([0-9]+)'       #  site (6)
+                                       + '.*?_Points([0-9]+)_'         # site (4)
+                                       + 'Wells([A-Z])([0-9]+)'       #  well (5,6)
                                        + 'c([0-9]+)' #  channel (7)
                                        + '.*(\..*)'                 # Extension [8]
                                      ,
@@ -38,11 +38,11 @@ def parse_path_and_file(path):
 
   logging.debug(f'match: {match.groups() }')
 
-  row = match.group(4)
-  col = int(match.group(5))
+  row = match.group(5)
+  col = int(match.group(6))
   well = f'{row}{col:02d}'
 
-  site = int(match.group(6))
+  site = int(match.group(4))
 
   channel_pos = int(match.group(7))
   
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     print("retval = " + str(retval))
     
     retval = parse_path_and_file(
-        "/share/mikro2/nikon/RMS-test/batch4-RH30-test2/single_images/RMS-P01_WellsD8_Points01c5.tif")
+        "/share/mikro2/nikon/RMS-test/batch4-RH30-test3/single_images/RMS-P01_Points00_WellsJ6c5.tif")                                                         
     print("retval = " + str(retval))
     
     
