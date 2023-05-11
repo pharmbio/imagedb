@@ -14,13 +14,15 @@ __pattern_path_and_file = re.compile('^'
                                        + '(.*?)/'   # project (1)
                                        + '(.*?)_'    # plate (2)
                                        + '([0-9]{4})-([0-9]{2})-([0-9]{2})_(.*?)/' # date (yyyy, mm, dd) (3,4,5) and (time 6)
-                                       + '([A-Z])([0-9]+)_'  # well (7,8)
-                                       + 's([0-9]+)_'   # site index (9)
-                                       + 'x([0-9]+)_'   # site x (10)
-                                       + 'y([0-9]+)_'   # site y (11)
-                                       + '(.*?)_'      # imaging-type, e,g, Fluorescence, BF (12)
-                                       + '(.*?)'       # wavelength or Light source 
-                                       + '(\..*)'      # Extension [14]
+                                       + '(t[0-9]+/)?'   # optional timepoint (7)
+                                       + '([A-Z])([0-9]+)_'  # well (8,9)
+                                       + 's([0-9]+)_'   # site index (10)
+                                       + 'x([0-9]+)_'   # site x (11)
+                                       + 'y([0-9]+)_'   # site y (12)
+                                       + '(z[0-9]+_)?'  # optional site z (13)
+                                       + '(.*?)_'      # imaging-type, e,g, Fluorescence, BF (14)
+                                       + '(.*?)'       # wavelength or Light source (15)
+                                       + '(\..*)'      # Extension [16]
                                      ,
                                      re.IGNORECASE)  # Windows has case-insensitive filenames
 
@@ -37,14 +39,20 @@ def parse_path_and_file(path):
 
   logging.debug(f'match: {match.groups() }')
 
-  row = match.group(7)
-  col = match.group(8)
+  tp = match.group(7)
+  if tp:
+    timepoint = tp[1:-1] # remove t and /
+  else:
+    timepoint = 0
+
+  row = match.group(8)
+  col = match.group(9)
   well = f'{row}{col}'
 
-  imaging_type = match.group(12)
+  imaging_type = match.group(14)
   logging.debug(imaging_type)
   if imaging_type == 'Fluorescence':
-    channel_name = match.group(13).split('_nm')[0]
+    channel_name = match.group(15).split('_nm')[0]
     channels = ['405', '488', '561', '638', '730']
     channel_pos = channels.index(channel_name) + 1
     channel_map_id = 10
@@ -55,9 +63,16 @@ def parse_path_and_file(path):
      channel_pos = 1
      channel_map_id = 21
 
-  site = int(match.group(9))
-  site_x = int(match.group(10))
-  site_y = int(match.group(11))
+  site = int(match.group(10))
+  site_x = int(match.group(11))
+  site_y = int(match.group(12))
+
+  z_val = match.group(13)
+  if z_val:
+    z = int(z_val[1:-1]) # remove z and
+    channel_pos = z + 1
+  else:
+    z = 0
 
   metadata = {
       'path': path,
@@ -71,11 +86,14 @@ def parse_path_and_file(path):
       'plate_acq_name': path,
       'well': well,
       'wellsample': site,
+      'x': site_x,
+      'y': site_y,
+      'z': z,
       'channel': channel_pos,
       'is_thumbnail': False,
       'guid': None,
-      'extension': match.group(14),
-      'timepoint': 0,
+      'extension': match.group(16),
+      'timepoint': timepoint,
       'channel_map_id': channel_map_id,
       'microscope': "squid",
       'parser': os.path.basename(__file__)
@@ -119,5 +137,16 @@ if __name__ == '__main__':
     retval = parse_path_and_file(
         "/share/mikro/squid/Colo/pilot5-DLD1_2023-03-08_16.19.17/I07_s6_x2_y1_BF_LED_matrix_full.tiff")
     print("retval = " + str(retval))
+
+    retval = parse_path_and_file(
+        "/share/mikro2/squid/BlueWash-auto/labauto-plate3-FA_2023-04-04_16.12.04/t1/B04_s5_x1_y1_z0_BF_LED_matrix_full.tiff")
+    print("retval = " + str(retval))
+
+    retval = parse_path_and_file(
+        "/share/mikro2/squid/BlueWash-auto/labauto-plate3-FA_2023-04-04_16.12.04/t1/G17_s6_x2_y1_z1_BF_LED_matrix_full.tiff")
+    print("retval = " + str(retval))
+
+
+
 
 

@@ -8,8 +8,31 @@ queries.
 import logging
 import jsonpickle
 import tornado.web
+import json
+import datetime
+import decimal
 
 from dbqueries import list_all_plates, get_plate, list_image_analyses
+
+def myserialize(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, datetime.date):
+        serial = obj.isoformat()
+        return serial
+
+    if isinstance(obj, datetime.datetime):
+        serial = obj.isoformat()
+        return serial
+
+    if isinstance(obj, datetime.time):
+        serial = obj.isoformat()
+        return serial
+
+    if isinstance(obj, decimal.Decimal):
+        return str(obj)
+
+    return obj.__dict__
 
 class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
     """
@@ -34,7 +57,9 @@ class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=ab
         results = list_all_plates()
 
         retval = {"results": results}
+        logging.info("before jsonpickle")
         json_string = jsonpickle.encode(retval, unpicklable=False)
+        logging.info("done with jsonpickle")
 
         self.write(json_string)
 
@@ -59,12 +84,17 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
         # use other function than tornado default json serializer since we are serializing
         # custom objects
 
-        #json_string = json.dumps(data, default=lambda x: x.__dict__)
-
-        json_string = jsonpickle.encode(data, unpicklable=False)
+        json_string = json.dumps(data, default=myserialize) # default=lambda x: x.__dict__)
+        logging.info("done with json.dumps")
+        
+        #json_string = jsonpickle.encode(data, unpicklable=False)
+        #logging.info("done with jsonpickle")
         json_string = json_string.replace("</", "<\\/")
+        logging.info("done replace jsonstring")
 
         self.write(json_string)
+
+        logging.info("done write json_string")
 
 
 #####

@@ -15,7 +15,7 @@ __pattern_path_and_file = re.compile('^'
                                      + '.*/nikon/'      # any until /nikon/
                                        + '(.*?)/'       # project (1)
                                        + '(.*?)/'       # plate (2)
-                                       + '(.*?/)?'   # Optional subdir (3), e.g. /single_images/ 
+                                       + '(.*?/)?'   # Optional subdir (3), e.g. /single_images/
                                        + '.*?_Points([0-9]+)_'         # site (4)
                                        + 'Wells([A-Z])([0-9]+)'       #  well (5,6)
                                        + 'c([0-9]+)' #  channel (7)
@@ -45,7 +45,7 @@ def parse_path_and_file(path):
   site = int(match.group(4))
 
   channel_pos = int(match.group(7))
-  
+
   # file creation timestamp
   c_time = os.path.getctime(path)
   date_create = datetime.datetime.fromtimestamp(c_time)
@@ -87,13 +87,17 @@ if __name__ == '__main__':
                         datefmt='%H:%M:%S',
                         level=logging.DEBUG)
 
-    
+
     retval = parse_path_and_file(
         "/share/mikro2/nikon/RMS-test/batch4-RH30-test2/single_images/RMS-P01_WellsI10_Points00c5.tif")
     print("retval = " + str(retval))
-    
+
     retval = parse_path_and_file(
-        "/share/mikro2/nikon/RMS-test/batch4-RH30-test3/single_images/RMS-P01_Points00_WellsJ6c5.tif")                                                         
+        "/share/mikro2/nikon/RMS-test/batch4-RH30-test3/single_images/RMS-P01_Points00_WellsJ6c5.tif")
     print("retval = " + str(retval))
-    
-    
+
+    retval = parse_path_and_file(
+        "/share/mikro2/nikon/RMS-SPECS/RMS-PB000041-FA-RH30/single_images/A11_s1c1.tif")
+    print("retval = " + str(retval))
+
+

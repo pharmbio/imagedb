@@ -119,7 +119,7 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
     conn = None
     try:
 
-        insert_query = "INSERT INTO images(plate_acquisition_id, plate_barcode, timepoint, well, site, channel, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        insert_query = "INSERT INTO images(plate_acquisition_id, plate_barcode, timepoint, well, site, channel, z, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         conn = get_connection()
         insert_cursor = conn.cursor()
         insert_cursor.execute(insert_query, (plate_acq_id,
@@ -128,6 +128,7 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
                                              img_meta['well'],
                                              img_meta['wellsample'],
                                              img_meta['channel'],
+                                             img_meta.get('z', 0),
                                              img_meta['path'],
                                              json.dumps(img_meta['file_meta']),
                                              json.dumps(img_meta)
@@ -571,11 +572,11 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
         logging.info(f"len(img_dirs): {len(img_dirs)}")
 
-        # remove blacklisted from list(Directories with unparsable images that were found since start of program)
-        for path in set(img_dirs):
-            if str(path) in blacklist:
-                img_dirs.remove(path)
-                #logging.info("removed because blacklisted: " + str(path))
+        # # remove blacklisted from list(Directories with unparsable images that were found since start of program)
+        # for path in set(img_dirs):
+        #     if str(path) in blacklist:
+        #         img_dirs.remove(path)
+        #         #logging.info("removed because blacklisted: " + str(path))
 
         logging.info(f"img dirs left: " + str(img_dirs))
 
