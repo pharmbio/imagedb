@@ -1,9 +1,6 @@
 version: "2.4"
 
 networks:
-  image-db-net:
-    external:
-      name: image-db-net
   traefik:
     external:
       name: traefik_web
@@ -14,7 +11,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro}
+      device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro2}
       o: bind
   # this is microimages r-o share
   externalimages-bind:
@@ -28,7 +25,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ${SHARE_IMAGEDB?You need to specify env SHARE_IMAGEDB, e.g. SHARE_IMAGEDB=/share/imagedb}
+      device: ${SHARE_IMAGEDB?You need to specify env SHARE_IMAGEDB, e.g. SHARE_IMAGEDB=/share/pool2/scratch/imagedb}
       o: bind
 
 # Webroot
@@ -63,7 +60,6 @@ services:
 
 
     networks:
-      - image-db-net
       - traefik
     volumes:
       - imgagedb-webroot-bind:/app

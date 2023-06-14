@@ -111,6 +111,6 @@ if __name__ == '__main__':
     retval = parse_path_and_file(
         "/share/mikro/squid/Colo/pilot5-DLD1_2023-03-08_16.19.17/I07_s6_x2_y1_BF_LED_matrix_full.tiff")
     print("retval = " + str(retval))
-    
+
 
 #

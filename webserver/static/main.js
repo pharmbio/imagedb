@@ -212,6 +212,10 @@
 
   function initViewerWindow(){
     selectBrightnessFromStoredValue();
+
+    console.log('plate', plate);
+    console.log('channel', channel);
+
     loadPlateFromViewer(plate, acquisition, well, site, channel);
   }
 
@@ -487,6 +491,10 @@ function drawPlatesListSidebar(origPlatesList){
   }
 
   function loadPlateFromViewer(plate_name, acquisition, well, site, channel) {
+
+    console.log('plate_name', plate_name);
+    console.log('channel', channel);
+
 
     // stop any current animation
     stopAnimation();
@@ -1562,6 +1570,14 @@ function drawPlatesListSidebar(origPlatesList){
       r = getChannelIdFromDye('MITO', channels);
       g = getChannelIdFromDye('SYTO', channels);
       elemSelect.add (new Option("H,M,S", "" + b + "," + r + "," + g) );
+    }
+
+    is_subset = ['HOECHST','CONC', 'PHAandWGA'].every(val => channel_names.includes(val))
+    if(is_subset){
+      b = getChannelIdFromDye('HOECHST', channels);
+      r = getChannelIdFromDye('CONC', channels);
+      g = getChannelIdFromDye('PHAandWGA', channels);
+      elemSelect.add( new Option("H,C,P", "" + b + "," + r + "," + g) );
     }
 
     // add as many options as channels

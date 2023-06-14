@@ -57,11 +57,11 @@ def parse_path_and_file(path):
     channel_pos = channels.index(channel_name) + 1
     channel_map_id = 10
   elif imaging_type == 'BF':
-    channel_pos = 1
-    channel_map_id = 21
+    channel_pos = 6
+    channel_map_id = 22
   else:
      channel_pos = 1
-     channel_map_id = 21
+     channel_map_id = 10
 
   site = int(match.group(10))
   site_x = int(match.group(11))
