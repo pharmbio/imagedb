@@ -88,12 +88,23 @@
       return siteNames;
     }
 
+    getAvailableZpos(acquisition_id) {
+      let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
+      let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
+      let zpos = this.getZpos(acquisition_id, firstWellKey, firstSiteKey);
+
+
+      let zNames = [];
+      for (let z of Object.values(zpos)) {
+        zNames.push(z.id);
+      }
+      return zNames;
+    }
+
     getChannelNames(acquisition_id) {
       // Get channel keys for the first sites object of the first well of slected acquisition in plate object
       let nCount = 0;
-      let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
-      let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
-      let channels = this.getChannels(acquisition_id, firstWellKey, firstSiteKey);
+      let channels = this.getAvailableChannels(acquisition_id);
 
       let channelNames = [];
       for(const [key, value] of Object.entries(channels)){
@@ -110,16 +121,29 @@
       let nCount = 0;
       let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
       let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
-      let channels = this.getChannels(acquisition_id, firstWellKey, firstSiteKey);
+      let firstZKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites[firstSiteKey].zpos)[0];
+      let channels = this.getChannels(acquisition_id, firstWellKey, firstSiteKey, firstZKey);
 
       return channels;
     }
 
-    getChannels(acquisition_id, well_name, site) {
+    getZpos(acquisition_id, well_name, site) {
       if(this.plateObj.acquisitions[acquisition_id] != null &&
          this.plateObj.acquisitions[acquisition_id].wells[well_name] != null &&
-         this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site]){
-        return this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site].channels;
+         this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site] != null){
+        return this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site].zpos;
+      }
+      else{
+        return null;
+      }
+    }
+
+    getChannels(acquisition_id, well_name, site, zpos) {
+      if(this.plateObj.acquisitions[acquisition_id] != null &&
+         this.plateObj.acquisitions[acquisition_id].wells[well_name] != null &&
+         this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site] != null &&
+         this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site].zpos[zpos] != null){
+        return this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site].zpos[zpos].channels;
       }
       else{
         return null;
@@ -143,16 +167,6 @@
       return nCount;
     }
 
-    countChannels(acquisition_id) {
-      // Count number of keys for the first sites object of the first well of first acquisition in plate object
-      let nCount = 0;
-      let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
-      let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
-      nCount = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites[firstSiteKey].channels).length;
-
-      return nCount;
-    }
-
 
     countWells() {
       // Count number of keys for the Wells object  of the first acquisition in plate object
@@ -171,20 +185,6 @@
       nCount = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells[firstWellKey].sites).length;
 
       return nCount;
-    }
-
-    getWellImageMeta(acquisition, well_name) {
-      let imageMeta = this.plateObj.acquisitions[acquisition].wells[well_name].sites["1"].channels["1"].image_meta;
-      return imageMeta;
-    }
-
-    getFormattedWellMeta(acquisition, well_name) {
-      let well_image_meta = this.getWellImageMeta(acquisition, well_name);
-      let formatted_meta = '';
-      formatted_meta += "Well: " + this.plateObj.acquisitions[acquisition].wells[well_name].id + "<br>";
-      formatted_meta += "Plate_barcode: " + well_image_meta["plate_barcode"] + "<br>";
-      formatted_meta += "Plate_acq_id: " + acquisition + "<br>" + "<br>";
-      return formatted_meta;
     }
   }
 
@@ -510,7 +510,7 @@ function drawPlatesListSidebar(origPlatesList){
 
             console.log(window.loaded_plates);
 
-            updateToolbarWithNewPlate(acquisition, well, site, channel);
+            updateToolbarWithNewPlate(acquisition, well, site, channel, zpos);
 
             console.log("done loadPlateFromViewer respone OK");
 
@@ -536,12 +536,13 @@ function drawPlatesListSidebar(origPlatesList){
 
     updateWellSelect(getLoadedPlate());
     updateSiteSelect(getLoadedPlate());
+    updateZSelect(getLoadedPlate());
     updateChannelSelect(getLoadedPlate());
 
   }
 
 
-  function updateToolbarWithNewPlate(selected_acq_id, selected_well, selected_site, selected_channel){
+  function updateToolbarWithNewPlate(selected_acq_id, selected_well, selected_site, selected_channel, selected_zpos){
 
     console.log("selected_well", selected_well);
 
@@ -551,6 +552,7 @@ function drawPlatesListSidebar(origPlatesList){
     updateWellSelect(getLoadedPlate(), selected_well);
 
     updateSiteSelect(getLoadedPlate(), selected_site);
+    updateZSelect(getLoadedPlate(), selected_zpos);
 
     updateChannelSelect(getLoadedPlate(), selected_channel);
 
@@ -589,7 +591,9 @@ function drawPlatesListSidebar(origPlatesList){
     console.log("site", site);
     let well_name = getSelectedWell();
     console.log("well_name", well_name);
-    let channels = getLoadedPlate().getChannels(acquisition, well_name, site);
+    let zpos = getSelectedZpos();
+    console.log("zpos", zpos);
+    let channels = getLoadedPlate().getChannels(acquisition, well_name, site, zpos);
     console.log("channels", channels);
     let imgURL = createMergeImgURLFromChannels(channels);
 
@@ -651,7 +655,8 @@ function drawPlatesListSidebar(origPlatesList){
     let well_name = getSelectedWell();
     console.log("well_name", well_name);
     console.log("getLoadedPlate()", getLoadedPlate());
-    let channels = getLoadedPlate().getChannels(acquisition, well_name, site);
+    let zpos = getSelectedZpos();
+    let channels = getLoadedPlate().getChannels(acquisition, well_name, site, zpos);
     let imgURL = createMergeImgURLFromChannels(channels);
 
     // Set brightness
@@ -715,7 +720,8 @@ function drawPlatesListSidebar(origPlatesList){
       console.log("site", site);
       let well_name = getSelectedWell();
       console.log("well_name", well_name);
-      let channels = getLoadedPlate().getChannels(acquisition, well_name, site);
+      let zpos = getSelectedZpos();
+      let channels = getLoadedPlate().getChannels(acquisition, well_name, site, zpos);
       console.log("channels", channels);
       let imgURL = createMergeImgURLFromChannels(channels);
 
@@ -750,7 +756,8 @@ function drawPlatesListSidebar(origPlatesList){
       console.log("getLoadedPlate()", getLoadedPlate());
 
       let acquisitionID = getAcquisitionFromIndex(acquisitionIndex);
-      let channels = getLoadedPlate().getChannels(acquisitionID, well_name, site);
+      let zpos = getSelectedZpos();
+      let channels = getLoadedPlate().getChannels(acquisitionID, well_name, site, zpos);
       let imgURL = createMergeImgURLFromChannels(channels);
 
       if (acquisitionIndex !== skipIndex) {
@@ -765,13 +772,15 @@ function drawPlatesListSidebar(origPlatesList){
 
     let acquisition = getSelectedAcquisition();
     // let site = getSelectedSiteIndex();
-    let channels = getLoadedPlate().getChannels(acquisition, well_name, site_name);
+    let zpos = getSelectedZpos();
+    let channels = getLoadedPlate().getChannels(acquisition, well_name, site_name, zpos);
     let imgURL = createMergeImgURLFromChannels(channels);
 
     let viewerURL = "/image-viewer/" + getLoadedPlate().getName() +
       "/tp/" + acquisition +
       "/well/" + well_name +
       "/site/" + site_name +
+      "/zpos/" + zpos +
       "/ch/" + getSelectedChannelValue() +
       "/url/" + imgURL;
 
@@ -791,7 +800,10 @@ function drawPlatesListSidebar(origPlatesList){
     // get site to draw
     let site = getSelectedSite();
 
-    drawPlate(plateObj, acquisition, site, clearFirst);
+    // get z to draw
+    let zpos = getSelectedZpos();
+
+    drawPlate(plateObj, acquisition, site, zpos, clearFirst);
 
     drawImageAnalysisTableFiltered(plateObj)
   }
@@ -807,7 +819,6 @@ function drawPlatesListSidebar(origPlatesList){
     let table = document.createElement('table');
     table.id = 'plateTableOne';
     table.className = 'plateTable';
-
 
     // First add header row
     let headerRow = document.createElement('tr');
@@ -1023,7 +1034,7 @@ function drawPlatesListSidebar(origPlatesList){
 
   }
 
-  function drawPlate(plateObj, acquisition, sites, clearFirst) {
+  function drawPlate(plateObj, acquisition, sites, zpos, clearFirst) {
 
     console.log("plateObj", plateObj);
     console.log("clearFirst", clearFirst);
@@ -1104,9 +1115,16 @@ function drawPlatesListSidebar(origPlatesList){
 
           let context = siteCanvas.getContext('2d');
 
-          if(site.channels != null){
+          let zpos = getSelectedZpos();
 
-            let url = createMergeThumbImgURLFromChannels(site.channels);
+          console.log('site', site);
+          console.log('zpos', zpos);
+          console.log('site.zpos', site.zpos);
+
+
+          if(site.zpos[zpos].channels != null){
+
+            let url = createMergeThumbImgURLFromChannels(site.zpos[zpos].channels);
             let img = document.createElement('img');
             img.src = url;
             img.className = 'cellThumbImg';
@@ -1125,7 +1143,8 @@ function drawPlatesListSidebar(origPlatesList){
             siteCanvas.onclick = function () {
               openViewer(well_key, site_name);
             }
-
+          }else{
+            console.log('site.zpos[zpos].channels is null')
           }
 
           // // Add tooltip when hoovering an image
@@ -1268,6 +1287,11 @@ function drawPlatesListSidebar(origPlatesList){
     let elem = document.getElementById('site-select');
     return JSON.parse(elem.options[elem.selectedIndex].value);
   }
+
+  function getSelectedZpos() {
+    return '0';
+  }
+
 
   function getSelectedWell() {
     let elem = document.getElementById('well-select');
@@ -1441,10 +1465,16 @@ function drawPlatesListSidebar(origPlatesList){
     elemSelect.selectedIndex = getSelectIndexFromSelectValue(elemSelect, site);
   }
 
+  function setZSelection(z) {
+    let elemSelect = document.getElementById('z-select');
+    elemSelect.selectedIndex = getSelectIndexFromSelectValue(elemSelect, z);
+  }
+
   function setChannelSelection(channel) {
     let elemSelect = document.getElementById('channel-select');
     elemSelect.selectedIndex = getSelectIndexFromSelectValue(elemSelect, channel);
   }
+
 
 
   function getSelectIndexFromSelectValue(elemSelect, value) {
@@ -1470,13 +1500,38 @@ function drawPlatesListSidebar(origPlatesList){
     // Loop through the siteNames array
     for (let name of siteNames) {
       option_json = "[" + name + "]";
+      option_display = name;
       selected = (selected_site == option_json) ? true : false;
-      elemSelect.add(new Option(option_json, option_json, selected, selected));
+      elemSelect.add(new Option(option_display, option_json, selected, selected));
     }
 
     // finally add an "all" option
     let allOption = JSON.stringify(siteNames)
     elemSelect.add(new Option(allOption, allOption));
+  }
+
+  function updateZSelect(plateObj, selected_z) {
+    let elemSelect = document.getElementById('z-select');
+
+    // reset
+    elemSelect.options.length = 0;
+
+    // add as many options as sites
+    let names = plateObj.getAvailableZpos(getSelectedAcquisitionId());
+
+    // Loop through the names array
+    for (let name of names) {
+      option_json = "[" + name + "]";
+      option_display = name;
+      selected = (selected_z == option_json) ? true : false;
+      elemSelect.add(new Option(option_display, option_json, selected, selected));
+    }
+
+    // finally add an "all" option
+    if(names && names.length > 1){
+      let allOption = JSON.stringify(names)
+      elemSelect.add(new Option(allOption, allOption));
+    }
   }
 
   function updatePlateNameLabel(plate_name) {

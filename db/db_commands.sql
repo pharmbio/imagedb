@@ -258,19 +258,19 @@ CREATE OR REPLACE VIEW images_all_view AS
      LEFT JOIN compound ON ((plate_layout.batch_id = compound.batchid)));
 
 CREATE OR REPLACE VIEW images_minimal_view AS
-SELECT
-    images.id,
+SELECT images.id,
     images.plate_acquisition_id,
     plate_acquisition.project,
     images.plate_barcode,
     images.timepoint,
     images.well,
     images.site,
+    images.z,
     images.channel,
     images.path,
-    plate.size,
-    plate.cell_line,
-    plate.cells_per_well,
+    plate_layout.plate_size,
+    plate_layout.cell_line,
+    plate_layout.cells_per_well,
     plate_layout.layout_id,
     plate_layout.solvent,
     plate_layout.stock_conc,
@@ -281,13 +281,12 @@ SELECT
     plate_acquisition.channel_map_id,
     channel_map.map_id,
     channel_map.dye
-   FROM (((((images
+   FROM ((((images
      LEFT JOIN plate_acquisition ON ((images.plate_acquisition_id = plate_acquisition.id)))
      LEFT JOIN channel_map ON (((plate_acquisition.channel_map_id = channel_map.map_id) AND (images.channel = channel_map.channel))))
-     LEFT JOIN plate ON ((images.plate_barcode = plate.barcode)))
-     LEFT JOIN plate_layout ON (((plate.layout_id = plate_layout.layout_id) AND (plate_layout.well_id = images.well))))
+     LEFT JOIN plate_layout ON (((plate_layout.barcode = images.plate_barcode) AND (plate_layout.well_id = images.well))))
      LEFT JOIN compound ON ((plate_layout.batch_id = compound.batchid)));
-
+     
 
 -- Other tables
 

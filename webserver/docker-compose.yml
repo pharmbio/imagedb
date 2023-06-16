@@ -11,7 +11,7 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro2}
+      device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro}
       o: bind
   # this is microimages r-o share
   externalimages-bind:
@@ -66,4 +66,7 @@ services:
       - mikroimages-bind:/share/mikro
       - imagedb-bind:/share/imagedb
       - externalimages-bind:/share/data/external-datasets
+      - type: bind
+        source: /share/mikro2
+        target: /share/mikro2
 
