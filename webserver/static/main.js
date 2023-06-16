@@ -210,13 +210,13 @@
     }
   }
 
-  function initViewerWindow(){
+  function initViewerWindow(plate, acquisition, well, site, zpos, channel){
     selectBrightnessFromStoredValue();
 
     console.log('plate', plate);
     console.log('channel', channel);
 
-    loadPlateFromViewer(plate, acquisition, well, site, channel);
+    loadPlateFromViewer(plate, acquisition, well, site, zpos, channel);
   }
 
 
@@ -490,7 +490,7 @@ function drawPlatesListSidebar(origPlatesList){
       });
   }
 
-  function loadPlateFromViewer(plate_name, acquisition, well, site, channel) {
+  function loadPlateFromViewer(plate_name, acquisition, well, site, zpos, channel) {
 
     console.log('plate_name', plate_name);
     console.log('channel', channel);

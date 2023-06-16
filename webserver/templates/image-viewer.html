@@ -170,9 +170,16 @@
 
               <!-- Channel selector -->
               <div class="input-group-prepend ml-2 ">
-                <label class="input-group-text" for="channel-select">Channel</label>
+                <label class="input-group-text" for="channel-select">Ch</label>
               </div>
               <select class="custom-select" style="width: 75px;" id="channel-select">
+              </select>
+
+              <!-- Z selector -->
+              <div class="input-group-prepend ml-2">
+                <label class="input-group-text" for="z-select">Z</label>
+              </div>
+              <select class="custom-select" id="z-select" style="width: 50px;">
               </select>
 
               <!-- Brightness selector -->
@@ -395,12 +402,13 @@
     var caman = Caman;
     caman.Store.put = function () {};
 
-    let plate = '{{ plate }}';
-    let acquisition = '{{ acquisition }}';
-    let well = '{{ well }}';
-    let site = '[{{ site }}]';
-    let channel = '{{ channel }}';
-    initViewerWindow(plate, acquisition, well, site, channel);
+    let init_plate = '{{ plate }}';
+    let init_acquisition = '{{ acquisition }}';
+    let init_well = '{{ well }}';
+    let init_site = '[{{ site }}]';
+    let init_zpos = '[{{ zpos }}]';
+    let init_channel = '{{ channel }}';
+    initViewerWindow(init_plate, init_acquisition, init_well, init_site, init_zpos, init_channel);
   </script>
 
 </body>
