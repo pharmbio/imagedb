@@ -17,7 +17,7 @@ from filenames import pharmbio_nikon_filename_v3_multi
 from filenames import pharmbio_nikon_filename_v4_multi
 from filenames import pharmbio_nikon_filename_v5_multi
 from filenames import pharmbio_nikon_filename_v6_multi
-
+from filenames import pharmbio_nikon_filename_v7_single
 
 parsers = []
 parsers.append(pharmbio_squid_filename_v1)
@@ -28,6 +28,7 @@ parsers.append(pharmbio_nikon_filename_v3_multi)
 parsers.append(pharmbio_nikon_filename_v4_multi)
 parsers.append(pharmbio_nikon_filename_v5_multi)
 parsers.append(pharmbio_nikon_filename_v6_multi)
+parsers.append(pharmbio_nikon_filename_v7_single)
 parsers.append(pharmbio_IMX_filename_standard)
 parsers.append(pharmbio_IMX_filename_older)
 parsers.append(pharmbio_IMX_filename_relaxed)

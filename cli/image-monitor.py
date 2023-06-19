@@ -22,7 +22,7 @@ import settings as imgdb_settings
 __connection_pool = None
 
 IMAGE_EXTENSIONS = (".tif", ".tiff", ".png", ".jpg", ".jpeg", ".bmp")
-EXCLUDED_EXTENSIONS = (".ome.tiff")
+EXCLUDED_EXTENSIONS = (".ome.tiff.not.used.anymore")
 
 def get_connection():
 
@@ -444,7 +444,15 @@ def find_dirs_containing_img_files_recursive(path: str):
         if entry.is_file():
             # return parent path if file is imagefile, then break scandir-loop
             if entry.path.lower().endswith( IMAGE_EXTENSIONS ) and not entry.path.lower().endswith( EXCLUDED_EXTENSIONS ):
-                yield(Path(entry.path).parent)
+
+                parent = Path(entry.path).parent
+                yield(parent)
+
+                # check if single_images subdir also exists, if so add that one to
+                single_images_dir = parent / "single_images"
+                if os.path.exists(single_images_dir):
+                    yield single_images_dir
+
                 break
 
 def update_finished_plate_acquisitions(cutoff_time):
