@@ -435,6 +435,7 @@ def find_dirs_containing_img_files_recursive(path: str):
     """
     Yield lowest level directories containing image files as Path (not starting with '.')
     the method is called recursively to find all subdirs
+    It breaks the recursion when it finds an image file to avoid looking through all files (long operation)
     """
 
     for entry in os.scandir(path):
@@ -448,6 +449,7 @@ def find_dirs_containing_img_files_recursive(path: str):
                 parent = Path(entry.path).parent
                 yield(parent)
 
+                # A little hack to get subdir "single_images" if it exist, before break looking through this directory
                 # check if single_images subdir also exists, if so add that one to
                 single_images_dir = parent / "single_images"
                 if os.path.exists(single_images_dir):
@@ -527,6 +529,10 @@ def import_plate_images_and_meta(plate_dir: str):
 # directories that doesn't have images or is throwing error when processed
 blacklist: list[str] = []
 blacklist.append('/share/mikro/IMX/MDC_pharmbio/trash/')
+blacklist.append('/share/mikro2/nikon/trash/')
+blacklist.append('/share/mikro2/squid/trash/')
+
+
 
 # processed filenames and timestamp when processed
 processed: dict[str, float]= dict()

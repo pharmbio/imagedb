@@ -65,16 +65,23 @@ def makeThumb_opencv(path, thumbpath, overwrite):
     # create thumb
     maxsize = (120,120)
 
-    origimg = cv2.imread(path)
-    imRes = cv2.resize(origimg, maxsize, interpolation = cv2.INTER_AREA)
+    try:
+      origimg = cv2.imread(path)
+      imRes = cv2.resize(origimg, maxsize, interpolation = cv2.INTER_AREA)
 
-    # create dir if needed
-    directory = os.path.dirname(thumbpath_with_ext)
-    if not os.path.exists(directory):
-      os.makedirs(directory)
+      # create dir if needed
+      directory = os.path.dirname(thumbpath_with_ext)
+      if not os.path.exists(directory):
+        os.makedirs(directory)
 
-    # save thumb
-    cv2.imwrite(thumbpath_with_ext, imRes)
+      # save thumb
+      cv2.imwrite(thumbpath_with_ext, imRes)
+    except cv2.error as e:
+
+        # handle error: empty frame
+        if e.err == "!ssize.empty()":
+          logging.error("Error making thumb could be that image is multi-doc-tiff?")
+          raise
 
 def tif2png_recursive(in_path, out_path):
   exts = ['.tif', '.tiff']
