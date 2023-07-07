@@ -257,6 +257,7 @@ CREATE OR REPLACE VIEW images_all_view AS
      LEFT JOIN plate_layout ON (((plate.layout_id = plate_layout.layout_id) AND (plate_layout.well_id = images.well))))
      LEFT JOIN compound ON ((plate_layout.batch_id = compound.batchid)));
 
+DROP VIEW images_minimal_view;
 CREATE OR REPLACE VIEW images_minimal_view AS
 SELECT images.id,
     images.plate_acquisition_id,
@@ -286,7 +287,7 @@ SELECT images.id,
      LEFT JOIN channel_map ON (((plate_acquisition.channel_map_id = channel_map.map_id) AND (images.channel = channel_map.channel))))
      LEFT JOIN plate_layout ON (((plate_layout.barcode = images.plate_barcode) AND (plate_layout.well_id = images.well))))
      LEFT JOIN compound ON ((plate_layout.batch_id = compound.batchid)));
-     
+
 
 -- Other tables
 

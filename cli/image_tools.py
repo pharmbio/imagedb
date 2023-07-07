@@ -66,8 +66,14 @@ def makeThumb_opencv(path, thumbpath, overwrite):
     maxsize = (120,120)
 
     try:
-      origimg = cv2.imread(path)
-      imRes = cv2.resize(origimg, maxsize, interpolation = cv2.INTER_AREA)
+
+      if "nikon" in path:
+        img = cv2.imread(path, cv2.IMREAD_ANYDEPTH)
+        img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+      else:
+        img = cv2.imread(path)
+
+      imRes = cv2.resize(img, maxsize, interpolation = cv2.INTER_AREA)
 
       # create dir if needed
       directory = os.path.dirname(thumbpath_with_ext)

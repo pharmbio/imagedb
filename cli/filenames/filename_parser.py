@@ -18,6 +18,7 @@ from filenames import pharmbio_nikon_filename_v4_multi
 from filenames import pharmbio_nikon_filename_v5_multi
 from filenames import pharmbio_nikon_filename_v6_multi
 from filenames import pharmbio_nikon_filename_v7_single
+from filenames import pharmbio_nikon_filename_v8_single
 
 parsers = []
 parsers.append(pharmbio_squid_filename_v1)
@@ -28,6 +29,7 @@ parsers.append(pharmbio_nikon_filename_v3_multi)
 parsers.append(pharmbio_nikon_filename_v4_multi)
 parsers.append(pharmbio_nikon_filename_v5_multi)
 parsers.append(pharmbio_nikon_filename_v6_multi)
+parsers.append(pharmbio_nikon_filename_v8_single)
 parsers.append(pharmbio_nikon_filename_v7_single)
 parsers.append(pharmbio_IMX_filename_standard)
 parsers.append(pharmbio_IMX_filename_older)
@@ -102,4 +104,7 @@ if __name__ == '__main__':
     print("\nretval = " + str(retval))
 
     retval = parse_path_and_file( "/share/mikro2/nikon/RMS-SPECS/RMS-PB000041-FA-RH30/single_images/A11_s1c1.tif")
+    print("\nretval = " + str(retval))
+    
+    retval = parse_path_and_file( "/share/mikro2/nikon/spheroid-test/pilot10-spheroid-P1-9/Well-J18-z1-CONC.ome.tiff")
     print("\nretval = " + str(retval))
