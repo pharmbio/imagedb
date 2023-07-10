@@ -56,13 +56,12 @@ class IndexTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
 
 class ImageViewerTemplateHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
 
-    def get(self, plate, acquisition, well, site, zpos, channel, imageurl):
+    def get(self, plate, acquisition, well, site, channel, imageurl):
 
         logging.debug('plate' + str(plate))
         logging.debug('acquisition' + str(acquisition))
         logging.debug('well' + str(well))
         logging.debug('site' + str(site))
-        logging.debug('zpos' + str(zpos))
         logging.debug('channel' + str(channel))
         logging.debug(self.request.body_arguments)
 
@@ -72,7 +71,6 @@ class ImageViewerTemplateHandler(tornado.web.RequestHandler): #pylint: disable=a
                      acquisition=acquisition,
                      well=well,
                      site=site,
-                     zpos=zpos,
                      channel=channel)
 
 
@@ -81,9 +79,9 @@ ROUTES = [
           (r'/api/list-plates', ListAllPlatesQueryHandler),
           (r'/api/list/image_analyses/(?P<limit>.+)/(?P<sortorder>.+)/(?P<plate_barcode>.+)', ListImageAnalysesHandler),
           (r'/api/plate/(?P<plate>.+)', GetPlateQueryHandler),
-          (r'/api/image-merge/normalization/(?P<normalization>.+)/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ImageMergeHandler),
-          (r'/api/image-merge-thumb/normalization/(?P<normalization>.+)/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ThumbImageMergeHandler),
-          (r'/image-viewer/(?P<plate>.+)/tp/(?P<acquisition>.+)/well/(?P<well>.+)/site/(?P<site>.+)/zpos/(?P<zpos>.+)/ch/(?P<channel>.+)/url/(?P<imageurl>.+)', ImageViewerTemplateHandler),
+          (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ImageMergeHandler),
+          (r'/api/image-merge-thumb/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ThumbImageMergeHandler),
+          (r'/image-viewer/(?P<plate>.+)/tp/(?P<acquisition>.+)/well/(?P<well>.+)/site/(?P<site>.+)/ch/(?P<channel>.+)/url/(?P<imageurl>.+)', ImageViewerTemplateHandler),
           (r'/bstest.html', DefaultTemplateHandler),
           (r'/index.html', IndexTemplateHandler),
           (r'/', IndexTemplateHandler),
@@ -92,7 +90,7 @@ ROUTES = [
 if __name__ == '__main__':
 
     #tornado.log.enable_pretty_logging()
-
+    
     logging.getLogger('tornado.access').disabled = True
 
     logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',

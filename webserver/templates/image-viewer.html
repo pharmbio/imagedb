@@ -170,16 +170,9 @@
 
               <!-- Channel selector -->
               <div class="input-group-prepend ml-2 ">
-                <label class="input-group-text" for="channel-select">Ch</label>
+                <label class="input-group-text" for="channel-select">Channel</label>
               </div>
               <select class="custom-select" style="width: 75px;" id="channel-select">
-              </select>
-
-              <!-- Z selector -->
-              <div class="input-group-prepend ml-2">
-                <label class="input-group-text" for="z-select">Z</label>
-              </div>
-              <select class="custom-select" id="z-select" style="width: 50px;">
               </select>
 
               <!-- Brightness selector -->
@@ -212,18 +205,12 @@
                 <button id="saveimgbutton" type="button" class="btn btn-secondary" on>Save image</button>
               </div>
 
+
+
               <!-- Scalebar -->
               <div class="form-group form-check" style="margin-bottom: 0px;margin-left: 5px">
                 <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="scalebar-cbx">
                 <label class="form-check-label" style="margin-top:0.8rem;" for="scalebar-cbx">Scalebar</label>
-              </div>
-
-              <!-- Normalization -->
-              <div class="form-group form-check" style="margin-bottom: 0px;">
-                <div class="col-md-12">
-                  <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="normalization-cb">
-                  <label class="form-check-label" style="margin-top:0.8rem;" for="normalization-cb">Normalization</label>
-                </div>
               </div>
 
             </div>
@@ -412,9 +399,8 @@
     let init_acquisition = '{{ acquisition }}';
     let init_well = '{{ well }}';
     let init_site = '[{{ site }}]';
-    let init_zpos = '[{{ zpos }}]';
     let init_channel = '{{ channel }}';
-    initViewerWindow(init_plate, init_acquisition, init_well, init_site, init_zpos, init_channel);
+    initViewerWindow(init_plate, init_acquisition, init_well, init_site, init_channel);
   </script>
 
 </body>

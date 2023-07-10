@@ -46,7 +46,6 @@ def get_plate(plate_name):
                        'path',
                        'well',
                        'site',
-                       'z',
                        'channel',
                        'dye',
                        'cell_line'
@@ -55,7 +54,7 @@ def get_plate(plate_name):
         query = ("SELECT " + ",".join(return_cols) +
                  " FROM images_minimal_view"
                  " WHERE plate_barcode = %s"
-                 " ORDER BY timepoint, plate_acquisition_id, well, site, z, channel")
+                 " ORDER BY timepoint, plate_acquisition_id, well, site, channel")
 
         logging.debug("query" + query)
 

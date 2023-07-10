@@ -48,19 +48,6 @@ class Site:
 
     def __init__(self, id):
         self.id = id
-        self.zpos = dict()
-
-    def add_data(self, image_meta):
-        zpos_id = image_meta['z']
-        # get or create a new object with this key
-        z = self.zpos.setdefault(zpos_id, Zpos(zpos_id))
-        z.add_data(image_meta)
-
-
-class Zpos:
-
-    def __init__(self, id):
-        self.id = id
         self.channels = dict()
 
     def add_data(self, image_meta):
@@ -69,6 +56,7 @@ class Zpos:
         # get or create a new object with this key
         channel = self.channels.setdefault(channel_id, Channel(channel_id, channel_dye))
         channel.add_data(image_meta)
+
 
 class Channel:
 
