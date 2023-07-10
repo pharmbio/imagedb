@@ -586,11 +586,11 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
         logging.info(f"len(img_dirs): {len(img_dirs)}")
 
-        # # remove blacklisted from list(Directories with unparsable images that were found since start of program)
-        # for path in set(img_dirs):
-        #     if str(path) in blacklist:
-        #         img_dirs.remove(path)
-        #         #logging.info("removed because blacklisted: " + str(path))
+        # remove blacklisted from list(Directories with unparsable images that were found since start of program)
+        for path in set(img_dirs):
+            if str(path) in blacklist:
+                img_dirs.remove(path)
+                logging.info("removed because blacklisted: " + str(path))
 
         logging.info(f"img dirs left: " + str(img_dirs))
 
