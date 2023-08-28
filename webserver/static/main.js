@@ -210,7 +210,7 @@
     }
   }
 
-  function initViewerWindow(){
+  function initViewerWindow(plate, acquisition, well, site, channel){
     selectBrightnessFromStoredValue();
 
     console.log('plate', plate);
