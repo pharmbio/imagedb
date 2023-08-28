@@ -1,6 +1,5 @@
-tornado==6.0.2
-numpy==1.16.3
-opencv-python==4.1.0.25
-Pillow==6.2.1
-psycopg2==2.8.3
+tornado==6.1
+opencv-python==4.8.0.74
+Pillow==10
+psycopg2==2.9.3
 jsonpickle==2.2
