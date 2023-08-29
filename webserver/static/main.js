@@ -194,6 +194,7 @@
 
   function initMainWindow(plateBarcode, acquisitionID) {
     selectBrightnessFromStoredValue();
+    selectNormalizationFromStoredValue();
     selectShowHiddenFromStoredValue();
     selectShowCompoundsFromStoredValue();
     apiListPlates();
@@ -212,6 +213,7 @@
 
   function initViewerWindow(plate, acquisition, well, site, channel){
     selectBrightnessFromStoredValue();
+    selectNormalizationFromStoredValue();
 
     console.log('plate', plate);
     console.log('channel', channel);
@@ -1179,6 +1181,10 @@ function drawPlatesListSidebar(origPlatesList){
     return parseInt(elem.options[elem.selectedIndex].value);
   }
 
+  function getSelectedNormalizationValue() {
+    return document.getElementById('normalization-cb').checked;
+  }
+
   function getSelectedShowHiddenValue() {
     return document.getElementById('show-hidden-cb').checked;
   }
@@ -1194,6 +1200,11 @@ function drawPlatesListSidebar(origPlatesList){
     let elem = document.getElementById('brightness-select');
     let index = getIndexFromValue(elem.options, brightness);
     elem.selectedIndex = index;
+  }
+
+  function selectNormalizationFromStoredValue(){
+    let value = getNormalizationFromStore();
+    document.getElementById('normalization-cb').checked = value;
   }
 
   function selectShowHiddenFromStoredValue(){
@@ -1605,6 +1616,8 @@ function drawPlatesListSidebar(origPlatesList){
       return "/static/images/empty.png";
     }
 
+    normalization = getSelectedNormalizationValue();
+
     try{
       let value = String(getSelectedChannelValue());
 
@@ -1614,15 +1627,15 @@ function drawPlatesListSidebar(origPlatesList){
       if (selected.length == 2) {
         channel_blue = selected[0];
         channel_red = selected[1];
-        url = "/api/image-merge-thumb/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + 'undefined' + "/channels.png";
+        url = "/api/image-merge-thumb/normalization/" + normalization + "/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + 'undefined' + "/channels.png";
       } else if (selected.length == 3) {
         channel_blue = selected[0];
         channel_red = selected[1];
         channel_green = selected[2];
-        url = "/api/image-merge-thumb/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + channels[channel_green].path + "/channels.png";
+        url = "/api/image-merge-thumb/normalization/" + normalization + "/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + channels[channel_green].path + "/channels.png";
       } else {
         let channel_grey = selected[0];
-        url = "/api/image-merge-thumb/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+        url = "/api/image-merge-thumb/normalization/" + normalization + "/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
       }
 
       return url;
@@ -1639,6 +1652,8 @@ function drawPlatesListSidebar(origPlatesList){
       return "/static/images/empty.png";
     }
 
+    normalization = getSelectedNormalizationValue();
+
     try{
       let value = String(getSelectedChannelValue());
 
@@ -1648,15 +1663,15 @@ function drawPlatesListSidebar(origPlatesList){
       if (selected.length == 2) {
         channel_blue = selected[0];
         channel_red = selected[1];
-        url = "/api/image-merge/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + 'undefined' + "/channels.png";
+        url = "/api/image-merge/normalization/" + normalization + "/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + 'undefined' + "/channels.png";
       } else if (selected.length == 3) {
         channel_blue = selected[0];
         channel_red = selected[1];
         channel_green = selected[2];
-        url = "/api/image-merge/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + channels[channel_green].path + "/channels.png";
+        url = "/api/image-merge/normalization/" + normalization + "/ch1/" + channels[channel_blue].path + "/ch2/" + channels[channel_red].path + "/ch3/" + channels[channel_green].path + "/channels.png";
       } else {
         let channel_grey = selected[0];
-        url = "/api/image-merge/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
+        url = "/api/image-merge/normalization/" + normalization + "/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
       }
 
       return url;
@@ -1710,6 +1725,12 @@ function drawPlatesListSidebar(origPlatesList){
   function brightnessSelectChanged() {
     let brightness = getSelectedBrightnessValue();
     setBrightnessInStore(brightness);
+    redrawPlate();
+  }
+
+  function normalizationSelectChanged() {
+    let value = getSelectedNormalizationValue();
+    setNormalizationInStore(value);
     redrawPlate();
   }
 
@@ -2127,6 +2148,14 @@ function drawPlatesListSidebar(origPlatesList){
     return value;
   }
 
+  function getNormalizationFromStore() {
+    let value = getCookieData("normalization");
+    if (value == null) {
+      value = getDefaultNormalization();
+    }
+    return value;
+  }
+
   function getShowHiddenFromStore() {
     let value = getCookieData("showHidden");
     if (value == null) {
@@ -2147,6 +2176,10 @@ function drawPlatesListSidebar(origPlatesList){
     return 100;
   }
 
+  function getDefaultNormalization(){
+    return true;
+  }
+
   function getDefaultShowHidden(){
     return true;
   }
@@ -2157,6 +2190,10 @@ function drawPlatesListSidebar(origPlatesList){
 
   function setBrightnessInStore(value) {
     setCookieData("brightness", value);
+  }
+
+  function setNormalizationInStore(value) {
+    setCookieData("normalization", value);
   }
 
   function setShowHiddenInStore(value) {

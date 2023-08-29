@@ -287,6 +287,16 @@
             </div>
         </form>
 
+        <!-- Normalizationi form -->
+        <form id='normalization-form'>
+            <div class="form-group form-check" style="margin-bottom: 0px;">
+              <div class="col-md-12">
+                <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="normalization-cb">
+                <label class="form-check-label" style="margin-top:0.8rem;" for="normalization-cb">Normalization</label>
+              </div>
+            </div>
+        </form>
+
 
         <!-- Navbar menues -->
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -478,7 +488,7 @@
   <script src="/static/splitterbar/SplitterBar.js"></script>
 
   <!-- this imagedb -->
-  <script src='/static/main.js?version=1.06'></script>
+  <script src='/static/main.js?version=1.08'></script>
 
   <!-- Body inline script -->
   <script>
@@ -529,6 +539,7 @@
       $("#animate-cbx").change(animateCbxChanged);
       $("#show-hidden-cb").change(showHiddenSelectChanged);
       $("#show-compounds-cb").change(showCompoundsSelectChanged);
+      $("#normalization-cb").change(normalizationSelectChanged);
 
       // Call init window javascript function
       let plateBarcode = '{{barcode}}';

@@ -17,7 +17,7 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
     """
     The image handler returns actual images, not just links
     """
-    async def get(self, ch1, ch2, ch3):
+    async def get(self, ch1, ch2, ch3, normalization):
         """Handles GET requests.
         """
 
@@ -26,6 +26,7 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
         logging.debug("ch1:" + ch1)
         logging.debug("ch2:" + ch2)
         logging.debug("ch3:" + ch3)
+        logging.debug("normalization:" + normalization)
 
         channels= {'1':ch1}
 
@@ -39,9 +40,9 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
 
         img_path = None
         if len(channels) == 1:
-            img_path = tif2png(channels, imgdb_settings.IMAGES_CACHE_FOLDER)
+            img_path = tif2png(channels, imgdb_settings.IMAGES_CACHE_FOLDER, normalization)
         else:
-            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER)
+            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, normalization)
 
         logging.debug(img_path)
 
@@ -79,7 +80,7 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
         if len(channels) == 1:
             img_path = channels['1']
         else:
-            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER)
+            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, False)
 
         # logging.debug(img_path)
 
