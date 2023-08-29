@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN apt-get update && apt-get upgrade -y
 
@@ -11,12 +11,6 @@ RUN apt-get update && apt-get install -y \
         python3.10-dev \
         python3.10-distutils \
         python3-pip 
-
-# opencv-python lib deps
-RUN apt-get install -y \
-        libsm6 \
-        libxext6 \
-        libxrender-dev
 
 # install postgres devtools
 RUN apt-get update && apt-get install -y \
@@ -36,4 +30,10 @@ RUN python3.10 -m pip install -r /app/requirements.txt
 ADD . /app
 WORKDIR /app
 
-CMD ["python3.10", "server.py", "--develop"]
+RUN ln -sf /usr/bin/python3.10 /usr/bin/python3
+
+RUN apt-get install -y libpng-dev libjpeg-dev libopenexr-dev libtiff-dev libwebp-dev
+
+RUN apt-get install -y libgl1-mesa-glx libgl1
+
+CMD ["python3", "server.py", "--develop"]

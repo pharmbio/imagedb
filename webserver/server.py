@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-Simple Tornado server.
-"""
-
 import os
 import logging
 import tornado
