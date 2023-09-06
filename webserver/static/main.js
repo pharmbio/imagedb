@@ -1581,6 +1581,13 @@ function drawPlatesListSidebar(origPlatesList){
       elemSelect.add( new Option("H,C,P", "" + b + "," + r + "," + g) );
     }
 
+    is_subset = ['HOECHST', 'PHAandWGA'].every(val => channel_names.includes(val))
+    if(is_subset){
+      b = getChannelIdFromDye('HOECHST', channels);
+      g = getChannelIdFromDye('PHAandWGA', channels);
+      elemSelect.add( new Option("H,P", "" + b + "," + g) );
+    }
+
     // add as many options as channels
     for(const [key, value] of Object.entries(channels)){
       channel_name = value.dye;
