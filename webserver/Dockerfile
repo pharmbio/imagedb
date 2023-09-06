@@ -27,13 +27,13 @@ RUN python3.10 -m pip --version
 
 RUN python3.10 -m pip install -r /app/requirements.txt
 
-ADD . /app
-WORKDIR /app
-
 RUN ln -sf /usr/bin/python3.10 /usr/bin/python3
 
 RUN apt-get install -y libpng-dev libjpeg-dev libopenexr-dev libtiff-dev libwebp-dev
 
 RUN apt-get install -y libgl1-mesa-glx libgl1
+
+ADD . /app
+WORKDIR /app
 
 CMD ["python3", "server.py", "--develop"]

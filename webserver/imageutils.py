@@ -9,12 +9,14 @@ import settings as imgdb_settings
 
 from fileutils import create_merged_filepath, create_pngconverted_filepath
 
-def tif2png(channels, outdir, overwrite_existing=False):
-    return tif2png_opencv(channels, outdir, overwrite_existing )
+def tif2png(channels, outdir, overwrite_existing=False, normalize=False):
+    return tif2png_opencv(channels, outdir, overwrite_existing, normalize)
 
-def tif2png_opencv(channels, outdir, overwrite_existing=False, normalize=True):
+def tif2png_opencv(channels, outdir, overwrite_existing=False, normalize=False):
 
     #logging.debug(channels)
+    overwrite_existing=True
+    normalize=True
 
     tiff_path = channels.get('1')
 
@@ -35,7 +37,10 @@ def tif2png_opencv(channels, outdir, overwrite_existing=False, normalize=True):
         # Save the merged image
         if not os.path.exists(os.path.dirname(png_path)):
             os.makedirs(os.path.dirname(png_path))
+        logging.info("overwriting")
         cv2.imwrite(png_path, img)
+
+    logging.info("Done tif2png_opencv")
 
     return png_path
 
@@ -84,12 +89,16 @@ def auto_white_balance(im, p=.6):
 
     return im
 
-async def merge_channels(channels, outdir, overwrite_existing=True):
+async def merge_channels(channels, outdir, overwrite_existing=True, normalization=False):
     ''' For now in image veiewer read image as 8 bit grayscale cv2.IMREAD_GRAYSCALE
         instead of 16 bit cv2.IMREAD_UNCHANGED (can't see difference in img viewer and saves 90% of size)
         and also dont create np array with np.uint16'''
 
-    #logging.info("Inside async merge")
+    logging.info("Inside merge_channels")
+    logging.info(f"normalization: {normalization}")
+    overwrite_existing=True
+    logging.info(f"overwrite_existing: {overwrite_existing}")
+
 
  #   for k, v in channels.items():
  #     logging.debug("key" + str(k))
@@ -104,7 +113,8 @@ async def merge_channels(channels, outdir, overwrite_existing=True):
 
     merged_file = create_merged_filepath(outdir, paths)
 
-    #logging.debug('merged_file=' + str(merged_file))
+
+    logging.info('merged_file=' + str(merged_file))
 
     READTYPE = cv2.IMREAD_ANYDEPTH
 
@@ -124,14 +134,18 @@ async def merge_channels(channels, outdir, overwrite_existing=True):
 
         # Add the channels to the needed image one by one
         # opencv uses bgr format instead of rgb
-        b = cv2.normalize(b, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        if normalization:
+          b = cv2.normalize(b, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        else:
+          b = cv2.imread(paths[1], cv2.IMREAD_GRAYSCALE)
         merged_img[:, :, 0] = b
 
         if len(paths) > 1:
             r = cv2.imread(paths[1], READTYPE)
             if r is None:
                 raise Exception('image read returned NONE, path: ' + str(paths[1]))
-
+            if normalization:
+                b = cv2.imread(paths[1], cv2.IMREAD_GRAYSCALE)
             r = cv2.normalize(r, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
             merged_img[:, :, 2] = r
 

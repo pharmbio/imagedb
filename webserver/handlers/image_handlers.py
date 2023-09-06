@@ -26,7 +26,7 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
         logging.debug("ch1:" + ch1)
         logging.debug("ch2:" + ch2)
         logging.debug("ch3:" + ch3)
-        logging.debug("normalization:" + normalization)
+        logging.info("normalization:" + normalization)
 
         channels= {'1':ch1}
 
@@ -54,10 +54,10 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
     """
     The image handler returns actual images, not just links
     """
-    async def get(self, ch1, ch2, ch3):
+    async def get(self, ch1, ch2, ch3, normalization):
         """Handles GET requests.
         """
-        
+
         logging.debug("Inside ThumbImageMergeHandler")
 
         channels = {'1': ch1}
