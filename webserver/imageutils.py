@@ -14,10 +14,6 @@ def tif2png(channels, outdir, overwrite_existing=False, normalize=False):
 
 def tif2png_opencv(channels, outdir, overwrite_existing=False, normalize=False):
 
-    #logging.debug(channels)
-    overwrite_existing=True
-    normalize=True
-
     tiff_path = channels.get('1')
 
     png_path = create_pngconverted_filepath(outdir, tiff_path)
@@ -54,7 +50,6 @@ def tif2png_pillow(channels, outdir, overwrite_existing=False):
 
     #logging.debug('merged_file=' + str(png_path))
 
-
     # Check if file exists already
     if not os.path.isfile(png_path) or overwrite_existing:
 
@@ -89,14 +84,13 @@ def auto_white_balance(im, p=.6):
 
     return im
 
-async def merge_channels(channels, outdir, overwrite_existing=True, normalization=False):
+async def merge_channels(channels, outdir, overwrite_existing=False, normalization=False):
     ''' For now in image veiewer read image as 8 bit grayscale cv2.IMREAD_GRAYSCALE
         instead of 16 bit cv2.IMREAD_UNCHANGED (can't see difference in img viewer and saves 90% of size)
         and also dont create np array with np.uint16'''
 
     logging.info("Inside merge_channels")
     logging.info(f"normalization: {normalization}")
-    overwrite_existing=True
     logging.info(f"overwrite_existing: {overwrite_existing}")
 
 
