@@ -1604,8 +1604,10 @@ function drawPlatesListSidebar(origPlatesList){
   }
 
   function removeChildren(domObject) {
-    while (domObject.firstChild) {
-      domObject.removeChild(domObject.firstChild);
+    if(domObject){
+      while (domObject.firstChild) {
+        domObject.removeChild(domObject.firstChild);
+      }
     }
   }
 
@@ -1731,7 +1733,7 @@ function drawPlatesListSidebar(origPlatesList){
   function normalizationSelectChanged() {
     let value = getSelectedNormalizationValue();
     setNormalizationInStore(value);
-    redrawPlate();
+    redrawPlateAndViewer();
   }
 
   function showHiddenSelectChanged() {
