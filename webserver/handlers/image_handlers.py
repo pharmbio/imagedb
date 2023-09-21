@@ -27,6 +27,10 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
         logging.debug("ch2:" + ch2)
         logging.debug("ch3:" + ch3)
 
+        normalization = False      
+        if "nikon" in ch1:
+            normalization = True
+
         channels= {'1':ch1}
 
         if not ch2 == 'undefined':
