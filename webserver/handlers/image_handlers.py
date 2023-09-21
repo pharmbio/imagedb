@@ -39,9 +39,9 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
 
         img_path = None
         if len(channels) == 1:
-            img_path = tif2png(channels, imgdb_settings.IMAGES_CACHE_FOLDER)
+            img_path = tif2png(channels, imgdb_settings.IMAGES_CACHE_FOLDER, normalize=normalization)
         else:
-            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER)
+            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, normalization=normalization)
 
         logging.debug(img_path)
 
@@ -79,7 +79,7 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
         if len(channels) == 1:
             img_path = channels['1']
         else:
-            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER)
+            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, False)
 
         # logging.debug(img_path)
 

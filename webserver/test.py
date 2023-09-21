@@ -1,9 +1,11 @@
-import os
+#!/usr/bin/env python3
+import hashlib
 import logging
-from handlers.query_handlers.py import search_db
+import cv2 as cv2
+from PIL import Image
+import numpy as np
 
-#logging.getLogger().setLevel(logging.DEBUG)
-#result = search_db("hej", DB_HOSTNAME="image-mongo")
-#logging.debug(result)
 
-print ("helo")
+
+print(f'cv2.CV_8U={cv2.CV_8U}') # type: ignore
+

@@ -1,5 +1,5 @@
 tornado==6.1
-opencv-python==4.8.0.74
+opencv-python==4.8.0.76
 Pillow==10
 psycopg2==2.9.3
 jsonpickle==2.2

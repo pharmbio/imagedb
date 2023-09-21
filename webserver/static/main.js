@@ -1600,8 +1600,10 @@ function drawPlatesListSidebar(origPlatesList){
   }
 
   function removeChildren(domObject) {
-    while (domObject.firstChild) {
-      domObject.removeChild(domObject.firstChild);
+    if(domObject){
+      while (domObject.firstChild) {
+        domObject.removeChild(domObject.firstChild);
+      }
     }
   }
 
