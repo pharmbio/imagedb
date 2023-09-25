@@ -27,9 +27,11 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
         logging.debug("ch2:" + ch2)
         logging.debug("ch3:" + ch3)
 
-        normalization = False      
+        normalization = False
+        overwrite_cache = False     
         if "nikon" in ch1:
             normalization = True
+            overwrite_cache = True
 
         channels= {'1':ch1}
 
@@ -43,9 +45,9 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
 
         img_path = None
         if len(channels) == 1:
-            img_path = tif2png(channels, imgdb_settings.IMAGES_CACHE_FOLDER, normalize=normalization)
+            img_path = tif2png(channels, imgdb_settings.IMAGES_CACHE_FOLDER, overwrite_existing=overwrite_cache, normalize=normalization)
         else:
-            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, normalization=normalization)
+            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, overwrite_existing=overwrite_cache, normalization=normalization)
 
         logging.debug(img_path)
 
