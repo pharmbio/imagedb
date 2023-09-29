@@ -103,12 +103,12 @@ def insert_meta_into_db(img_meta):
 
 
 def getPlateBarcodeFromPlateAcquisitionName(acquisition_name):
-    
+
     # extract barcode from acquisition_name (if there is one)
     match = re.search('(P[0-9]{6})_.*', acquisition_name)
     if match:
         return match.group(1)
-        
+
     # extract barcode from acquisition_name (if there is one)
     match = re.search('(PB[0-9]{6})_.*', acquisition_name)
     if match:
@@ -536,6 +536,7 @@ blacklist: list[str] = []
 blacklist.append('/share/mikro/IMX/MDC_pharmbio/trash/')
 blacklist.append('/share/mikro2/nikon/trash/')
 blacklist.append('/share/mikro2/squid/trash/')
+blacklist.append('/share/mikro2/squid/specs3k_2500px/')
 
 
 
