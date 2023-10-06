@@ -934,9 +934,12 @@ function drawPlatesListSidebar(origPlatesList){
 
   function color_from_cbkid(id){
     color = '#5d5d5d99'; //'#6c6c6c';
-    if(id in compColors){
-      color = compColors[id];
-      //console.log('color', color);
+    if (id !== null && typeof id === "string") {
+      if(id in compColors){
+        color = compColors[id];
+      }else if(id.startsWith('[')){
+        color = "#66ff66";
+      }
     }
 
     return color;
