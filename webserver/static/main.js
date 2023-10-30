@@ -360,6 +360,7 @@ function drawPlatesListSidebar(origPlatesList){
       let plate_barcode = result.plate_barcode;
       let acq_name = result.name;
       let acq_id = result.id;
+      let microscope = result.microscope;
 
       if(index < latest_results.length && !filter){
         // do nothing, we are still att "Latest acquisition" menu
@@ -377,7 +378,7 @@ function drawPlatesListSidebar(origPlatesList){
       let plate_item = document.createElement('li');
       let link = document.createElement('a');
       let linktext = acq_name;
-      let linkpopup_text = acq_name + " acq-id: " + acq_id + " project: " + proj;
+      let linkpopup_text = acq_name + " acq-id: " + acq_id + " project: " + proj + " micro: " + microscope;
       link.className = "text-info";
       link.href = "";
 

@@ -149,7 +149,7 @@ def list_all_plates():
 
         conn = get_connection()
 
-        query = ("SELECT DISTINCT name, plate_barcode, project, id, hidden "
+        query = ("SELECT DISTINCT name, plate_barcode, project, id, hidden, microscope "
                  " FROM plate_acquisition "
                  " ORDER BY project, name, plate_barcode, id")
 
