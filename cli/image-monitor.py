@@ -124,7 +124,7 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
     conn = None
     try:
 
-        insert_query = "INSERT INTO images(plate_acquisition_id, plate_barcode, timepoint, well, site, channel, z, path, file_meta, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        insert_query = "INSERT INTO images(plate_acquisition_id, plate_barcode, timepoint, well, site, channel, z, path, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
         conn = get_connection()
         insert_cursor = conn.cursor()
         insert_cursor.execute(insert_query, (plate_acq_id,
@@ -135,7 +135,6 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
                                              img_meta['channel'],
                                              img_meta.get('z', 0),
                                              img_meta['path'],
-                                             json.dumps(img_meta['file_meta']),
                                              json.dumps(img_meta)
                                              ))
         insert_cursor.close()
@@ -301,15 +300,15 @@ def make_compressed_copy(img_meta):
 def addImageToImagedb(img_meta):
     # read tiff-meta-tags
     # make inside try-catch so a corrupted image doesn't stop it all
-    tiff_meta = ""
-    try:
-        tiff_meta = image_tools.read_tiff_info(img_meta['path'])
-    except Exception as e:
-        logging.error("Exception reading tiff meta: %s", e)
-        logging.error("image: " + str(img_meta['path']))
-        logging.error( "Continuing since we don't want to break on a single bad image")
+    #tiff_meta = ""
+    #try:
+    #    tiff_meta = image_tools.read_tiff_info(img_meta['path'])
+    #except Exception as e:
+    #    logging.error("Exception reading tiff meta: %s", e)
+    #    logging.error("image: " + str(img_meta['path']))
+    #    logging.error( "Continuing since we don't want to break on a single bad image")
 
-    img_meta['file_meta'] = tiff_meta
+    #img_meta['file_meta'] = tiff_meta
 
     # insert into db
     insert_meta_into_db(img_meta)
