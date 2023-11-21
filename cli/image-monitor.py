@@ -13,7 +13,7 @@ from unittest import result
 import psycopg2
 from psycopg2 import pool
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import filenames.filename_parser
 import image_tools
@@ -124,7 +124,7 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
     conn = None
     try:
 
-        insert_query = "INSERT INTO images(plate_acquisition_id, plate_barcode, timepoint, well, site, channel, z, path, metadata) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        insert_query = "INSERT INTO images(plate_acquisition_id, plate_barcode, timepoint, well, site, channel, z, path) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
         conn = get_connection()
         insert_cursor = conn.cursor()
         insert_cursor.execute(insert_query, (plate_acq_id,
@@ -134,8 +134,7 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
                                              img_meta['wellsample'],
                                              img_meta['channel'],
                                              img_meta.get('z', 0),
-                                             img_meta['path'],
-                                             json.dumps(img_meta)
+                                             img_meta['path']
                                              ))
         insert_cursor.close()
         conn.commit()
@@ -461,7 +460,27 @@ def find_dirs_containing_img_files_recursive(path: str):
 
                 break
 
+
 def update_finished_plate_acquisitions(cutoff_time):
+    #update_finished_plate_acquisitions_from_file()
+    update_finished_plate_acquisitions_from_cutoff_time(cutoff_time)
+
+
+def update_finished_plate_acquisitions_from_file():
+    global processed
+
+    # first get unfinished acq from database
+    unfinished = select_unfinished_plate_acq_folder()
+
+    for plate_acq_folder in unfinished:
+
+        # if coordinates.csv file in plate_acq folder, then set finished
+        finished_flag_file = os.path.join(plate_acq_folder, "coordinates.csv")
+        if os.path.exists(finished_flag_file):
+            update_acquisition_finished(plate_acq_folder, time.time())
+
+
+def update_finished_plate_acquisitions_from_cutoff_time(cutoff_time):
     global processed
 
     # first get unfinished acq from database
