@@ -435,21 +435,25 @@ CREATE OR REPLACE VIEW image_analyses_v1 AS
 ;
 
 CREATE OR REPLACE VIEW image_analyses_per_plate AS
-  SELECT
-        plate_acquisition.project,
-        plate_acquisition.plate_barcode AS plate_barcode,
-        plate_acquisition.name AS plate_acq_name,
-        plate_acquisition.id AS plate_acq_id,
-        image_analyses.id AS analysis_id,
-        to_char(image_analyses.finish at time zone 'cet', 'YYYY-MM-DD')  AS analysis_date,
-        to_char(image_analyses.error at time zone 'cet', 'YYYY-MM-DD') AS analysis_error,
-        image_analyses.meta AS meta,
-        image_analyses.pipeline_name,
-        CONCAT('/share/data/cellprofiler/automation/',image_analyses.result::json->>'job_folder') AS results
-    FROM
-        plate_acquisition
-    LEFT JOIN image_analyses ON image_analyses.plate_acquisition_id = plate_acquisition.id
-;
+  SELECT 
+    plate_acquisition.project,
+    plate_acquisition.plate_barcode,
+    plate_acquisition.name AS plate_acq_name,
+    plate_acquisition.id AS plate_acq_id,
+    image_analyses.id AS analysis_id,
+    to_char(timezone('cet', image_analyses.finish), 'YYYY-MM-DD') AS analysis_date,
+    to_char(timezone('cet', image_analyses.error), 'YYYY-MM-DD') AS analysis_error,
+    image_analyses.meta,
+    image_analyses.pipeline_name,
+    concat('/share/data/cellprofiler/automation/', (image_analyses.result::json ->> 'job_folder')) AS results,
+    dataset.name AS dataset_name
+  FROM 
+      plate_acquisition
+  LEFT JOIN 
+      image_analyses ON image_analyses.plate_acquisition_id = plate_acquisition.id
+  LEFT JOIN 
+      dataset ON dataset.analysis_id = image_analyses.id;
+
 
 -- SELECT * FROM image_analyses_per_plate
 -- ORDER BY project, plate_barcode, plate_acq_name, meta, analysis_date
@@ -457,6 +461,16 @@ CREATE OR REPLACE VIEW image_analyses_per_plate AS
 -- SELECT project, plate_acq_name, meta, analysis_date, analysis_error, pipeline_name, plate_acq_id, analysis_id, results
 -- FROM image_analyses_per_plate
 -- ORDER BY project, plate_barcode, plate_acq_name, meta, analysis_date
+
+DROP TABLE IF EXISTS dataset;
+CREATE TABLE dataset (
+    name                    text,
+    analysis_id             int
+);
+
+CREATE INDEX  ix_dataset_name ON dataset(name);
+CREATE INDEX  ix_dataset_analysis_id ON dataset(analysis_id);
+ALTER TABLE dataset ADD CONSTRAINT constr_primary_key_dataset_name_analysis_id PRIMARY KEY (name, analysis_id);
 
 
 CREATE OR REPLACE VIEW image_sub_analyses_v1 AS
