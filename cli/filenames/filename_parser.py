@@ -10,6 +10,7 @@ from filenames import external_filename_cpjump
 from filenames import external_filename_david
 from filenames import external_filename_IMX
 from filenames import external_filename_gbm_IMX
+from filenames import external_filename_IMX_v2
 from filenames import external_filename_opera_rXcXfXpX_chXskXfkXflX
 from filenames import pharmbio_nikon_filename_v1
 from filenames import pharmbio_nikon_filename_v2_exported
@@ -39,6 +40,7 @@ parsers.append(pharmbio_IMX_filename_older)
 parsers.append(pharmbio_IMX_filename_relaxed)
 parsers.append(external_filename_christa)
 parsers.append(external_filename_gbm_IMX)
+parsers.append(external_filename_IMX_v2)
 parsers.append(external_filename_IMX)
 parsers.append(external_filename_cpjump)
 parsers.append(external_filename_david)
@@ -113,4 +115,7 @@ if __name__ == '__main__':
     print("\nretval = " + str(retval))
 
     retval = parse_path_and_file( "/share/mikro2/nikon/cleo-test/P013730-live-cell-run3/K16_s2__Channel_446-er.ome.tiff")
+    print("\nretval = " + str(retval))
+
+    retval = parse_path_and_file( "/share/data/external-datasets/Morphomac/torkild/2023-08-11/23764/2023-U35_THP-1_I02_s1_w3_thumbA99DF1CF-9039-4190-8FB9-0594BBE3A896.tif")
     print("\nretval = " + str(retval))

@@ -117,6 +117,11 @@ if __name__ == '__main__':
     retval = parse_path_and_file("/share/data//external-datasets/gbm/gbm120/Plate_11173_220802/TimePoint_1/20220802 IF9 8xC1-24 R1 3013 P1_K01_s10_w1.TIF")
     print("\nretval = " + str(retval))
 
+    retval = parse_path_and_file("/share/data//external-datasets/Morphomac/torkild/23764/2023-U35_THP-1_I02_s1_w3_thumbA99DF1CF-9039-4190-8FB9-0594BBE3A896.tif")
+    print("\nretval = " + str(retval))
+
+    
+
     # .*\/(.*)\/(.*)\/.*
     # .*\/(.*)_s(.*)_w([0-9]+)([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})(.*)\.(.*)
 

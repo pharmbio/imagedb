@@ -232,23 +232,28 @@ CREATE OR REPLACE VIEW images_all_view AS
     plate_acquisition.microscope,
     plate_acquisition.channel_map_id,
     channel_map.dye,
-    plate.size,
-    plate.seeded,
-    plate.cell_line,
-    plate.cells_per_well,
-    plate.type AS plate_type,
-    plate.treatment,
-    plate.treatment_units,
-    plate.painted,
-    plate.painted_type,
     plate_layout.layout_id,
+    plate_layout.well_id,
     plate_layout.solvent,
     plate_layout.stock_conc,
+    plate_layout.stock_conc_unit,
     plate_layout.pert_type,
     plate_layout.batch_id,
     plate_layout.cmpd_vol,
+    plate_layout.cmpd_vol_unit,
     plate_layout.well_vol,
+    plate_layout.well_vol_unit,
     plate_layout.cmpd_conc,
+    plate_layout.cmpd_conc_unit,
+    plate_layout.cell_line,
+    plate_layout.cells_per_well,
+    plate_layout.plate_size,
+    plate_layout.plate_type,
+    plate_layout.seeded,
+    plate_layout.treatment,
+    plate_layout.treatment_units,
+    plate_layout.painted,
+    plate_layout.painted_type,
     compound.batchid,
     compound.name AS compound_name,
     compound.cbkid,
@@ -257,11 +262,10 @@ CREATE OR REPLACE VIEW images_all_view AS
     compound.smiles,
     compound.inchi,
     compound.inkey
-   FROM (((((images
+   FROM ((((images
      LEFT JOIN plate_acquisition ON ((images.plate_acquisition_id = plate_acquisition.id)))
      LEFT JOIN channel_map ON (((plate_acquisition.channel_map_id = channel_map.map_id) AND (images.channel = channel_map.channel))))
-     LEFT JOIN plate ON ((images.plate_barcode = plate.barcode)))
-     LEFT JOIN plate_layout ON (((plate.layout_id = plate_layout.layout_id) AND (plate_layout.well_id = images.well))))
+     LEFT JOIN plate_layout ON (((plate_layout.barcode = images.plate_barcode) AND (plate_layout.well_id = images.well))))
      LEFT JOIN compound ON ((plate_layout.batch_id = compound.batchid)));
 
 DROP VIEW images_minimal_view;
@@ -435,7 +439,7 @@ CREATE OR REPLACE VIEW image_analyses_v1 AS
 ;
 
 CREATE OR REPLACE VIEW image_analyses_per_plate AS
-  SELECT 
+  SELECT
     plate_acquisition.project,
     plate_acquisition.plate_barcode,
     plate_acquisition.name AS plate_acq_name,
@@ -447,11 +451,11 @@ CREATE OR REPLACE VIEW image_analyses_per_plate AS
     image_analyses.pipeline_name,
     concat('/share/data/cellprofiler/automation/', (image_analyses.result::json ->> 'job_folder')) AS results,
     dataset.name AS dataset_name
-  FROM 
+  FROM
       plate_acquisition
-  LEFT JOIN 
+  LEFT JOIN
       image_analyses ON image_analyses.plate_acquisition_id = plate_acquisition.id
-  LEFT JOIN 
+  LEFT JOIN
       dataset ON dataset.analysis_id = image_analyses.id;
 
 
@@ -543,21 +547,29 @@ ALTER TABLE plate_layout ADD CONSTRAINT constr_primary_key_plate_layout_layout_i
 DROP VIEW plate_layout_v1;
 CREATE OR REPLACE VIEW plate_layout_v1 AS
   SELECT
+    plate_layout.barcode,
     plate_layout.layout_id,
     plate_layout.well_id,
-    plate_layout.batch_id,
     plate_layout.solvent,
     plate_layout.stock_conc,
     plate_layout.stock_conc_unit,
+    plate_layout.pert_type,
+    plate_layout.batch_id,
     plate_layout.cmpd_vol,
     plate_layout.cmpd_vol_unit,
     plate_layout.well_vol,
     plate_layout.well_vol_unit,
-    plate_layout.pert_type,
     plate_layout.cmpd_conc,
     plate_layout.cmpd_conc_unit,
     plate_layout.cell_line,
     plate_layout.cells_per_well,
+    plate_layout.plate_size,
+    plate_layout.plate_type,
+    plate_layout.seeded,
+    plate_layout.treatment,
+    plate_layout.treatment_units,
+    plate_layout.painted,
+    plate_layout.painted_type,
     compound.batchid,
     compound.cbkid,
     compound.libid,
