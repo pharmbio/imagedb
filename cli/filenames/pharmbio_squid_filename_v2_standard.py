@@ -53,9 +53,19 @@ def parse_path_and_file(path):
   logging.debug(imaging_type)
   if imaging_type == 'Fluorescence':
     channel_name = match.group(15).split('_nm')[0]
-    channels = ['405', '488', '561', '638', '730']
+    
+    channels_v1 = ['405', '488', '561', '638', '730']
+    channels_v2 = ['385', '470', '510', '560', '640']
+    
+    if channel_name in channels_v1:
+      channels = channels_v1
+      channel_map_id = 10
+    elif channel_name in channels_v2:
+      channels = channels_v2
+      channel_map_id = 28
+
     channel_pos = channels.index(channel_name) + 1
-    channel_map_id = 10
+    
   elif imaging_type == 'BF':
     channel_pos = 6
     channel_map_id = 22
