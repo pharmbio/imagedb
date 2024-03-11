@@ -21,8 +21,9 @@ import settings as imgdb_settings
 
 __connection_pool = None
 
-IMAGE_EXTENSIONS = (".tif", ".tiff", ".png", ".jpg", ".jpeg", ".bmp")
-EXCLUDED_EXTENSIONS = (".ome.tiff.not.used.anymore")
+IMAGE_EXTENSIONS = (".tif", ".tiff", ".png", ".jpg", ".jpeg", ".bmp") # lower case in this tuple collection
+EXCLUDED_EXTENSIONS = (".ome.tiff.not.used.anymore") # lower case in this tuple collection
+EXCLUDED_PREFIXES = ("otf_") # lower case in this tuple collection
 
 def get_connection():
 
@@ -76,7 +77,10 @@ def get_all_image_files(dir):
 
     image_files = []
     for file in os.listdir(dir):
-        if file.lower().endswith( IMAGE_EXTENSIONS ) and not file.lower().endswith( EXCLUDED_EXTENSIONS ):
+        file_lower = file.lower()  # Convert to lower case once to avoid multiple conversions
+        if (file_lower.endswith(IMAGE_EXTENSIONS) and
+                not (file_lower.endswith(EXCLUDED_EXTENSIONS) or file_lower.startswith(EXCLUDED_PREFIXES))):
+
             absolute_file = os.path.join(dir, file)
             image_files.append(absolute_file)
 
@@ -613,13 +617,15 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
         logging.info(f"img dirs left: " + str(img_dirs))
 
+        # TODO sort list?
+
         # Import images in imagedirs
         for img_dir in img_dirs:
             try:
                 import_plate_images_and_meta(str(img_dir))
             except Exception as e:
                     logging.exception("Exception in img_dir")
-                    # add dir to blacklist
+                    # add dir to blacklist if there are more than X wrong files in dir
                     logging.info("Add to blacklist img_dir: " + str(img_dir))
                     blacklist.append(str(img_dir))
                     exception_file = os.path.join(imgdb_settings.ERROR_LOG_DIR, "exceptions-last-poll.log")

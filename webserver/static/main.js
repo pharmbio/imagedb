@@ -871,11 +871,13 @@ function drawPlatesListSidebar(origPlatesList){
             info_div.setAttribute("data-animation", false);
             info_div.setAttribute("data-html", true);
 
-            let title = "Well: "            + well_meta.well_id       + "<br>" +
-                        "cbkid: "           + well_meta.cbkid         + "<br>" +
-                        "batchid: "         + well_meta.batch_id      + "<br>" +
-                        "compound-name: "   + well_meta.compound_name + "<br>" +
-                        "pert_type: "       + well_meta.pert_type     + "<br>" +
+            let title = "Well: "            + well_meta.well_id        + "<br>" +
+                        "cbkid: "           + well_meta.cbkid          + "<br>" +
+                        "batchid: "         + well_meta.batch_id       + "<br>" +
+                        "compound-name: "   + well_meta.compound_name  + "<br>" +
+                        "cmpd-conc: "       + well_meta.cmpd_conc      + "<br>" +
+                        "pert-type: "       + well_meta.pert_type      + "<br>" +
+                        "cells/well: "      + well_meta.cells_per_well + "<br>" +
                         "cell-line: "       + well_meta.cell_line;
 
             info_div.title = title;
