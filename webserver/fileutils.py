@@ -3,8 +3,8 @@ import os
 def create_merged_filepath(outdir, paths, suffix='.png'):
 
     # create a filename
-    for path in paths:
-      filename = "" + os.path.basename(path) + "-"
+    # Use list comprehension to extract base names and join them with hyphens
+    filename = "-".join([os.path.basename(path) for path in paths])
 
     filename = filename + suffix
 

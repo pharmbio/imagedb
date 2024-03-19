@@ -2,6 +2,7 @@ import os
 import logging
 from filenames import pharmbio_squid_filename_v1
 from filenames import pharmbio_squid_filename_v2_standard
+from filenames import pharmbio_squid_filename_BF_and_other_and_z
 from filenames import pharmbio_IMX_filename_standard
 from filenames import pharmbio_IMX_filename_older
 from filenames import pharmbio_IMX_filename_relaxed
@@ -25,6 +26,7 @@ from filenames import pharmbio_nikon_filename_v9_single
 
 
 parsers = []
+parsers.append(pharmbio_squid_filename_BF_and_other_and_z)
 parsers.append(pharmbio_squid_filename_v1)
 parsers.append(pharmbio_squid_filename_v2_standard)
 parsers.append(pharmbio_nikon_filename_v1)
@@ -62,6 +64,8 @@ def parse_path_and_file(filename):
 
     if not os.path.isdir(filename):
         raise Exception('Could not parse filename:' + str(filename))
+
+    return metadata
 
 
 if __name__ == '__main__':
@@ -112,7 +116,7 @@ if __name__ == '__main__':
 
     retval = parse_path_and_file( "/share/mikro2/nikon/RMS-SPECS/RMS-PB000041-FA-RH30/single_images/A11_s1c1.tif")
     print("\nretval = " + str(retval))
-    
+
     retval = parse_path_and_file( "/share/mikro2/nikon/spheroid-test/pilot10-spheroid-P1-9/Well-J18-z1-CONC.ome.tiff")
     print("\nretval = " + str(retval))
 

@@ -59,7 +59,8 @@ CREATE TABLE plate_acquisition (
   folder            text
   name              text,
   project           text,
-  finished          timestamp
+  finished          timestamp,
+  comment           text
 );
 CREATE INDEX ix_plate_acquisition_plate_barcode ON plate_acquisition(plate_barcode);
 CREATE INDEX ix_plate_acquisition_channel_map_id ON plate_acquisition(channel_map_id);
@@ -69,6 +70,8 @@ CREATE INDEX ix_plate_acquisition_name ON plate_acquisition(name);
 CREATE INDEX ix_plate_acquisition_project ON plate_acquisition(project);
 CREATE INDEX ix_plate_acquisition_imaged ON plate_acquisition(imaged);
 CREATE INDEX ix_plate_acquisition_finished ON plate_acquisition(finished);
+CREATE INDEX ix_plate_acquisition_comment ON plate_acquisition(comment);
+
 
 
 CREATE OR REPLACE VIEW plate_acquisition_v1 AS

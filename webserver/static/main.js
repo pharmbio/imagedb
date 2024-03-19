@@ -1563,6 +1563,14 @@ function drawPlatesListSidebar(origPlatesList){
       elemSelect.add (new Option("N,M,A", "" + b + "," + r + "," + g) );
     }
 
+    is_subset = ['NUCLEUS','GOLGI', 'ACTIN'].every(val => channel_names.includes(val))
+    if(is_subset){
+      b = getChannelIdFromDye('NUCLEUS', channels);
+      r = getChannelIdFromDye('GOLGI', channels);
+      g = getChannelIdFromDye('ACTIN', channels);
+      elemSelect.add (new Option("N,G,A", "" + b + "," + r + "," + g) );
+    }
+
     is_subset = ['HOECHST','MITO', 'PHA'].every(val => channel_names.includes(val))
     if(is_subset){
       b = getChannelIdFromDye('HOECHST', channels);
@@ -1592,6 +1600,14 @@ function drawPlatesListSidebar(origPlatesList){
       b = getChannelIdFromDye('HOECHST', channels);
       g = getChannelIdFromDye('PHAandWGA', channels);
       elemSelect.add( new Option("H,P", "" + b + "," + g) );
+    }
+
+    is_subset = ['BF', 'BFz1', 'BFz2'].every(val => channel_names.includes(val))
+    if(is_subset){
+      b = getChannelIdFromDye('BF', channels);
+      r = getChannelIdFromDye('BFz1', channels);
+      g = getChannelIdFromDye('BFz2', channels);
+      elemSelect.add( new Option("BF,BFz1,BFz2", "" + b + "," + r + "," + g) );
     }
 
     // add as many options as channels
