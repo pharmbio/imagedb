@@ -46,11 +46,50 @@
       border-radius: 2px;
     }
 
-    /* Sidebar size etc.*/
-    #sidebar-wrapper {
-      width: 180px;
-      white-space: nowrap;
-    }
+
+/* Adjustments for sidebar to make it scrollable */
+#sidebar-wrapper {
+  width: 180px;
+  white-space: nowrap;
+  max-height: 100vh; /* Full viewport height */
+  overflow-y: auto; /* Enable vertical scroll */
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+}
+
+/* Adjustments for right pane to make it scrollable */
+#page-content-wrapper {
+  max-height: 100vh; /* Full viewport height */
+  overflow-y: auto; /* Enable vertical scroll */
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+}
+
+/* Custom scrollbar styles for Webkit browsers */
+#sidebar-wrapper::-webkit-scrollbar, 
+#page-content-wrapper::-webkit-scrollbar {
+  width: 2px; /* Initial width */
+}
+
+#sidebar-wrapper::-webkit-scrollbar-track, 
+#page-content-wrapper::-webkit-scrollbar-track {
+  background: transparent; /* Optional: Track background */
+}
+
+#sidebar-wrapper::-webkit-scrollbar-thumb, 
+#page-content-wrapper::-webkit-scrollbar-thumb {
+  background: #dfdfdf; /* Scroll thumb color */
+  border-radius: 10px; /* Rounded corners for thumb */
+  opacity: 0.5;
+}
+
+#sidebar-wrapper:hover::-webkit-scrollbar-thumb, 
+#page-content-wrapper:hover::-webkit-scrollbar-thumb {
+  background: #dfdfdf; /* Thumb color on hover */
+}
+
+#sidebar-wrapper:hover::-webkit-scrollbar, 
+#page-content-wrapper:hover::-webkit-scrollbar {
+  width: 2px; /* Thicker scrollbar on hover */
+}
 
     /* Splitter css */
     .splitpane {
@@ -99,11 +138,12 @@
       background-color: #17a2b8
     }
 
+
     /* -- end range-slider */
 
     /* This is just for making left sidebar scrollable */
     /*
-    #sidebar-wrapper {
+    sidebar-wrapper {
       z-index: 1000;
       position: fixed;
       left: 190px;
@@ -118,6 +158,8 @@
       -o-transition: all 0.5s ease;
       transition: all 0.5s ease;
     }
+    */
+    /*
     #page-content-wrapper {
       width: 85%;
       position: fixed;
@@ -125,6 +167,7 @@
       margin-right: 230px;
     }
     */
+    
     /* end -This is just for making left sidebar scrollable */
 
     /*

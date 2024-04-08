@@ -9,22 +9,23 @@ import logging
 #
 
 
-__pattern_path_and_file = re.compile('^'
-                                     + '.*/squid/'  # any until /squid/
-                                       + '(.*?)/'   # project (1)
-                                       + '(.*?)_'    # plate (2)
-                                       + '([0-9]{4})-([0-9]{2})-([0-9]{2})_(.*?)/' # date (yyyy, mm, dd) (3,4,5) and (time 6)
-                                       + '(t[0-9]+/)?'   # optional timepoint (7)
-                                       + '([A-Z])([0-9]+)_'  # well (8,9)
-                                       + 's([0-9]+)_'   # site index (10)
-                                       + 'x([0-9]+)_'   # site x (11)
-                                       + 'y([0-9]+)_'   # site y (12)
-                                       + '(z[0-9]+_)?'  # optional site z (13)
-                                       + '(.*?)_'      # imaging-type, e,g, Fluorescence, BF (14)
-                                       + '(.*?)'       # wavelength or Light source (15)
-                                       + '(\..*)'      # Extension [16]
-                                     ,
-                                     re.IGNORECASE)  # Windows has case-insensitive filenames
+# Compile a regex pattern to match the structured file path and name, with case-insensitivity for Windows compatibility
+__pattern_path_and_file = re.compile(r'''
+    ^.*/squid/                                  # Match start and any characters until "/squid/"
+    (.*?)/                                      # Capture project name
+    (.*?)_                                      # Capture plate
+    ([0-9]{4})-([0-9]{2})-([0-9]{2})_           # Capture date (yyyy-mm-dd)
+    (.*?)/                                      # Capture time or additional info until the next slash
+    (t[0-9]+/)?                                 # Optionally capture timepoint (e.g., "t1/")
+    ([A-Z])([0-9]+)_                            # Capture well position (letter and numbers)
+    s([0-9]+)_                                  # Capture site index
+    x([0-9]+)_                                  # Capture site x coordinate
+    y([0-9]+)_                                  # Capture site y coordinate
+    (z[0-9]+_)?                                 # Optionally capture site z coordinate
+    (.*?)_                                      # Capture imaging type (e.g., Fluorescence, BF)
+    (.*?)                                       # Capture wavelength or light source
+    (\..*)                                      # Capture file extension
+''', re.IGNORECASE | re.VERBOSE)
 
 
 def parse_path_and_file(path):
@@ -53,10 +54,10 @@ def parse_path_and_file(path):
   logging.debug(imaging_type)
   if imaging_type == 'Fluorescence':
     channel_name = match.group(15).split('_nm')[0]
-    
+
     channels_v1 = ['405', '488', '561', '638', '730']
     channels_v2 = ['385', '470', '510', '560', '640']
-    
+
     if channel_name in channels_v1:
       channels = channels_v1
       channel_map_id = 10
@@ -65,7 +66,7 @@ def parse_path_and_file(path):
       channel_map_id = 28
 
     channel_pos = channels.index(channel_name) + 1
-    
+
   elif imaging_type == 'BF':
     channel_pos = 6
     channel_map_id = 22

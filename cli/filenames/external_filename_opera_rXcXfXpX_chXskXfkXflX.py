@@ -34,7 +34,7 @@ def parse_path_and_file(path):
       + 'r(.+?)' # row (1)
       + 'c(.+?)'  # col (2)
       + 'f(.+?)'  # wellsample (field) (3)
-      + 'p(.+?)'   # dont know (4)
+      + 'p(.+?)'   # plane (z) (4)
       + '-'
       + 'ch([0-9]+)'  # Channel (color channel?) (5)
       + 'sk([0-9]+)'  # dont know (6)
@@ -53,6 +53,7 @@ def parse_path_and_file(path):
     well = row_as_chr + col
 
     site = match.group(3)
+    z = match.group(4)
 
     channel = match.group(5)
 
@@ -81,6 +82,7 @@ def parse_path_and_file(path):
       'plate_acq_name': path,
       'well': well,
       'wellsample': site,
+      'z': z,
       'channel': channel,
       'is_thumbnail': False,
       'guid': 'no-guid',

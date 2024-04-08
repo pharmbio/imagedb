@@ -12,10 +12,11 @@ def parse_path_and_file(path):
     # https://regex101.com/
 
     # project, plate
-    match = re.search('.*/external-datasets/david/(exp.*)/Images/tp.*/.*', path)
+    # match = re.search('.*/external-datasets/david/(exp.*)/Images/tp.*/.*', path)
+    match = re.search('.*/external-datasets/mini3D/.*/(.*)/Images/.*', path)
     if match is None:
       return None
-    project = 'david'
+    project = 'mini3D'
     plate = match.group(1)
 
 
@@ -25,16 +26,16 @@ def parse_path_and_file(path):
 
     # well, site, channel, thumb, guid, extension
     # r10c03f01p01-ch2sk15fk1fl1.tiff
-    match = re.search('.*\/'           # any until last /
-      + 'r([0-9]*)'   # row (1)
-      + 'c([0-9]*)'   # col (2)
-      + 'f([0-9]*)'   # field? (3)
-      + 'p([0-9]*)'   # ??? (4)
-      + '\-ch([0-9]*)' # channel (5)
-      + 'sk([0-9]*)'  # timepoint (6)
-      + 'fk([0-9]*)'  # ???? (7)
-      + 'fl([0-9]*)'  # ???? (8)
-      + '\.(.*)', path)   # Extension [9]
+    match = re.search(r'.*/' # any until last /
+      + r'r([0-9]*)'   # row (1)
+      + r'c([0-9]*)'   # col (2)
+      + r'f([0-9]*)'   # field (3)
+      + r'p([0-9]*)'   # plane (z) (4)
+      + r'\-ch([0-9]*)' # channel (5)
+      + r'sk([0-9]*)'  # timepoint (6)
+      + r'fk([0-9]*)'  # ???? (7)
+      + r'fl([0-9]*)'  # ???? (8)
+      + r'\.(.*)', path)   # Extension [9]
 
     logging.debug("match: " + str(match))
 
@@ -50,6 +51,7 @@ def parse_path_and_file(path):
 
     well = row_as_char + col
     site = match.group(3)
+    z = match.group(4)
     channel = match.group(5)
     timepoint = match.group(6)
 
@@ -77,6 +79,7 @@ def parse_path_and_file(path):
       'plate_acq_name': path,
       'well': well,
       'wellsample': site,
+      'z': z,
       'channel': channel,
       'is_thumbnail': False,
       'guid': None,
@@ -104,13 +107,16 @@ if __name__ == '__main__':
                         level=logging.DEBUG)
 
     # Testparse
-  #  retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/jonne/384-pilot-4x/2020-08-21/233/384-pilot-4x_D06_w13BB03CA4-CE8C-4DE8-AFE2-1321765D3AAE.tif")
-  #  retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/jonne/384-pilot-4x-4/2020-09-02/262/384-pilot-4x-4_G16_w156A3DA15-CEF2-49C6-B647-3A4321D9B8DC.tif")
+    #  retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/jonne/384-pilot-4x/2020-08-21/233/384-pilot-4x_D06_w13BB03CA4-CE8C-4DE8-AFE2-1321765D3AAE.tif")
+    #  retval = parse_path_and_file("/share/mikro/IMX/MDC_pharmbio/jonne/384-pilot-4x-4/2020-09-02/262/384-pilot-4x-4_G16_w156A3DA15-CEF2-49C6-B647-3A4321D9B8DC.tif")
     retval = parse_path_and_file("/share/data/external-datasets/david/exp180/tp-1/Images/r10c46f01p01-ch6sk1fk1fl1.tiff")
     print("retval: " + str(retval))
     retval = parse_path_and_file("/share/data/external-datasets/david/exp180/Images/tp-12/r04c03f01p01-ch2sk12fk1fl1.tiff")
     print("retval: " + str(retval))
 
+    file = "/share/data/external-datasets/mini3D/LiveDrop_HEPG2C3A/20240109_livedrop_MOA_fixedinKI_CP__2024-01-09T12_04_47-Measurement_1a/Images/r12c24f06p03-ch1sk1fk1fl1.tiff"
+    retval = parse_path_and_file(file)
+    print("retval: " + str(retval))
 
     # .*\/(.*)\/(.*)\/.*
     # .*\/(.*)_s(.*)_w([0-9]+)([A-Z0-9]{8}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{12})(.*)\.(.*)

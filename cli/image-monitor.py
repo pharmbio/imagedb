@@ -70,7 +70,6 @@ def get_subdirs_recursively_no_thumb_dir(path):
                 subdirs.append(subdir)
     return subdirs
 
-
 def get_all_image_files(dir):
     # get all files
     logging.info(dir)
@@ -536,7 +535,7 @@ def import_plate_images_and_meta(plate_dir: str):
 
     logging.info("start import_plate_images_and_meta: " + str(plate_dir))
 
-    all_images = get_all_image_files(plate_dir)
+    all_images = sorted(get_all_image_files(plate_dir))
 
     # create a new list with only images not in processed dict
     new_images = [img for img in all_images if img not in processed]
