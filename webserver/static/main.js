@@ -280,7 +280,157 @@ function filterchanged(){
   }
 }
 
-function drawPlatesListSidebar(origPlatesList){
+let sortProjects = false;
+function toggleSidebarSort(){
+  sortProjects = !sortProjects;
+  // Redraw the sidebar with the new sort state
+  redrawPlatesListSidebar();
+
+  // Optionally, update the button text or icon to reflect the current sort state
+  // document.getElementById("sort-toggle").textContent = sortProjects ? "Unsort" : "Sort";
+}
+
+function drawPlatesListSidebar(origPlatesList) {
+  console.log('origPlatesList', origPlatesList);
+
+  // Make a deep copy of the original plates list to avoid modifying it
+  let platesList = origPlatesList.map(plate => ({ ...plate }));
+
+  // Clear and clone the list container
+  let list = document.getElementById('result-list');
+  document.getElementById('result-list').replaceWith(list.cloneNode(false)); // Ensure false is passed to cloneNode to not clone deep
+  list = document.getElementById('result-list');
+
+  // Helper function to remove all children from a node
+  function removeChildren(node) {
+    while (node.firstChild) {
+      node.removeChild(node.firstChild);
+    }
+  }
+
+  // Clear the existing list
+  removeChildren(list);
+
+  // Filter logic based on search filter text
+  let filter = getSearchFilterText().toLowerCase();
+  if (filter.length > 0) {
+    platesList = platesList.filter(row =>
+      Object.values(row).some(value => String(value).toLowerCase().includes(filter))
+    );
+  }
+
+  // Filter out hidden plates if necessary
+  if (!getSelectedShowHiddenValue()) {
+    platesList = platesList.filter(item => !item.hidden);
+  }
+
+  // Sorting and separating the latest acquisitions
+  const latestAcqCount = 10;
+  let sortedByAcqId = [...platesList].sort((a, b) => b.id - a.id);
+  let latestAcquisitions = sortedByAcqId.slice(0, latestAcqCount);
+  let otherPlates = sortedByAcqId.slice(latestAcqCount);
+
+  // Group the rest by project
+  let projects = {};
+  otherPlates.forEach(plate => {
+    if (!projects[plate.project]) {
+      projects[plate.project] = [];
+    }
+    projects[plate.project].push(plate);
+  });
+
+  // Function to create a list item for a plate
+  function createPlateListItem(plate) {
+    let plateItem = document.createElement('li');
+    let link = document.createElement('a');
+    link.className = "text-info";
+    link.href = "#";
+    link.title = `${plate.name} acq-id: ${plate.id} project: ${plate.project} micro: ${plate.microscope}`;
+    link.textContent = plate.name;
+    link.onclick = e => {
+      e.preventDefault();
+      apiLoadPlate(plate.plate_barcode, plate.id);
+    };
+    plateItem.appendChild(link);
+    return plateItem;
+  }
+
+  // Add "Latest acquisitions" if not filtering
+  let latestAcqItem = null;
+  if (!filter) {
+    latestAcqItem = document.createElement('li');
+    latestAcqItem.innerHTML = "<span style='cursor: pointer;'>Latest acquisitions</span>";
+    let latestAcqList = document.createElement('ul');
+    latestAcquisitions.forEach(plate => latestAcqList.appendChild(createPlateListItem(plate)));
+    latestAcqItem.appendChild(latestAcqList);
+    list.appendChild(latestAcqItem);
+  }
+
+  // Define project keys array
+  let projectKeys = Object.keys(projects);
+
+  // Sort project names if sortProjects is true
+  if (sortProjects) {
+    projectKeys.sort();
+  }
+
+  // Add items for all projects
+  projectKeys.forEach(projectName => {
+    let projectItem = document.createElement('li');
+    projectItem.innerHTML = `<span style='cursor: pointer;'>${projectName}</span>`;
+    let projectPlateList = document.createElement('ul');
+    projects[projectName].forEach(plate => projectPlateList.appendChild(createPlateListItem(plate)));
+    projectItem.appendChild(projectPlateList);
+    list.appendChild(projectItem);
+  });
+
+
+  // Turn sidebar list into a clickable tree-view with projects collapsedm   vb
+  // with this jQuery plugin
+  //
+  $('#result-list').bonsai({
+    expandAll: false, // expand all items
+    expand: null, // optional function to expand an item
+    collapse: null, // optional function to collapse an item
+    addExpandAll: false, // add a link to expand all items
+    addSelectAll: false, // add a link to select all checkboxes
+    selectAllExclude: null, // a filter selector or function for selectAll
+    createInputs: false,
+    checkboxes: false, // run quit(this.options) on the root node (requires jquery.qubit)
+    handleDuplicateCheckboxes: false //update any other checkboxes that have the same value
+  });
+
+  // This is a tweak to make filter working
+  $('#result-list').bonsai('update');
+
+  // Expand latest_acq by default
+  if(latestAcqItem){
+    let bonsai = $('#result-list').data('bonsai');
+    bonsai.expand(latestAcqItem);
+  }
+
+  // If result is < x items expand all
+  if(platesList.length < 10){
+    bonsai.expandAll(list);
+  }
+
+  // Tweak to get clickable project-names instead of only the little arrow
+  // the project names are enclosed in <span></span>
+  // https://github.com/aexmachina/jquery-bonsai/issues/23
+  $('#result-list').on('click', 'span', function () {
+    console.log("click");
+    $(this).closest('li').find('> .thumb').click();
+  });
+
+  // Activate tooltips (all that have tooltip attribute within the resultlist)
+  $('#result-list [data-toggle="tooltip"]').tooltip({
+    trigger: 'hover',
+    boundary: 'window'
+  })
+
+}
+
+function drawPlatesListSidebar_old(origPlatesList){
 
     console.log('origPlatesList', origPlatesList);
 

@@ -64,29 +64,29 @@
 }
 
 /* Custom scrollbar styles for Webkit browsers */
-#sidebar-wrapper::-webkit-scrollbar, 
+#sidebar-wrapper::-webkit-scrollbar,
 #page-content-wrapper::-webkit-scrollbar {
   width: 2px; /* Initial width */
 }
 
-#sidebar-wrapper::-webkit-scrollbar-track, 
+#sidebar-wrapper::-webkit-scrollbar-track,
 #page-content-wrapper::-webkit-scrollbar-track {
   background: transparent; /* Optional: Track background */
 }
 
-#sidebar-wrapper::-webkit-scrollbar-thumb, 
+#sidebar-wrapper::-webkit-scrollbar-thumb,
 #page-content-wrapper::-webkit-scrollbar-thumb {
   background: #dfdfdf; /* Scroll thumb color */
   border-radius: 10px; /* Rounded corners for thumb */
   opacity: 0.5;
 }
 
-#sidebar-wrapper:hover::-webkit-scrollbar-thumb, 
+#sidebar-wrapper:hover::-webkit-scrollbar-thumb,
 #page-content-wrapper:hover::-webkit-scrollbar-thumb {
   background: #dfdfdf; /* Thumb color on hover */
 }
 
-#sidebar-wrapper:hover::-webkit-scrollbar, 
+#sidebar-wrapper:hover::-webkit-scrollbar,
 #page-content-wrapper:hover::-webkit-scrollbar {
   width: 2px; /* Thicker scrollbar on hover */
 }
@@ -167,7 +167,7 @@
       margin-right: 230px;
     }
     */
-    
+
     /* end -This is just for making left sidebar scrollable */
 
     /*
@@ -193,30 +193,22 @@
       .left-splitpane, .right-splitpane and .splitter-bar -->
   <div class="d-flex splitpane" id="all_content_wrapper">
 
-    <!-- Sidebar -->
-    <div class="bg-light border-right left-splitpane" id="sidebar-wrapper" ;>
-      <div class="sidebar-heading">Projects/Plates</div>
-
-      <div class="sidebar-heading">
-        <!-- <div class="list-group list-group-flush">-->
-        <ul id='result-list'></ul>
-
-        <div id="left-sidebar-spinner" class="d-flex justify-content-center">
-          <div class="spinner-border text-info" role="status">
-            <span class="sr-only">Loading plates...</span>
-          </div>
-        </div>
-
-        <!--
-      <div class="d-flex justify-content-center">
-          <div class="text-info">
-           Loading plates
-         </div>
+    <div class="bg-light border-right left-splitpane" id="sidebar-wrapper">
+      <div class="sidebar-heading d-flex justify-content-between align-items-center">
+        Projects/Plates
+        <button id="sort-toggle" class="sort-button" style="background: none; border: none; padding: 0; cursor: pointer;">
+            <img src="/static/images/arrow-sort.svg" title="Sort plates by project name or latest acquisition" alt="Sort" id="sort-icon" style="width: 24px; height: 24px;">
+        </button>
       </div>
-      -->
 
+      <ul id='result-list'></ul>
+      <div id="left-sidebar-spinner" class="d-flex justify-content-center">
+        <div class="spinner-border text-info" role="status">
+          <span class="sr-only">Loading plates...</span>
+        </div>
       </div>
     </div>
+
     <!-- /#sidebar-wrapper -->
 
     <!-- splitter -->
@@ -572,6 +564,7 @@
       $("#animate-cbx").change(animateCbxChanged);
       $("#show-hidden-cb").change(showHiddenSelectChanged);
       $("#show-compounds-cb").change(showCompoundsSelectChanged);
+      $("#sort-toggle").click(toggleSidebarSort);
 
       // Call init window javascript function
       let plateBarcode = '{{barcode}}';
