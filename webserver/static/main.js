@@ -280,14 +280,9 @@ function filterchanged(){
   }
 }
 
-let sortProjects = false;
 function toggleSidebarSort(){
-  sortProjects = !sortProjects;
-  // Redraw the sidebar with the new sort state
+  setSortSidebar(! getSortSidebar());
   redrawPlatesListSidebar();
-
-  // Optionally, update the button text or icon to reflect the current sort state
-  // document.getElementById("sort-toggle").textContent = sortProjects ? "Unsort" : "Sort";
 }
 
 function drawPlatesListSidebar(origPlatesList) {
@@ -369,8 +364,8 @@ function drawPlatesListSidebar(origPlatesList) {
   // Define project keys array
   let projectKeys = Object.keys(projects);
 
-  // Sort project names if sortProjects is true
-  if (sortProjects) {
+  // Sort project names if sortSidebar is true
+  if (getSortSidebar()) {
     projectKeys.sort();
   }
 
@@ -1345,7 +1340,7 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
   function selectBrightnessFromStoredValue(){
-    let brightness = getBrightnessFromStore();
+    let brightness = getBrightness();
     console.log("brightness", brightness);
     let elem = document.getElementById('brightness-select');
     let index = getIndexFromValue(elem.options, brightness);
@@ -1353,13 +1348,13 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
   function selectShowHiddenFromStoredValue(){
-    let showHidden = getShowHiddenFromStore();
+    let showHidden = getShowHidden();
     console.log("showHidden", showHidden);
     document.getElementById('show-hidden-cb').checked = showHidden;
   }
 
   function selectShowCompoundsFromStoredValue(){
-    let value = getShowCompoundsFromStore();
+    let value = getShowCompounds();
     document.getElementById('show-compounds-cb').checked = value;
   }
 
@@ -2258,12 +2253,69 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   }
 
-  /*
-  *
-  *  Cookie-store section
-  *
-  */
-  function getCookie(name) {
+  class LocalStorageStore {
+    constructor() {
+      this.defaults = {
+        brightness: 100,
+        showHidden: true,
+        showCompounds: true,
+        sortSidebar: false
+      };
+    }
+
+    // Utility Methods
+    get(name) {
+      const item = localStorage.getItem(name);
+      return item ? JSON.parse(item) : this.defaults[name];
+    }
+
+    set(name, value) {
+      localStorage.setItem(name, JSON.stringify(value));
+    }
+
+    delete(name) {
+      localStorage.removeItem(name);
+    }
+
+  }
+
+  // Application-specific defaults and operations
+  const storageStore = new LocalStorageStore();
+
+  function setBrightness(value) {
+    storageStore.set("brightness", value);
+  }
+
+  function getBrightness() {
+    return storageStore.get("brightness");
+  }
+
+  function setShowHidden(value) {
+    storageStore.set("showHidden", value);
+  }
+
+  function getShowHidden() {
+    return storageStore.get("showHidden");
+  }
+
+  function setShowCompounds(value) {
+    storageStore.set("showCompounds", value);
+  }
+
+  function getShowCompounds() {
+    return storageStore.get("showCompounds");
+  }
+
+  function setSortSidebar(value) {
+    storageStore.set("sortSidebar", value);
+  }
+
+  function getSortSidebar() {
+    return storageStore.get("sortSidebar");
+  }
+
+/*
+function getCookie(name) {
     let cookie = {};
     document.cookie.split(';').forEach(function (el) {
         let [k, v] = el.split('=');
@@ -2299,52 +2351,5 @@ function drawPlatesListSidebar_old(origPlatesList){
         return JSON.parse(window.atob(cookie));
     }
   }
-
-  function getBrightnessFromStore() {
-    let value = getCookieData("brightness");
-    if (value == null) {
-      value = getDefaultBrightness();
-    }
-    return value;
-  }
-
-  function getShowHiddenFromStore() {
-    let value = getCookieData("showHidden");
-    if (value == null) {
-      value = getDefaultShowHidden();
-    }
-    return value;
-  }
-
-  function getShowCompoundsFromStore() {
-    let value = getCookieData("showCompounds");
-    if (value == null) {
-      value = getDefaultShowCompounds();
-    }
-    return value;
-  }
-
-  function getDefaultBrightness(){
-    return 100;
-  }
-
-  function getDefaultShowHidden(){
-    return true;
-  }
-
-  function getDefaultShowCompounds(){
-    return false;
-  }
-
-  function setBrightnessInStore(value) {
-    setCookieData("brightness", value);
-  }
-
-  function setShowHiddenInStore(value) {
-    setCookieData("showHidden", value);
-  }
-
-  function setShowCompoundsInStore(value) {
-    setCookieData("showCompounds", value);
-  }
+  */
 
