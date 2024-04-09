@@ -90,7 +90,6 @@ def get_plate(plate_name):
             plate = plates_dict.setdefault(plate_id, platemodel.Plate(plate_id))
             plate.add_data(image)
 
-
         #
         # Add plate layout meta to result
         #
