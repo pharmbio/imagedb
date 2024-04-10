@@ -1,43 +1,65 @@
 /*
   Javascript version: ECMAScript 6 (Javascript 6)
  */
-  class Plates {
-    constructor(jsondata) {
-      this.jsondata = jsondata;
-    }
-
-    getPlate(index) {
-      // return first (and only) plate
-      return new Plate(this.jsondata[Object.keys(this.jsondata)[index]])
-    }
-
-    getFirstPlate() {
-      return this.getPlate(0);
-    }
-  }
-
   class Plate {
-    constructor(jsondata) {
-      this.plateObj = jsondata;
+    constructor(jsonData) {
+      this.data = jsonData;
     }
 
     getName() {
-      return this.plateObj.id;
+      return this.data.id;
     }
 
-    getPlateLayout() {
-      return this.plateObj.layout
+    getLayout() {
+      return this.data.layout;
     }
 
-    getWellLayoutMeta(well_name){
-      let plateLayout = this.getPlateLayout();
+    getWellLayoutMeta(wellName) {
+      return this.getLayout()?.[wellName];
+    }
 
-      let well_meta = null;
-      if(plateLayout){
-        well_meta = plateLayout[well_name];
-      }
-      return well_meta;
+    getAcquisitions() {
+      return this.data.acquisitions;
+    }
 
+    getWells(acquisitionId) {
+      return this.getAcquisitions()[acquisitionId]?.wells || {};
+    }
+
+    getSites(acquisitionId, wellKey) {
+      return this.getWells(acquisitionId)[wellKey]?.sites || {};
+    }
+
+    getChannels(acquisitionId, wellKey, siteKey) {
+      return this.getSites(acquisitionId, wellKey)[siteKey]?.channels || {};
+    }
+
+    getFirstWellKey(acquisitionId) {
+      return Object.keys(this.getWells(acquisitionId))[0];
+    }
+
+    getFirstSiteKey(acquisitionId, wellKey) {
+      return Object.keys(this.getSites(acquisitionId, wellKey))[0];
+    }
+
+    getSiteNames(acquisitionId) {
+      const firstWellKey = this.getFirstWellKey(acquisitionId);
+      const sites = this.getSites(acquisitionId, firstWellKey);
+      return Object.values(sites).map(site => site.id);
+    }
+
+    getChannelNames(acquisitionId) {
+      const firstWellKey = this.getFirstWellKey(acquisitionId);
+      const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
+      const channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey);
+      return Object.values(channels).map(channel => channel.dye);
+    }
+
+    getAvailableChannels(acquisitionId) {
+      const firstWellKey = this.getFirstWellKey(acquisitionId);
+      const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
+      let channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey);
+      return channels;
     }
 
 
@@ -45,132 +67,78 @@
       // Loop through wellNames (for all acquisitions) and see if size is outside 96 or 384 plate limit
       // if not return 96, 384 or 1536
 
-      Object.keys(this.plateObj.acquisitions)
-
-      let nMaxRow = 1
-      let nMaxCol = 1
+      let maxRow = 1
+      let maxCol = 1
 
       for(let acquisition_id of Object.keys(this.getAcquisitions())){
         let wells = this.getWells(acquisition_id);
         for (let well of Object.values(wells)) {
           let wellName = well.id;
 
-          let nRow = getRowIndexFrowWellName(wellName);
-          let nCol = getColIndexFrowWellName(wellName);
+          let nRow = Plate.getRowIndexFromWellName(wellName);
+          let nCol = Plate.getColIndexFromWellName(wellName);
 
-          nMaxRow = Math.max(nMaxRow, nRow);
-          nMaxCol = Math.max(nMaxCol, nCol);
+          maxRow = Math.max(maxRow, nRow);
+          maxCol = Math.max(maxCol, nCol);
         }
       }
 
-      if (nMaxRow > 16 || nMaxCol > 24) {
-        console.log("1536");
-        return { "rows": 32, "cols": 48, "sites": siteNames };
-      }
-
-      if (nMaxRow > 8 || nMaxCol > 12) {
-        console.log("384");
-        return { "rows": 16, "cols": 24, "sites": siteNames };
-      }
-
-      console.log("96");
+      if (maxRow > 16 || maxCol > 24) return { "rows": 32, "cols": 48, "sites": siteNames };
+      if (maxRow > 8 || maxCol > 12) return { "rows": 16, "cols": 24, "sites": siteNames };
       return { "rows": 8, "cols": 12, "sites": siteNames };
     }
 
-    getAvailableSites(acquisition_id) {
-      let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
-      let sites = this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites;
 
-      let siteNames = [];
-      for (let site of Object.values(sites)) {
-        siteNames.push(site.id);
-      }
-      return siteNames;
-    }
-
-    getChannelNames(acquisition_id) {
-      // Get channel keys for the first sites object of the first well of slected acquisition in plate object
-      let nCount = 0;
-      let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
-      let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
-      let channels = this.getChannels(acquisition_id, firstWellKey, firstSiteKey);
-
-      let channelNames = [];
-      for(const [key, value] of Object.entries(channels)){
-        channelNames.push(value.dye);
-      }
-
-      console.log("channelNames", channelNames);
-
-      return channelNames;
-    }
-
-    getAvailableChannels(acquisition_id) {
-      // Get channel keys for the first sites object of the first well of slected acquisition in plate object
-      let nCount = 0;
-      let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
-      let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
-      let channels = this.getChannels(acquisition_id, firstWellKey, firstSiteKey);
-
-      return channels;
-    }
-
-    getChannels(acquisition_id, well_name, site) {
-      if(this.plateObj.acquisitions[acquisition_id] != null &&
-         this.plateObj.acquisitions[acquisition_id].wells[well_name] != null &&
-         this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site]){
-        return this.plateObj.acquisitions[acquisition_id].wells[well_name].sites[site].channels;
-      }
-      else{
-        return null;
-      }
-    }
-
-    getWells(acquisition_id) {
-      return this.plateObj.acquisitions[acquisition_id].wells;
-    }
-
-
-    getAcquisitions() {
-      return this.plateObj.acquisitions;
-    }
-
+    /**
+     * Counts the number of acquisitions in the plate.
+     * @returns {number} The count of acquisitions.
+     */
     countAcquisitions() {
-      // Count number of acquisitions keys for the Plate object
-      let nCount = 0;
-      nCount = Object.keys(this.plateObj.acquisitions).length;
-
-      return nCount;
+      return Object.keys(this.getAcquisitions()).length;
     }
 
-    countChannels(acquisition_id) {
-      // Count number of keys for the first sites object of the first well of first acquisition in plate object
-      let nCount = 0;
-      let firstWellKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells)[0];
-      let firstSiteKey = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites)[0];
-      nCount = Object.keys(this.plateObj.acquisitions[acquisition_id].wells[firstWellKey].sites[firstSiteKey].channels).length;
-
-      return nCount;
+    /**
+     * Counts the number of channels for the first non-empty well and site
+     * for the given acquisition ID. Returns 0 if no channels are found.
+     *
+     * @param {String} acquisitionId The acquisition ID to count channels for.
+     * @returns {number} The count of channels.
+     */
+    countChannels(acquisitionId) {
+      const firstWellKey = this.getFirstWellKey(acquisitionId);
+      const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
+      const channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey);
+      if (Object.keys(channels).length > 0) {
+        return Object.keys(channels).length;
+      }
+      return 0; // No channels found
     }
 
-
+    /**
+     * Counts the number of wells in the first acquisition. Assumes that the number of wells is consistent across acquisitions.
+     * @returns {number} The count of wells in the first acquisition, or 0 if no acquisitions are present.
+     */
     countWells() {
-      // Count number of keys for the Wells object  of the first acquisition in plate object
-      let nCount = 0;
-      let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0];
-      nCount = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells).length;
-
-      return nCount;
+      const acquisitionIds = Object.keys(this.getAcquisitions());
+      if (acquisitionIds.length > 0) {
+        return Object.keys(this.getWells(acquisitionIds[0])).length;
+      }
+      return 0;
     }
 
+    /**
+     * Counts the number of sites in the first well of the first acquisition. Assumes that the structure is consistent across the plate.
+     * @returns {number} The count of sites in the first well of the first acquisition, or 0 if none are found.
+     */
     countSites() {
-      // Count number of keys for the sites object of the first well of first acquisition in plate object
-      let nCount = 0;
-      let firstPlateAcqKey = Object.keys(this.plateObj.acquisitions)[0];
-      let firstWellKey = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells)[0];
-      nCount = Object.keys(this.plateObj.acquisitions[firstPlateAcqKey].wells[firstWellKey].sites).length;
-
-      return nCount;
+      const acquisitionIds = Object.keys(this.getAcquisitions());
+      if (acquisitionIds.length > 0) {
+        const firstWellKey = this.getFirstWellKey(acquisitionIds[0]);
+        if (firstWellKey) {
+          return Object.keys(this.getSites(acquisitionIds[0], firstWellKey)).length;
+        }
+      }
+      return 0;
     }
 
     getWellImageMeta(acquisition, well_name) {
@@ -185,6 +153,38 @@
       formatted_meta += "Plate_barcode: " + well_image_meta["plate_barcode"] + "<br>";
       formatted_meta += "Plate_acq_id: " + acquisition + "<br>" + "<br>";
       return formatted_meta;
+    }
+
+    static getWellName(row, col) {
+      let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "\\", "]", "^", "_", "`", "a", "b"];
+      return rows[row] + col.toString().padStart(2, '0');
+    }
+  
+    static getRowIndexFromWellName(name) {
+      let ascVal = name.charCodeAt(0);
+      let rowIndex = ascVal - 64; // Adjusting based on ASCII value of 'A'
+      return rowIndex;
+    }
+  
+    static getColIndexFromWellName(name) {
+      let colIndex = parseInt(name.substr(1), 10);
+      return colIndex;
+    }
+
+  }
+
+  class Plates {
+    constructor(jsonData) {
+      this.data = jsonData;
+    }
+
+    getPlate(index) {
+      const plateData = this.data[Object.keys(this.data)[index]];
+      return new Plate(plateData);
+    }
+
+    getFirstPlate() {
+      return this.getPlate(0);
     }
   }
 
@@ -937,7 +937,10 @@ function drawPlatesListSidebar_old(origPlatesList){
     // get site to draw
     let site = getSelectedSite();
 
-    drawPlate(plateObj, acquisition, site, clearFirst);
+    // get site to draw
+    let zpos = 0;
+
+    drawPlate(plateObj, acquisition, site, zpos, clearFirst);
 
     drawImageAnalysisTableFiltered(plateObj)
   }
@@ -966,7 +969,7 @@ function drawPlatesListSidebar_old(origPlatesList){
         headerRow.appendChild(empty_cell);
       }
       let row = 0;
-      let well_name = getWellName(row, col);
+      let well_name = Plate.getWellName(row, col);
       let header_cell = document.createElement('td');
       header_cell.innerHTML = well_name.substring(1);
       header_cell.className = 'headerCell';
@@ -979,7 +982,7 @@ function drawPlatesListSidebar_old(origPlatesList){
       let rowElement = document.createElement('tr');
       for (let col = 1; col <= cols; col++) {
 
-        let well_name = getWellName(row, col);
+        let well_name = Plate.getWellName(row, col);
 
         // Add column header before first column cell
         if (col === 1) {
@@ -1096,7 +1099,7 @@ function drawPlatesListSidebar_old(origPlatesList){
   function highlight_all(plateObj, cbkid){
 
     console.log('cbkid', cbkid);
-    layout = plateObj.getPlateLayout();
+    layout = plateObj.getLayout();
 
     let wells = [];
     for (const [key, value] of Object.entries(layout)) {
@@ -1174,7 +1177,7 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   }
 
-  function drawPlate(plateObj, acquisition, sites, clearFirst) {
+  function drawPlate(plateObj, acquisition, sites, zpos, clearFirst) {
 
     console.log("plateObj", plateObj);
     console.log("clearFirst", clearFirst);
@@ -1191,7 +1194,7 @@ function drawPlatesListSidebar_old(origPlatesList){
       removeChildren(container);
     }
 
-    let siteNames = sites; // plateObj.getAvailableSites();
+    let siteNames = sites; // plateObj.getSiteNames();
 
     // first create a new plate consisting of empty well-div's
     if (document.getElementById('plateTable') == null) {
@@ -1616,7 +1619,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     elemSelect.options.length = 0;
 
     // add as many options as sites
-    let siteNames = plateObj.getAvailableSites(getSelectedAcquisitionId());
+    let siteNames = plateObj.getSiteNames(getSelectedAcquisitionId());
 
     // Loop through the siteNames array
     for (let name of siteNames) {
@@ -1842,23 +1845,6 @@ function drawPlatesListSidebar_old(origPlatesList){
      }
   }
 
-  function getWellName(row, col) {
-    let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P","Q","R","S","T","U","V","W","X","Y","Z","[","\\","]","^","_","`","a","b"]
-    return rows[row] + col.toString().padStart(2, 0)
-  }
-
-  function getRowIndexFrowWellName(name) {
-    let ascVal = name.charCodeAt(0);
-    // A = char code 65
-    let rowIndex = ascVal - 64;
-    return rowIndex;
-  }
-
-  function getColIndexFrowWellName(name) {
-    let colIndex = parseInt(name.substr(1), 10);
-    return colIndex;
-  }
-
   function displayModalServerError(status, text) {
     displayModalError("Server error: " + status + ", Response: " + text);
   }
@@ -1885,13 +1871,13 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   function brightnessSelectChanged() {
     let brightness = getSelectedBrightnessValue();
-    setBrightnessInStore(brightness);
+    setBrightness(brightness);
     redrawPlate();
   }
 
   function showHiddenSelectChanged() {
     let value = getSelectedShowHiddenValue();
-    setShowHiddenInStore(value);
+    setShowHidden(value);
     redrawPlatesListSidebar();
     //location.reload();
   }
@@ -1899,7 +1885,7 @@ function drawPlatesListSidebar_old(origPlatesList){
   function showCompoundsSelectChanged() {
     console.log('showCompoundsSelectChanged');
     let value = getSelectedShowCompoundsValue();
-    setShowCompoundsInStore(value);
+    setShowCompounds(value);
     setVisibility('infoDotDiv', value);
   }
 
