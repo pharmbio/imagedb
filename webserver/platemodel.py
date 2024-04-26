@@ -7,13 +7,12 @@ class Channel:
     def add_data(self, image_meta):
         self.path = image_meta['path']
 
-class Site:
-    def __init__(self, id):
-        self.id = id
+class Zpos:
+    def __init__(self, z_value):
+        self.z_value = z_value
         self.channels = {}
 
     def get_or_create_channel(self, channel_id, channel_dye):
-        # Reducing dictionary lookup by caching the channel object.
         if channel_id not in self.channels:
             self.channels[channel_id] = Channel(channel_id, channel_dye)
         return self.channels[channel_id]
@@ -21,6 +20,20 @@ class Site:
     def add_data(self, image_meta):
         channel = self.get_or_create_channel(image_meta['channel'], image_meta['dye'])
         channel.add_data(image_meta)
+
+class Site:
+    def __init__(self, id):
+        self.id = id
+        self.z_positions = {}
+
+    def get_or_create_z_position(self, z_value):
+        if z_value not in self.z_positions:
+            self.z_positions[z_value] = Zpos(z_value)
+        return self.z_positions[z_value]
+
+    def add_data(self, image_meta):
+        z_position = self.get_or_create_z_position(image_meta['z'])
+        z_position.add_data(image_meta)
 
 class Well:
     def __init__(self, id):
