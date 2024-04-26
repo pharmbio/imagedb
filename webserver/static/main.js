@@ -5,119 +5,121 @@
     constructor(jsonData) {
       this.data = jsonData;
     }
-
+  
     getName() {
       return this.data.id;
     }
-
+  
     getLayout() {
       return this.data.layout;
     }
-
+  
     getWellLayoutMeta(wellName) {
       return this.getLayout()?.[wellName];
     }
-
+  
     getAcquisitions() {
       return this.data.acquisitions;
     }
-
+  
     getWells(acquisitionId) {
       return this.getAcquisitions()[acquisitionId]?.wells || {};
     }
-
+  
     getSites(acquisitionId, wellKey) {
       return this.getWells(acquisitionId)[wellKey]?.sites || {};
     }
-
-    getChannels(acquisitionId, wellKey, siteKey) {
-      return this.getSites(acquisitionId, wellKey)[siteKey]?.channels || {};
+  
+    getZPositions(acquisitionId, wellKey, siteKey) {
+      return this.getSites(acquisitionId, wellKey)[siteKey]?.z_positions || {};
     }
-
+  
+    getChannels(acquisitionId, wellKey, siteKey, zKey) {
+      return this.getZPositions(acquisitionId, wellKey, siteKey)[zKey]?.channels || {};
+    }
+  
     getFirstWellKey(acquisitionId) {
       return Object.keys(this.getWells(acquisitionId))[0];
     }
-
+  
     getFirstSiteKey(acquisitionId, wellKey) {
       return Object.keys(this.getSites(acquisitionId, wellKey))[0];
     }
-
+  
+    getFirstZPositionKey(acquisitionId, wellKey, siteKey) {
+      return Object.keys(this.getZPositions(acquisitionId, wellKey, siteKey))[0];
+    }
+  
     getSiteNames(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const sites = this.getSites(acquisitionId, firstWellKey);
       return Object.values(sites).map(site => site.id);
     }
-
+  
     getChannelNames(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
-      const channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey);
+      const firstZPositionKey = this.getFirstZPositionKey(acquisitionId, firstWellKey, firstSiteKey);
+      const channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey, firstZPositionKey);
       return Object.values(channels).map(channel => channel.dye);
     }
-
+  
     getAvailableChannels(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
-      let channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey);
-      return channels;
+      const firstZPositionKey = this.getFirstZPositionKey(acquisitionId, firstWellKey, firstSiteKey);
+      return this.getChannels(acquisitionId, firstWellKey, firstSiteKey, firstZPositionKey);
     }
-
-
+  
     getPlateSize(siteNames) {
       // Loop through wellNames (for all acquisitions) and see if size is outside 96 or 384 plate limit
       // if not return 96, 384 or 1536
-
-      let maxRow = 1
-      let maxCol = 1
-
-      for(let acquisition_id of Object.keys(this.getAcquisitions())){
-        let wells = this.getWells(acquisition_id);
-        for (let well of Object.values(wells)) {
-          let wellName = well.id;
-
+      let maxRow = 1;
+      let maxCol = 1;
+      for (let acquisitionId of Object.keys(this.getAcquisitions())) {
+        let wells = this.getWells(acquisitionId);
+        for (let wellKey of Object.keys(wells)) {
+          let wellName = wells[wellKey].id;
           let nRow = Plate.getRowIndexFromWellName(wellName);
           let nCol = Plate.getColIndexFromWellName(wellName);
-
           maxRow = Math.max(maxRow, nRow);
           maxCol = Math.max(maxCol, nCol);
         }
       }
-
-      if (maxRow > 16 || maxCol > 24) return { "rows": 32, "cols": 48, "sites": siteNames };
-      if (maxRow > 8 || maxCol > 12) return { "rows": 16, "cols": 24, "sites": siteNames };
-      return { "rows": 8, "cols": 12, "sites": siteNames };
+  
+      if (maxRow > 16 || maxCol > 24) return { rows: 32, cols: 48, sites: siteNames };
+      if (maxRow > 8 || maxCol > 12) return { rows: 16, cols: 24, sites: siteNames };
+      return { rows: 8, cols: 12, sites: siteNames };
     }
-
-
-    /**
-     * Counts the number of acquisitions in the plate.
-     * @returns {number} The count of acquisitions.
-     */
+  
+  
+      /**
+       * Counts the number of acquisitions in the plate.
+       * @returns {number} The count of acquisitions.
+       */
     countAcquisitions() {
       return Object.keys(this.getAcquisitions()).length;
     }
-
-    /**
-     * Counts the number of channels for the first non-empty well and site
-     * for the given acquisition ID. Returns 0 if no channels are found.
-     *
-     * @param {String} acquisitionId The acquisition ID to count channels for.
-     * @returns {number} The count of channels.
-     */
+  
+      /**
+       * Counts the number of channels for the first non-empty well and site
+       * for the given acquisition ID. Returns 0 if no channels are found.
+       *
+       * @param {String} acquisitionId The acquisition ID to count channels for.
+       * @returns {number} The count of channels.
+       */
     countChannels(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
-      const channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey);
-      if (Object.keys(channels).length > 0) {
-        return Object.keys(channels).length;
-      }
-      return 0; // No channels found
+      const firstZPositionKey = this.getFirstZPositionKey(acquisitionId, firstWellKey, firstSiteKey);
+      const channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey, firstZPositionKey);
+      return Object.keys(channels).length;
     }
-
-    /**
-     * Counts the number of wells in the first acquisition. Assumes that the number of wells is consistent across acquisitions.
-     * @returns {number} The count of wells in the first acquisition, or 0 if no acquisitions are present.
-     */
+  
+      /**
+       * Counts the number of wells in the first acquisition. Assumes that the number of wells is consistent across acquisitions.
+       * @returns {number} The count of wells in the first acquisition, or 0 if no acquisitions are present.
+       */
     countWells() {
       const acquisitionIds = Object.keys(this.getAcquisitions());
       if (acquisitionIds.length > 0) {
@@ -125,40 +127,40 @@
       }
       return 0;
     }
-
-    /**
-     * Counts the number of sites in the first well of the first acquisition. Assumes that the structure is consistent across the plate.
-     * @returns {number} The count of sites in the first well of the first acquisition, or 0 if none are found.
-     */
-    countSites() {
-      const acquisitionIds = Object.keys(this.getAcquisitions());
-      if (acquisitionIds.length > 0) {
-        const firstWellKey = this.getFirstWellKey(acquisitionIds[0]);
-        if (firstWellKey) {
-          return Object.keys(this.getSites(acquisitionIds[0], firstWellKey)).length;
+  
+      /**
+       * Counts the number of sites in the first well of the first acquisition. Assumes that the structure is consistent across the plate.
+       * @returns {number} The count of sites in the first well of the first acquisition, or 0 if none are found.
+       */
+      countSites() {
+        const acquisitionIds = Object.keys(this.getAcquisitions());
+        if (acquisitionIds.length > 0) {
+          const firstWellKey = this.getFirstWellKey(acquisitionIds[0]);
+          if (firstWellKey) {
+            return Object.keys(this.getSites(acquisitionIds[0], firstWellKey)).length;
+          }
         }
+        return 0;
       }
-      return 0;
-    }
-
-    getWellImageMeta(acquisition, well_name) {
-      let imageMeta = this.plateObj.acquisitions[acquisition].wells[well_name].sites["1"].channels["1"].image_meta;
-      return imageMeta;
-    }
-
-    getFormattedWellMeta(acquisition, well_name) {
-      let well_image_meta = this.getWellImageMeta(acquisition, well_name);
-      let formatted_meta = '';
-      formatted_meta += "Well: " + this.plateObj.acquisitions[acquisition].wells[well_name].id + "<br>";
-      formatted_meta += "Plate_barcode: " + well_image_meta["plate_barcode"] + "<br>";
-      formatted_meta += "Plate_acq_id: " + acquisition + "<br>" + "<br>";
-      return formatted_meta;
-    }
-
-    static getWellName(row, col) {
-      let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "\\", "]", "^", "_", "`", "a", "b"];
-      return rows[row] + col.toString().padStart(2, '0');
-    }
+  
+      getWellImageMeta(acquisition, well_name) {
+        let imageMeta = this.plateObj.acquisitions[acquisition].wells[well_name].sites["1"].channels["1"].image_meta;
+        return imageMeta;
+      }
+  
+      getFormattedWellMeta(acquisition, well_name) {
+        let well_image_meta = this.getWellImageMeta(acquisition, well_name);
+        let formatted_meta = '';
+        formatted_meta += "Well: " + this.plateObj.acquisitions[acquisition].wells[well_name].id + "<br>";
+        formatted_meta += "Plate_barcode: " + well_image_meta["plate_barcode"] + "<br>";
+        formatted_meta += "Plate_acq_id: " + acquisition + "<br>" + "<br>";
+        return formatted_meta;
+      }
+  
+      static getWellName(row, col) {
+        let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "\\", "]", "^", "_", "`", "a", "b"];
+        return rows[row] + col.toString().padStart(2, '0');
+      }
   
     static getRowIndexFromWellName(name) {
       let ascVal = name.charCodeAt(0);
@@ -170,19 +172,18 @@
       let colIndex = parseInt(name.substr(1), 10);
       return colIndex;
     }
-
   }
-
+  
   class Plates {
     constructor(jsonData) {
       this.data = jsonData;
     }
-
+  
     getPlate(index) {
       const plateData = this.data[Object.keys(this.data)[index]];
       return new Plate(plateData);
     }
-
+  
     getFirstPlate() {
       return this.getPlate(0);
     }
