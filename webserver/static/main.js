@@ -74,7 +74,7 @@
     getAvailableZpos(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
-      return this.getZPositions(acquisitionId, firstWellKey, firstSiteKey);
+      return Object.keys(this.getZPositions(acquisitionId, firstWellKey, firstSiteKey));
     }
   
     getPlateSize(siteNames) {
@@ -219,9 +219,6 @@
 
   function initViewerWindow(plate, acquisition, well, site, zpos, channel){
     selectBrightnessFromStoredValue();
-
-    console.log('plate', plate);
-    console.log('channel', channel);
 
     loadPlateFromViewer(plate, acquisition, well, site, zpos, channel);
   }
@@ -705,7 +702,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     updateWellSelect(getLoadedPlate(), selected_well);
 
     updateSiteSelect(getLoadedPlate(), selected_site);
-updateZSelect(getLoadedPlate(), selected_zpos);
+    updateZSelect(getLoadedPlate(), selected_zpos);
 
     updateChannelSelect(getLoadedPlate(), selected_channel);
 
@@ -744,7 +741,7 @@ updateZSelect(getLoadedPlate(), selected_zpos);
     console.log("site", site);
     let well_name = getSelectedWell();
     console.log("well_name", well_name);
-    let zpos = getSelectedZpos();
+    let zpos = getSelectedZpos()[0];
     console.log("zpos", zpos);
     let channels = getLoadedPlate().getChannels(acquisition, well_name, site, zpos);
     console.log("channels", channels);
@@ -808,7 +805,7 @@ updateZSelect(getLoadedPlate(), selected_zpos);
     let well_name = getSelectedWell();
     console.log("well_name", well_name);
     console.log("getLoadedPlate()", getLoadedPlate());
-    let zpos = getSelectedZpos();
+    let zpos = getSelectedZpos()[0];
     let channels = getLoadedPlate().getChannels(acquisition, well_name, site, zpos);
     let imgURL = createMergeImgURLFromChannels(channels);
 
@@ -873,7 +870,7 @@ updateZSelect(getLoadedPlate(), selected_zpos);
       console.log("site", site);
       let well_name = getSelectedWell();
       console.log("well_name", well_name);
-      let zpos = getSelectedZpos();
+      let zpos = getSelectedZpos()[0];
       let channels = getLoadedPlate().getChannels(acquisition, well_name, site, zpos);
       console.log("channels", channels);
       let imgURL = createMergeImgURLFromChannels(channels);
@@ -909,7 +906,7 @@ updateZSelect(getLoadedPlate(), selected_zpos);
       console.log("getLoadedPlate()", getLoadedPlate());
 
       let acquisitionID = getAcquisitionFromIndex(acquisitionIndex);
-      let zpos = getSelectedZpos();
+      let zpos = getSelectedZpos()[0];
       let channels = getLoadedPlate().getChannels(acquisitionID, well_name, site, zpos);
       let imgURL = createMergeImgURLFromChannels(channels);
 
@@ -925,7 +922,7 @@ updateZSelect(getLoadedPlate(), selected_zpos);
 
     let acquisition = getSelectedAcquisition();
     // let site = getSelectedSiteIndex();
-    let zpos = getSelectedZpos();
+    let zpos = getSelectedZpos()[0];
     let channels = getLoadedPlate().getChannels(acquisition, well_name, site_name, zpos);
     let imgURL = createMergeImgURLFromChannels(channels);
 
@@ -933,7 +930,7 @@ updateZSelect(getLoadedPlate(), selected_zpos);
       "/tp/" + acquisition +
       "/well/" + well_name +
       "/site/" + site_name +
-"/zpos/" + zpos +
+      "/zpos/" + zpos +
       "/ch/" + getSelectedChannelValue() +
       "/url/" + imgURL;
 
@@ -954,7 +951,7 @@ updateZSelect(getLoadedPlate(), selected_zpos);
     let site = getSelectedSite();
 
     // get z to draw
-    let zpos = getSelectedZpos();
+    let zpos = getSelectedZpos()[0];
 
     drawPlate(plateObj, acquisition, site, zpos, clearFirst);
 
@@ -1274,16 +1271,17 @@ updateZSelect(getLoadedPlate(), selected_zpos);
 
           let context = siteCanvas.getContext('2d');
 
-          let zpos = getSelectedZpos();
-
-          console.log('site', site);
-          console.log('zpos', zpos);
-          console.log('site.zpos', site.zpos);
+          let zpos = getSelectedZpos()[0];
 
 
-          if(site.zpos[zpos].channels != null){
+          //console.log('site', site);
+          //console.log('zpos', zpos);
+          //console.log('site.z_positions', site.z_positions);
 
-            let url = createMergeThumbImgURLFromChannels(site.zpos[zpos].channels);
+
+          if(site.z_positions[zpos].channels != null){
+
+            let url = createMergeThumbImgURLFromChannels(site.z_positions[zpos].channels);
             let img = document.createElement('img');
             img.src = url;
             img.className = 'cellThumbImg';
@@ -1303,7 +1301,7 @@ updateZSelect(getLoadedPlate(), selected_zpos);
               openViewer(well_key, site_name);
             }
           }else{
-            console.log('site.zpos[zpos].channels is null')
+            console.log('site.z_positions[zpos].channels is null')
           }
 
           // // Add tooltip when hoovering an image
@@ -1448,8 +1446,11 @@ updateZSelect(getLoadedPlate(), selected_zpos);
   }
 
   function getSelectedZpos() {
-    let allZ = getLoadedPlate().getAvailableZPos(getSelectedAcquisitionId());
-    return allZ[0];
+    //let allZ = getLoadedPlate().getAvailableZpos(getSelectedAcquisitionId());
+    //return allZ[0];
+    let elem  = document.getElementById('z-select');
+    let zpos = JSON.parse(elem.options[elem.selectedIndex].value);
+    return zpos;
   } 
 
   function getSelectedWell() {
@@ -1675,19 +1676,19 @@ updateZSelect(getLoadedPlate(), selected_zpos);
     elemSelect.options.length = 0;
 
     // add as many options as sites
-    let names = plateObj.getAvailableZpos(getSelectedAcquisitionId());
+    let z_positions = plateObj.getAvailableZpos(getSelectedAcquisitionId());
 
     // Loop through the names array
-    for (let name of names) {
-      option_json = "[" + name + "]";
-      option_display = name;
+    for (let zpos of z_positions) {
+      option_json = "[" + zpos + "]";
+      option_display = zpos;
       selected = (selected_z == option_json) ? true : false;
       elemSelect.add(new Option(option_display, option_json, selected, selected));
     }
 
     // finally add an "all" option
-    if(names && names.length > 1){
-      let allOption = JSON.stringify(names)
+    if(z_positions && z_positions.length > 1){
+      const allOption =  `[ ${z_positions.join(', ')} ]`;
       elemSelect.add(new Option(allOption, allOption));
     }
   }
@@ -1822,10 +1823,18 @@ updateZSelect(getLoadedPlate(), selected_zpos);
       channel_id = value.id;
       option_text = "" + value.id + "-" + channel_name
       option_value = channel_id;
-      selected = (selected_channel == channel_name) ? true : false
-      elemSelect.add(new Option(option_text, option_value, selected));
+      elemSelect.add(new Option(option_text, option_value));
     }
+
+    // set selected
+    Array.from(elemSelect.options).forEach(option => {
+      if (selected_channel === option.value) {
+        option.selected = true;
+      }
+    });
   }
+
+
 
   function removeChildren(domObject) {
     if(domObject){
@@ -1976,6 +1985,10 @@ updateZSelect(getLoadedPlate(), selected_zpos);
     redrawPlate();
   }
 
+  function zSelectChanged() {
+    redrawPlate();
+  }
+
   function channelSelectChanged() {
     redrawPlate();
   }
@@ -1997,6 +2010,10 @@ updateZSelect(getLoadedPlate(), selected_zpos);
   }
 
   function viewerSiteSelectChanged() {
+    redrawImageViewer();
+  }
+
+  function viewerZSelectChanged() {
     redrawImageViewer();
   }
 

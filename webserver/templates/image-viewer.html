@@ -133,7 +133,7 @@
               </select>
 
               <!-- Acquisition slider -->
-              <div id="slider" class="ml-2" style="width:100px;height:20px;hidden:true;">
+              <div id="slider" class="ml-2" style="width:100px;height:20px;display:none;">
                 <input type="text" id="acquisition-slider" name="" value="" style="width:0px;" />
               </div>
 
@@ -302,6 +302,7 @@
       $("#brightness-select").change(viewerBrightnessSelectChanged);
       $("#acquisition-select").change(viewerAcquisitionSelectChanged);
       $("#site-select").change(viewerSiteSelectChanged);
+      $("#z-select").change(viewerZSelectChanged);
       $("#channel-select").change(viewerChannelSelectChanged);
       $("#well-select").change(viewerWellSelectChanged);
       $("#animation-speed-select").change(viewerAnimationSpeedSelectChanged);
@@ -406,8 +407,9 @@
     let init_acquisition = '{{ acquisition }}';
     let init_well = '{{ well }}';
     let init_site = '[{{ site }}]';
+    let init_zpos = '[{{ zpos }}]';
     let init_channel = '{{ channel }}';
-    initViewerWindow(init_plate, init_acquisition, init_well, init_site, init_channel);
+    initViewerWindow(init_plate, init_acquisition, init_well, init_site, init_zpos, init_channel);
   </script>
 
 </body>
