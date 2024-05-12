@@ -1167,7 +1167,7 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
 
-  function create_site_layout(well_name, sites, zpos){
+  function create_site_layout_old(well_name, sites, zpos){
 
     let table = document.createElement('table');
     table.id = 'siteTable';
@@ -1199,6 +1199,47 @@ function drawPlatesListSidebar_old(origPlatesList){
         site_cell.id = cell_name;
         site_cell.className = 'siteCell';
         rowElement.appendChild(site_cell);
+      }
+      table.appendChild(rowElement);
+
+    }
+    return table;
+
+  }
+
+
+  function create_site_layout(well_name, sites, zpos){
+
+    let table = document.createElement('table');
+    table.id = 'siteTable';
+    table.className = 'siteTable';
+
+    // Now add rows and columns
+    nElements = sites.length * zpos.length
+    nRows = Math.ceil(Math.sqrt(nElements));
+    nCols = Math.ceil(Math.sqrt(nElements));
+
+    // loop sites and zpos
+    // Add the sites and zpos that are selected to be shown
+    let cell_names = [];
+    for(let siteIndex = 0; siteIndex < sites.length; siteIndex++) {
+      for(let zposIndex = 0; zposIndex < zpos.length; zposIndex++) {
+        let site_name = sites[siteIndex];
+        cell_name = well_name + "_s" + site_name + "_z" + zpos[zposIndex]; 
+        cell_names.push(cell_name);
+      }
+    }
+
+    let cell_index = 0;
+    for (let row = 0; row < nRows; row++) {
+      let rowElement = document.createElement('tr');
+      for (let col = 0; col < nCols; col++) {
+        let cell_name = cell_names[cell_index];
+        let site_cell = document.createElement('td');
+        site_cell.id = cell_name;
+        site_cell.className = 'siteCell';
+        rowElement.appendChild(site_cell);
+        cell_index ++;
       }
       table.appendChild(rowElement);
 
@@ -1243,92 +1284,92 @@ function drawPlatesListSidebar_old(origPlatesList){
     Object.keys(wells).forEach(well_key => {
       let well = wells[well_key];
 
-      // Add the sites that are selected to be shown
-      let nSites = siteNames.length;
-      for(let nSite = 0; nSite < nSites; nSite++) {
+      // Add the sites and zpos that are selected to be shown
+      for(let siteIndex = 0; siteIndex < siteNames.length; siteIndex++) {
+        for(let zposIndex = 0; zposIndex < zpos.length; zposIndex++) {
 
-        let site_name = siteNames[nSite];
+          let site_name = siteNames[siteIndex];
 
-        let site = well.sites[site_name];
-        if(site != null){
+          let site = well.sites[site_name];
+          if(site != null){
 
-          //console.log("site", site);
+            //console.log("site", site);
 
-          let site_key = well_key + "_s" + site_name + "_z" + zpos[0];
-          //console.log("site_key", site_key);
-          let site_cell = document.getElementById(site_key);
+            let site_key = well_key + "_s" + site_name + "_z" + zpos[zposIndex];
+            //console.log("site_key", site_key);
+            let site_cell = document.getElementById(site_key);
 
-          //console.log("siteNames", siteNames);
-          //console.log("site_name", site_name);
-          //console.log("well_key", well_key);
+            //console.log("siteNames", siteNames);
+            //console.log("site_name", site_name);
+            //console.log("well_key", well_key);
 
-          // Try to get existing canvas - if it doesn't exist create it
-          // this way we are only drawing images on top of existing images
-          // and animation becomes smooth
-          let siteCanvas = document.getElementById('siteCanvas' + site_key);
-          if (siteCanvas == null) {
+            // Try to get existing canvas - if it doesn't exist create it
+            // this way we are only drawing images on top of existing images
+            // and animation becomes smooth
+            let siteCanvas = document.getElementById('siteCanvas' + site_key);
+            if (siteCanvas == null) {
 
-            siteCanvas = document.createElement('canvas');
-            siteCanvas.className = 'siteCanvas';
-            siteCanvas.id = 'siteCanvas' + site_key;
-            siteCanvas.title = '' + site_key;
+              siteCanvas = document.createElement('canvas');
+              siteCanvas.className = 'siteCanvas';
+              siteCanvas.id = 'siteCanvas' + site_key;
+              siteCanvas.title = '' + site_key;
 
-            // TODO fix resizing of canvas
-            // Canvas size should not be set with css-style
-            siteCanvas.width = 100;
-            siteCanvas.height = 100;
-            //siteCanvas.style.border = "2px solid #ffff00";
+              // TODO fix resizing of canvas
+              // Canvas size should not be set with css-style
+              siteCanvas.width = 100;
+              siteCanvas.height = 100;
+              //siteCanvas.style.border = "2px solid #ffff00";
 
-            site_cell.appendChild(siteCanvas);
-          }
-          let zoom = getSelectedZoomValue();
-          let scale = zoom / 100;
-
-          siteCanvas.width = 100 * scale;
-          siteCanvas.height = 100 * scale;
-
-          let context = siteCanvas.getContext('2d');
-
-
-          //console.log('site', site);
-          //console.log('zpos', zpos);
-          //console.log('site.z_positions', site.z_positions);
-
-
-          if(site.z_positions[zpos[0]].channels != null){
-
-            let url = createMergeThumbImgURLFromChannels(site.z_positions[zpos[0]].channels);
-            let img = document.createElement('img');
-            img.src = url;
-            img.className = 'cellThumbImg';
-            img.id = 'cellThumbImg' + site_key;
-
-            // Get filter values
-            let brightness = getSelectedBrightnessValue() / 100;
-
-            //wellThumbImg
-            img.onload = function () {
-              context.filter = 'brightness(' + brightness + ')'
-              context.drawImage(img, 0, 0);
-            };
-
-            // Create open Viewer click handlers
-            siteCanvas.onclick = function () {
-              openViewer(well_key, site_name);
+              site_cell.appendChild(siteCanvas);
             }
-          }else{
-            console.log('site.z_positions[zpos].channels is null')
+            let zoom = getSelectedZoomValue();
+            let scale = zoom / 100;
+
+            siteCanvas.width = 100 * scale;
+            siteCanvas.height = 100 * scale;
+
+            let context = siteCanvas.getContext('2d');
+
+
+            //console.log('site', site);
+            //console.log('zpos', zpos);
+            //console.log('site.z_positions', site.z_positions);
+
+
+            if(site.z_positions[zpos[0]].channels != null){
+
+              let url = createMergeThumbImgURLFromChannels(site.z_positions[zpos[0]].channels);
+              let img = document.createElement('img');
+              img.src = url;
+              img.className = 'cellThumbImg';
+              img.id = 'cellThumbImg' + site_key;
+
+              // Get filter values
+              let brightness = getSelectedBrightnessValue() / 100;
+
+              //wellThumbImg
+              img.onload = function () {
+                context.filter = 'brightness(' + brightness + ')'
+                context.drawImage(img, 0, 0);
+              };
+
+              // Create open Viewer click handlers
+              siteCanvas.onclick = function () {
+                openViewer(well_key, site_name);
+              }
+            }else{
+              console.log('site.z_positions[zpos].channels is null')
+            }
+
+            // // Add tooltip when hoovering an image
+            //  siteCanvas.setAttribute("data-toggle", "tooltip");
+            //  siteCanvas.setAttribute("data-placement", "right"); // Placement has to be off element otherwise flicker
+            //  siteCanvas.setAttribute("data-delay", "0");
+            //  siteCanvas.setAttribute("data-animation", false);
+            //  siteCanvas.setAttribute("data-html", true);
+            //  siteCanvas.title = site_key; //plateObj.getFormattedWellMeta(acquisition, well_key);
           }
-
-          // // Add tooltip when hoovering an image
-          //  siteCanvas.setAttribute("data-toggle", "tooltip");
-          //  siteCanvas.setAttribute("data-placement", "right"); // Placement has to be off element otherwise flicker
-          //  siteCanvas.setAttribute("data-delay", "0");
-          //  siteCanvas.setAttribute("data-animation", false);
-          //  siteCanvas.setAttribute("data-html", true);
-          //  siteCanvas.title = site_key; //plateObj.getFormattedWellMeta(acquisition, well_key);
         }
-
       }
 
     })
