@@ -951,7 +951,9 @@ function drawPlatesListSidebar_old(origPlatesList){
     let site = getSelectedSite();
 
     // get z to draw
-    let zpos = getSelectedZpos()[0];
+    let zpos = getSelectedZpos();
+    console.log("zpos", zpos)
+    zpos = zpos[0];
 
     drawPlate(plateObj, acquisition, site, zpos, clearFirst);
 

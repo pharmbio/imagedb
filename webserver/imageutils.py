@@ -90,9 +90,9 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
     #overwrite_existing=True
     #normalization=False
 
-    logging.info("Inside merge_channels")
-    logging.info(f"normalization: {normalization}")
-    logging.info(f"overwrite_existing: {overwrite_existing}")
+ #   logging.debug("Inside merge_channels")
+ #   logging.debug(f"normalization: {normalization}")
+ #   logging.debug(f"overwrite_existing: {overwrite_existing}")
 
 
  #   for k, v in channels.items():
@@ -113,7 +113,7 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
 
     merged_file = create_merged_filepath(outdir, paths)
 
-    logging.info('merged_file=' + str(merged_file))
+    #logging.info('merged_file=' + str(merged_file))
 
     # Check if file exists already
     if overwrite_existing or not os.path.isfile(merged_file):
