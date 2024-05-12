@@ -318,16 +318,28 @@ function drawPlatesListSidebar(origPlatesList) {
     );
   }
 
+  console.log("platesList", platesList);
+
   // Filter out hidden plates if necessary
   if (!getSelectedShowHiddenValue()) {
     platesList = platesList.filter(item => !item.hidden);
   }
 
-  // Sorting and separating the latest acquisitions
-  const latestAcqCount = 10;
-  let sortedByAcqId = [...platesList].sort((a, b) => b.id - a.id);
-  let latestAcquisitions = sortedByAcqId.slice(0, latestAcqCount);
-  let otherPlates = sortedByAcqId.slice(latestAcqCount);
+  console.log("platesList", platesList);
+
+  // Sorting and separating the latest acquisitions (only if not filtering)
+  let latestAcquisitions = [];
+  let otherPlates = platesList;
+  if(! filter){
+    const latestAcqCount = 10;
+    let sortedByAcqId = [...platesList].sort((a, b) => b.id - a.id);
+    latestAcquisitions = sortedByAcqId.slice(0, latestAcqCount);
+    otherPlates = sortedByAcqId.slice(latestAcqCount);
+  }
+
+  console.log("platesList", platesList);
+  console.log("latestAcquisitions", latestAcquisitions);
+  console.log("otherPlates", otherPlates);
 
   // Group the rest by project
   let projects = {};
@@ -410,6 +422,7 @@ function drawPlatesListSidebar(origPlatesList) {
 
   // If result is < x items expand all
   if(platesList.length < 10){
+    let bonsai = $('#result-list').data('bonsai');
     bonsai.expandAll(list);
   }
 
@@ -953,7 +966,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     // get z to draw
     let zpos = getSelectedZpos();
     console.log("zpos", zpos)
-    zpos = zpos[0];
+    //zpos = zpos[0];
 
     drawPlate(plateObj, acquisition, site, zpos, clearFirst);
 
@@ -965,7 +978,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     apiCreateImageAnalysesTable(plate_barcode)
   }
 
-  function createEmptyTable(rows, cols, sites, plateObj=null) {
+  function createEmptyTable(rows, cols, sites, zpos, plateObj=null) {
     console.log('inside create empty plate');
     let isShowCompounds = getSelectedShowCompoundsValue();
     let table = document.createElement('table');
@@ -1012,7 +1025,7 @@ function drawPlatesListSidebar_old(origPlatesList){
         well_cell.className = 'wellCell';
         rowElement.appendChild(well_cell);
 
-        let sites_table = create_site_layout(well_name, sites);
+        let sites_table = create_site_layout(well_name, sites, zpos);
 
         let well_div = document.createElement("div");
         well_div.className = "wellDiv"
@@ -1154,7 +1167,7 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
 
-  function create_site_layout(well_name, sites){
+  function create_site_layout(well_name, sites, zpos){
 
     let table = document.createElement('table');
     table.id = 'siteTable';
@@ -1162,6 +1175,8 @@ function drawPlatesListSidebar_old(origPlatesList){
 
     // Now add rows and columns
     nSites = sites.length;
+    nZpos = zpos[0].length;
+    nPos = Math.max(nSites, nZpos);
     //console.log("nSites", nSites);
 
 
@@ -1178,7 +1193,7 @@ function drawPlatesListSidebar_old(origPlatesList){
         //console.log("add site: " + nSite);
 
         let site_name = sites[nSite];
-        let cell_name = well_name + "_s" + site_name;
+        let cell_name = well_name + "_s" + site_name + "_z" + zpos[0];
 
         let site_cell = document.createElement('td');
         site_cell.id = cell_name;
@@ -1214,7 +1229,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     // first create a new plate consisting of empty well-div's
     if (document.getElementById('plateTable') == null) {
       let plateSize = plateObj.getPlateSize(siteNames);
-      let table = createEmptyTable(plateSize.rows, plateSize.cols, plateSize.sites, plateObj);
+      let table = createEmptyTable(plateSize.rows, plateSize.cols, plateSize.sites, zpos, plateObj);
       container.appendChild(table);
       console.log('done create div');
     }
@@ -1239,7 +1254,7 @@ function drawPlatesListSidebar_old(origPlatesList){
 
           //console.log("site", site);
 
-          let site_key = well_key + "_s" + site_name;
+          let site_key = well_key + "_s" + site_name + "_z" + zpos[0];
           //console.log("site_key", site_key);
           let site_cell = document.getElementById(site_key);
 
@@ -1256,6 +1271,7 @@ function drawPlatesListSidebar_old(origPlatesList){
             siteCanvas = document.createElement('canvas');
             siteCanvas.className = 'siteCanvas';
             siteCanvas.id = 'siteCanvas' + site_key;
+            siteCanvas.title = '' + site_key;
 
             // TODO fix resizing of canvas
             // Canvas size should not be set with css-style
@@ -1273,17 +1289,15 @@ function drawPlatesListSidebar_old(origPlatesList){
 
           let context = siteCanvas.getContext('2d');
 
-          let zpos = getSelectedZpos()[0];
-
 
           //console.log('site', site);
           //console.log('zpos', zpos);
           //console.log('site.z_positions', site.z_positions);
 
 
-          if(site.z_positions[zpos].channels != null){
+          if(site.z_positions[zpos[0]].channels != null){
 
-            let url = createMergeThumbImgURLFromChannels(site.z_positions[zpos].channels);
+            let url = createMergeThumbImgURLFromChannels(site.z_positions[zpos[0]].channels);
             let img = document.createElement('img');
             img.src = url;
             img.className = 'cellThumbImg';
