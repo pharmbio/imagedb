@@ -62,7 +62,7 @@
       const firstZPositionKey = this.getFirstZPositionKey(acquisitionId, firstWellKey, firstSiteKey);
       const channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey, firstZPositionKey);
       return Object.values(channels).map(channel => channel.dye);
-    }
+      }
   
     getAvailableChannels(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
@@ -148,12 +148,12 @@
         }
         return 0;
       }
-  
+
       getWellImageMeta(acquisition, well_name) {
         let imageMeta = this.plateObj.acquisitions[acquisition].wells[well_name].sites["1"].channels["1"].image_meta;
         return imageMeta;
       }
-  
+
       getFormattedWellMeta(acquisition, well_name) {
         let well_image_meta = this.getWellImageMeta(acquisition, well_name);
         let formatted_meta = '';
@@ -365,6 +365,7 @@ function drawPlatesListSidebar(origPlatesList) {
     plateItem.appendChild(link);
     return plateItem;
   }
+
 
   // Add "Latest acquisitions" if not filtering
   let latestAcqItem = null;
@@ -614,12 +615,24 @@ function drawPlatesListSidebar_old(origPlatesList){
     apiLoadPlate(barcode);
   }
 
+  function removeAllImages(container) {
+    console.log("Inside removeAllImages");
+    let images = container.getElementsByClassName('cellThumbImg');
+    while (images.length > 0) {
+        images[0].parentNode.removeChild(images[0]);
+    }
+  }
+
 
   function apiLoadPlate(plate_name, select_acq_id=undefined) {
 
     // stop any current animation
     stopAnimation();
     document.getElementById("animate-cbx").checked = false;
+
+    // Remove all existing images
+    let container = document.getElementById('plate-div');
+    removeAllImages(container);
 
     url = '/api/plate/' + plate_name;
     fetch(url)

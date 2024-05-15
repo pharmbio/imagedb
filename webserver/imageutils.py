@@ -83,11 +83,12 @@ def auto_white_balance(im, p=.6):
     return im
 
 def hash_filename(filename):
-    """Hash a filename using SHA-256 to ensure it fits within filesystem limits."""
+    """Hash the base name of a filename using SHA-256 and keep the original extension."""
+    base_name, ext = os.path.splitext(filename)
     hash_obj = hashlib.sha256()
-    hash_obj.update(filename.encode('utf-8'))
-    # Return the hexadecimal digest of the hash
-    return hash_obj.hexdigest()
+    hash_obj.update(base_name.encode('utf-8'))
+    # Return the hashed base name with the original extension
+    return f"{hash_obj.hexdigest()}{ext}"
 
 async def merge_channels(channels, outdir, overwrite_existing=False, normalization=False):
     ''' For now in image veiewer read image as 8 bit grayscale cv2.IMREAD_GRAYSCALE
@@ -162,23 +163,20 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
         # auto white balance and normalize between colors
         merged_img = auto_white_balance(merged_img)
 
-        # Create dir
-        os.makedirs(os.path.dirname(merged_file), exist_ok=True)
-
-        filename = os.path.basename(merged_file)
-
         # ext4 is limited to 256 byte filenames
+        filename = os.path.basename(merged_file)
         if len(filename) > 255:
             filename = hash_filename(filename)  # Use the hash function to shorten the filename
             # Join the new filename with the original directory path
-            merged_file = os.path.join(os.path.dirname(merged_file), filename)
+            merged_file = os.path.join(os.path.dirname(merged_file), filename)      
 
-        # Write the image file to disk
+        # Save the merged image
+        if not os.path.exists(os.path.dirname(merged_file)):
+            os.makedirs(os.path.dirname(merged_file))
+
         cv2.imwrite(merged_file, merged_img)
 
-        return merged_file
-
-
+    return merged_file
 
 ## main entry for testing
 #logging.getLogger().setLevel(logging.DEBUG)
