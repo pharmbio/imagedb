@@ -216,13 +216,6 @@ def insert_plate_acq(img_meta):
         plate_acq_id = cursor.fetchone()[0]
         cursor.close()
 
-        # Also add to New acquisitions table
-        query = "INSERT INTO new_plate_acquisition(id, folder) VALUES(%s, %s)"
-        cursor2 = conn.cursor()
-        cursor2.execute(query, (plate_acq_id,
-                               folder
-                               ))
-
         conn.commit()
 
         return plate_acq_id
