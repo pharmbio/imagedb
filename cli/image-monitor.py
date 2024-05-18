@@ -44,32 +44,6 @@ def put_connection(pooled_connection):
         __connection_pool.putconn(pooled_connection)
 
 
-#
-# Returns list of (level 1) subdirs to specified dir
-#
-def get_subdirs(root_path, filter=""):
-    subdirs = []
-    for name in os.listdir(root_path):
-        if filter in name:
-            if os.path.isdir(os.path.join(root_path, name)):
-                subdirs.append(os.path.join(root_path, name))
-    return subdirs
-
-#
-# Recursively gets all subdirs in dir
-#
-
-
-def get_subdirs_recursively_no_thumb_dir(path):
-    logging.debug(path)
-    subdirs = []
-    for root, dir, files in os.walk(path):
-        for subdir in dir:
-            if "thumb" not in subdir:
-                subdir = os.path.join(root, subdir)
-                subdirs.append(subdir)
-    return subdirs
-
 def get_all_image_files(dir):
     # get all files
     logging.info(dir)
@@ -84,10 +58,6 @@ def get_all_image_files(dir):
             image_files.append(absolute_file)
 
     return image_files
-
-
-def get_last_modified(path):
-    return
 
 
 def make_thumb_path(image, thumbdir):
@@ -430,16 +400,23 @@ def find_dirs_containing_img_files_recursive_from_list_of_paths(path_list: List[
         if not os.path.exists(path):
             logging.exception(f"Path does not exist: {path}")
         else:
-            yield from find_dirs_containing_img_files_recursive(path)
+            yield from find_dirs_containing_img_files_recursive(path, True)
 
-def find_dirs_containing_img_files_recursive(path: str):
+def find_dirs_containing_img_files_recursive(path: str, sort_dir_entries: bool = False):
     """
     Yield lowest level directories containing image files as Path (not starting with '.')
     the method is called recursively to find all subdirs
     It breaks the recursion when it finds an image file to avoid looking through all files (long operation)
     """
 
-    for entry in os.scandir(path):
+    if sort_dir_entries:
+        iterable_entries = list(os.scandir(path))
+        # Sort entries by modification time, most recent first
+        iterable_entries.sort(key=lambda e: e.stat().st_mtime, reverse=True)
+    else:
+        iterable_entries = os.scandir(path)
+
+    for entry in iterable_entries:
         # recurse directories
         if not entry.name.startswith('.') and entry.is_dir():
             yield from find_dirs_containing_img_files_recursive(entry.path)
@@ -449,7 +426,6 @@ def find_dirs_containing_img_files_recursive(path: str):
 
                 parent = Path(entry.path).parent
                 yield(parent)
-
                 # A little hack to get subdir "single_images" if it exist, before break looking through this directory
                 # check if single_images subdir also exists, if so add that one to
                 single_images_dir = parent / "single_images"
@@ -547,17 +523,15 @@ def import_plate_images_and_meta(plate_dir: str):
     logging.info("done import_plate_images_and_meta: " + str(plate_dir))
 
 
-# directories that doesn't have images or is throwing error when processed
-blacklist: list[str] = []
-blacklist.append('/share/mikro/IMX/MDC_pharmbio/trash/')
-blacklist.append('/share/mikro2/nikon/trash/')
-blacklist.append('/share/mikro2/squid/trash/')
-blacklist.append('/share/mikro2/squid/specs3k_2500px/')
-
-
+# directories that don't have images or are throwing errors when processed
+blacklist: List[str] = [
+    '/share/mikro/IMX/MDC_pharmbio/trash/',
+    '/share/mikro2/nikon/trash/',
+    '/share/mikro2/squid/trash/'
+]
 
 # processed filenames and timestamp when processed
-processed: dict[str, float]= dict()
+processed: Dict[str, float] = {}
 
 
 def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, proj_root_dirs, exhaustive_initial_poll, continuous_polling):
@@ -582,57 +556,45 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
         # create new cutoff time
         cutoff_time = time.time() - latest_file_change_margin
 
-        # get all image dirs within root dirs
-        img_dirs = set(find_dirs_containing_img_files_recursive_from_list_of_paths(proj_root_dirs))
-
-        logging.info(f"len(img_dirs): {len(img_dirs)}")
-
-        # remove finished acquisitions
+        # get finished ones from db
         finished_acq_folders = select_finished_plate_acq_folder()
-        for path in set(img_dirs):
-            if str(path) in finished_acq_folders:
-                img_dirs.remove(path)
-                #logging.info("removed because finished: " + str(path))
 
-        logging.info(f"len(img_dirs): {len(img_dirs)}")
+        # get all image dirs within root dirs (yields dirs sorted by date, most recent first)
+        for img_dir in find_dirs_containing_img_files_recursive_from_list_of_paths(proj_root_dirs):
 
-        # remove old dirs
-        if is_initial_poll:
-            old_dir_cuttoff = 0 # 1970-01-01
-        else:
-            old_dir_cuttoff = (3600 * 24 * poll_dirs_margin_days)
-        for path in set(img_dirs):
-            if path.stat().st_mtime < old_dir_cuttoff:
-                img_dirs.remove(path)
-                #logging.info("removed because old: " + str(path))
+            logging.debug(f"img_dir: {img_dir}")
 
-        logging.info(f"len(img_dirs): {len(img_dirs)}")
+            # remove finished acquisitions
+            if str(img_dir) in finished_acq_folders:
+                logging.debug(f"removed because finished: {img_dir}")
+                continue
 
-        # remove blacklisted from list(Directories with unparsable images that were found since start of program)
-        for path in set(img_dirs):
-            if str(path) in blacklist:
-                img_dirs.remove(path)
-                logging.info("removed because blacklisted: " + str(path))
+            # remove old dirs
+            if is_initial_poll:
+                old_dir_cuttoff = 0 # 1970-01-01
+            else:
+                old_dir_cuttoff = (3600 * 24 * poll_dirs_margin_days)
 
-        logging.info(f"img dirs left: " + str(img_dirs))
+            if img_dir.stat().st_mtime < old_dir_cuttoff:
+                logging.debug(f"removed because old: {img_dir} ")
+                continue
 
-        # TODO sort list?
+            if str(img_dir) in blacklist:
+                logging.info(f"removed because blacklisted: {img_dir}")
 
-        # Import images in imagedirs
-        for img_dir in img_dirs:
             try:
                 import_plate_images_and_meta(str(img_dir))
+
             except Exception as e:
-                    logging.exception("Exception in img_dir")
-                    # add dir to blacklist if there are more than X wrong files in dir
-                    logging.info("Add to blacklist img_dir: " + str(img_dir))
-                    blacklist.append(str(img_dir))
-                    exception_file = os.path.join(imgdb_settings.ERROR_LOG_DIR, "exceptions-last-poll.log")
-                    with open(exception_file, 'a') as exc_file:
-                        exc_file.write("Exception, time:" +
-                                       str(datetime.today()) + "\n")
-                        exc_file.write("img_dir:" + str(img_dir) + "\n")
-                        exc_file.write(traceback.format_exc())
+                logging.exception("Exception in img_dir")
+                # add dir to blacklist if there are more than X wrong files in dir
+                logging.info(f"Add to blacklist img_dir: {img_dir} ")
+                blacklist.append(str(img_dir))
+                exception_file = os.path.join(imgdb_settings.ERROR_LOG_DIR, "exceptions-last-poll.log")
+                with open(exception_file, 'a') as exc_file:
+                    exc_file.write(f"Exception, time: {datetime.today()}\n")
+                    exc_file.write(f"img_dir: {img_dir}\n")
+                    exc_file.write(traceback.format_exc())
 
 
         # If time > 10 min (default cutpoff_time) since last uploaded from unfinished plate_acquisitions
@@ -671,10 +633,8 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
         if continuous_polling != True:
             break
 
-#
-#  Main entry for script
-#
-try:
+def main():
+
     #
     # Configure logging
     #
@@ -706,12 +666,16 @@ try:
     logging.debug(args)
 
     polling_loop(args.poll_dirs_margin_days,
-                 args.latest_file_change_margin,
-                 args.poll_interval,
-                 args.proj_root_dirs,
-                 args.exhaustive_initial_poll,
-                 args.continuous_polling)
+                args.latest_file_change_margin,
+                args.poll_interval,
+                args.proj_root_dirs,
+                args.exhaustive_initial_poll,
+                args.continuous_polling)
 
-except Exception as e:
-    print(traceback.format_exc())
-    logging.info("Exception out of script")
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        logging.exception("Exception out of script")
+        print(traceback.format_exc())

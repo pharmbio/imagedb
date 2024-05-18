@@ -637,7 +637,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     url = '/api/plate/' + plate_name;
     fetch(url)
       .then(function (response) {
-        if (response.status === 200) {
+        if (response.status === 200) { 
 
           //window.history.pushState('', '', url);
 
