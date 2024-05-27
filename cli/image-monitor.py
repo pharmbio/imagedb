@@ -574,6 +574,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
             if str(img_dir) in blacklist:
                 logging.info(f"removed because blacklisted: {img_dir}")
+                continue
 
             try:
                 import_plate_images_and_meta(str(img_dir))
