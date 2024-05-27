@@ -572,7 +572,8 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                 logging.debug(f"removed because old: {img_dir} ")
                 continue
 
-            if str(img_dir) in blacklist:
+            for blacklisted_item in blacklist:
+                if blacklisted_item in str(img_dir):
                 logging.info(f"removed because blacklisted: {img_dir}")
                 continue
 
