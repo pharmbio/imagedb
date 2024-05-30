@@ -50,8 +50,9 @@ class Well:
         site.add_data(image_meta)
 
 class PlateAcquisition:
-    def __init__(self, id):
+    def __init__(self, id, project):
         self.id = id
+        self.project = project
         self.wells = {}
 
     def get_or_create_well(self, well_id):
@@ -69,13 +70,13 @@ class Plate:
         self.acquisitions = {}
         self.layout = {}
 
-    def get_or_create_acquisition(self, acquisition_id):
+    def get_or_create_acquisition(self, acquisition_id, project):
         if acquisition_id not in self.acquisitions:
-            self.acquisitions[acquisition_id] = PlateAcquisition(acquisition_id)
+            self.acquisitions[acquisition_id] = PlateAcquisition(acquisition_id, project)
         return self.acquisitions[acquisition_id]
 
     def add_data(self, image_meta):
-        acquisition = self.get_or_create_acquisition(image_meta['plate_acquisition_id'])
+        acquisition = self.get_or_create_acquisition(image_meta['plate_acquisition_id'], image_meta['project'])
         acquisition.add_data(image_meta)
 
     def add_layout(self, layout):

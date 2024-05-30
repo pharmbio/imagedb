@@ -5,57 +5,57 @@
     constructor(jsonData) {
       this.data = jsonData;
     }
-  
+
     getName() {
       return this.data.id;
     }
-  
+
     getLayout() {
       return this.data.layout;
     }
-  
+
     getWellLayoutMeta(wellName) {
       return this.getLayout()?.[wellName];
     }
-  
+
     getAcquisitions() {
       return this.data.acquisitions;
     }
-  
+
     getWells(acquisitionId) {
       return this.getAcquisitions()[acquisitionId]?.wells || {};
     }
-  
+
     getSites(acquisitionId, wellKey) {
       return this.getWells(acquisitionId)[wellKey]?.sites || {};
     }
-  
+
     getZPositions(acquisitionId, wellKey, siteKey) {
       return this.getSites(acquisitionId, wellKey)[siteKey]?.z_positions || {};
     }
-  
+
     getChannels(acquisitionId, wellKey, siteKey, zKey) {
       return this.getZPositions(acquisitionId, wellKey, siteKey)[zKey]?.channels || {};
     }
-  
+
     getFirstWellKey(acquisitionId) {
       return Object.keys(this.getWells(acquisitionId))[0];
     }
-  
+
     getFirstSiteKey(acquisitionId, wellKey) {
       return Object.keys(this.getSites(acquisitionId, wellKey))[0];
     }
-  
+
     getFirstZPositionKey(acquisitionId, wellKey, siteKey) {
       return Object.keys(this.getZPositions(acquisitionId, wellKey, siteKey))[0];
     }
-  
+
     getSiteNames(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const sites = this.getSites(acquisitionId, firstWellKey);
       return Object.values(sites).map(site => site.id);
     }
-  
+
     getChannelNames(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
@@ -63,7 +63,7 @@
       const channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey, firstZPositionKey);
       return Object.values(channels).map(channel => channel.dye);
       }
-  
+
     getAvailableChannels(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
@@ -76,7 +76,7 @@
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
       return Object.keys(this.getZPositions(acquisitionId, firstWellKey, firstSiteKey));
     }
-  
+
     getPlateSize(siteNames) {
       // Loop through wellNames (for all acquisitions) and see if size is outside 96 or 384 plate limit
       // if not return 96, 384 or 1536
@@ -92,13 +92,13 @@
           maxCol = Math.max(maxCol, nCol);
         }
       }
-  
+
       if (maxRow > 16 || maxCol > 24) return { rows: 32, cols: 48, sites: siteNames };
       if (maxRow > 8 || maxCol > 12) return { rows: 16, cols: 24, sites: siteNames };
       return { rows: 8, cols: 12, sites: siteNames };
     }
-  
-  
+
+
       /**
        * Counts the number of acquisitions in the plate.
        * @returns {number} The count of acquisitions.
@@ -106,7 +106,7 @@
     countAcquisitions() {
       return Object.keys(this.getAcquisitions()).length;
     }
-  
+
       /**
        * Counts the number of channels for the first non-empty well and site
        * for the given acquisition ID. Returns 0 if no channels are found.
@@ -121,7 +121,7 @@
       const channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey, firstZPositionKey);
       return Object.keys(channels).length;
     }
-  
+
       /**
        * Counts the number of wells in the first acquisition. Assumes that the number of wells is consistent across acquisitions.
        * @returns {number} The count of wells in the first acquisition, or 0 if no acquisitions are present.
@@ -133,7 +133,7 @@
       }
       return 0;
     }
-  
+
       /**
        * Counts the number of sites in the first well of the first acquisition. Assumes that the structure is consistent across the plate.
        * @returns {number} The count of sites in the first well of the first acquisition, or 0 if none are found.
@@ -162,34 +162,34 @@
         formatted_meta += "Plate_acq_id: " + acquisition + "<br>" + "<br>";
         return formatted_meta;
       }
-  
+
       static getWellName(row, col) {
         let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "\\", "]", "^", "_", "`", "a", "b"];
         return rows[row] + col.toString().padStart(2, '0');
       }
-  
+
     static getRowIndexFromWellName(name) {
       let ascVal = name.charCodeAt(0);
       let rowIndex = ascVal - 64; // Adjusting based on ASCII value of 'A'
       return rowIndex;
     }
-  
+
     static getColIndexFromWellName(name) {
       let colIndex = parseInt(name.substr(1), 10);
       return colIndex;
     }
   }
-  
+
   class Plates {
     constructor(jsonData) {
       this.data = jsonData;
     }
-  
+
     getPlate(index) {
       const plateData = this.data[Object.keys(this.data)[index]];
       return new Plate(plateData);
     }
-  
+
     getFirstPlate() {
       return this.getPlate(0);
     }
@@ -637,7 +637,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     url = '/api/plate/' + plate_name;
     fetch(url)
       .then(function (response) {
-        if (response.status === 200) { 
+        if (response.status === 200) {
 
           //window.history.pushState('', '', url);
 
@@ -706,6 +706,28 @@ function drawPlatesListSidebar_old(origPlatesList){
         displayModalError(error);
       });
 
+  }
+
+  function apiMoveAcquisitionToTrash(id) {
+    // Add your API call here
+    console.log(`Moving Plate Acquisition ID ${id} to trash.`);
+    // Example using fetch:
+    fetch('/api/move-to-trash', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: id })
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Success:', data);
+      // Handle success
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+      // Handle error
+    });
   }
 
   function updateToolbarWithNewAcquisition() {
@@ -941,8 +963,6 @@ function drawPlatesListSidebar_old(origPlatesList){
       }
     }
   }
-
-
 
   function openViewer(well_name, site_name) {
 
@@ -1238,7 +1258,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     for(let siteIndex = 0; siteIndex < sites.length; siteIndex++) {
       for(let zposIndex = 0; zposIndex < zpos.length; zposIndex++) {
         let site_name = sites[siteIndex];
-        cell_name = well_name + "_s" + site_name + "_z" + zpos[zposIndex]; 
+        cell_name = well_name + "_s" + site_name + "_z" + zpos[zposIndex];
         cell_names.push(cell_name);
       }
     }
@@ -1402,8 +1422,12 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   function getSelectedAcquisitionId() {
     let elem = document.getElementById('acquisition-select');
+    if (!elem || elem.selectedIndex < 0 || elem.selectedIndex >= elem.options.length) {
+      return null;
+    }
     return getAcquisitionFromIndex(elem.selectedIndex);
   }
+
 
   function getAcquisitionFromIndex(index) {
     let elem = document.getElementById('acquisition-select');
@@ -1412,6 +1436,9 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   function getSelectedAcquisition() {
     let elem = document.getElementById('acquisition-select');
+    if (!elem || elem.options.length === 0) {
+      return null;
+    }
     return elem.options[elem.selectedIndex].value;
   }
 
@@ -1521,7 +1548,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     let elem  = document.getElementById('z-select');
     let zpos = JSON.parse(elem.options[elem.selectedIndex].value);
     return zpos;
-  } 
+  }
 
   function getSelectedWell() {
     let elem = document.getElementById('well-select');
@@ -2002,6 +2029,22 @@ function drawPlatesListSidebar_old(origPlatesList){
   * Tool event handlers
   *
   */
+
+  function openTrashModal() {
+    $('#trash-modal').modal('show');
+  }
+
+  function confirmMoveToTrash() {
+    const enteredId = document.getElementById('confirm-id-input').value;
+    const currentPlateAcquisitionId = getSelectedAcquisitionId();
+    if (enteredId === currentPlateAcquisitionId) {
+      $('#trash-modal').modal('hide');
+      apiMoveAcquisitionToTrash(currentPlateAcquisitionId);
+    } else {
+      displayModalError('Plate acquisition does not match.');
+    }
+  }
+
   function zoomSelectChanged() {
     redrawPlate();
   }
