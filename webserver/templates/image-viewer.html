@@ -80,13 +80,54 @@
       margin: 0px;
       background-color: black;
     }
+  </style>
 
+  <style>
     /*
      This changes bootstrap base font and all relatives
     */
     html {
       font-size: 14px;
     }
+
+    .tooltip-inner {
+      color: #000;
+      background-color: #fff;
+      text-align: left;
+    }
+
+    .bs-tooltip-right {
+      padding: 2px 2px;
+      color: #fff;
+      background-color: #245973;
+      border-radius: 2px;
+    }
+
+    /* Custom z-index for modals */
+    #trash-modal {
+      z-index: 1040; /* Default Bootstrap z-index for modals */
+    }
+
+    #error-modal {
+      z-index: 1050; /* Higher z-index to ensure it appears above the trash modal */
+    }
+
+    .modal-backdrop {
+      z-index: 1030; /* Ensure backdrop appears below the modals */
+    }
+
+    .dynamic-label {
+            min-width: 200px;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+            max-width: 100%; /* Adjust to fit container if necessary */
+            text-align: left;
+    }
+
+
   </style>
 
 </head>
@@ -113,23 +154,29 @@
             <div class="input-group">
 
               <!-- Plate label -->
-              <label id="plate-name-label" class="input-group-text"
-                style="width: 450px;overflow: hidden;text-overflow: ellipsis; white-space: nowrap;">
+              <label id="plate-name-label" class="input-group-text text-truncate dynamic-label" title="Plate:">
                 Plate:
               </label>
+
+              <!-- Project label -->
+              <div class="input-group-prepend ml-2">
+                <label id="project-name-label" class="input-group-text text-truncate dynamic-label" title="Proj:">
+                  Proj:
+                </label>
+              </div>
+
+              <!-- Acquisition selector -->
+              <div class="input-group-prepend ml-2">
+                <label id="acq-id-label" class="input-group-text" for="acquisition-select">Acq-id:</label>
+              </div>
+              <select class="custom-select" style="width: 60px;" id="acquisition-select">
+              </select>
 
               <!-- Well selector -->
               <div class="input-group-prepend ml-2">
                 <label class="input-group-text" for="well-select">Well</label>
               </div>
               <select class="custom-select" style="width: 75px;" id="well-select">
-              </select>
-
-              <!-- Acquisition selector -->
-              <div class="input-group-prepend ml-2">
-                <label class="input-group-text" for="acquisition-select">Acq-id:</label>
-              </div>
-              <select class="custom-select" style="width: 60px;" id="acquisition-select">
               </select>
 
               <!-- Acquisition slider -->

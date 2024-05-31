@@ -59,6 +59,17 @@
       z-index: 1030; /* Ensure backdrop appears below the modals */
     }
 
+    .dynamic-label {
+            min-width: 200px;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+            max-width: 100%; /* Adjust to fit container if necessary */
+            text-align: left;
+    }
+
 
 /* Adjustments for sidebar to make it scrollable */
 #sidebar-wrapper {
@@ -396,14 +407,20 @@
           <div class="input-group align-bottom">
 
             <!-- Plate label -->
-            <label id="plate-name-label" class="input-group-text"
-              style="width: 500px;overflow: hidden;text-overflow: ellipsis; white-space: nowrap;">
+            <label id="plate-name-label" class="input-group-text text-truncate dynamic-label" title="Plate:">
               Plate:
             </label>
 
+            <!-- Project label -->
+            <div class="input-group-prepend ml-2">
+              <label id="project-name-label" class="input-group-text text-truncate dynamic-label" title="Proj:">
+                Proj:
+              </label>
+            </div>
+
             <!-- Acquisition selector -->
             <div class="input-group-prepend ml-2">
-              <label class="input-group-text" for="acquisition-select">Acq-id:</label>
+              <label id="acq-id-label" class="input-group-text" for="acquisition-select">Acq-id:</label>
             </div>
             <select class="custom-select" style="width: 60px;" id="acquisition-select">
             </select>

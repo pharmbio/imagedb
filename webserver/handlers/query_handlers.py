@@ -12,7 +12,7 @@ import json
 import datetime
 import decimal
 
-from dbqueries import list_all_plates, get_plate, list_image_analyses
+from dbqueries import list_all_plates, get_plate, list_image_analyses, move_plate_acq_to_trash
 
 def myserialize(obj):
     """JSON serializer for objects not serializable by default json code"""
@@ -50,7 +50,7 @@ class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=ab
             form_data = self.request.body_arguments
         except Exception as e:
             logging.error("Exception: %s", e)
-            form_data = []
+            form_data = {}
 
         logging.debug("form_data:" + str(form_data))
 
@@ -61,7 +61,12 @@ class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=ab
         json_string = jsonpickle.encode(retval, unpicklable=False)
         logging.info("done with jsonpickle")
 
+         # Ensure json_string is a proper string
+        if not isinstance(json_string, str):
+            json_string = str(json_string)
+
         self.write(json_string)
+        self.finish()
 
 
 class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
@@ -71,7 +76,7 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
         body = "application/json"
         self.set_header(header, body)
 
-    def get(self, plate):
+    def get(self, plate, acqID):
         """Handles GET requests.
         """
         logging.info("plate_name: " + str(plate))
@@ -86,7 +91,7 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
 
         json_string = json.dumps(data, default=myserialize) # default=lambda x: x.__dict__)
         logging.info("done with json.dumps")
-        
+
         #json_string = jsonpickle.encode(data, unpicklable=False)
         #logging.info("done with jsonpickle")
         json_string = json_string.replace("</", "<\\/")
@@ -95,6 +100,29 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
         self.write(json_string)
 
         logging.info("done write json_string")
+
+
+class MoveAcqIDToTrashHandler(tornado.web.RequestHandler):
+    def prepare(self):
+        header = "Content-Type"
+        body = "application/json"
+        self.set_header(header, body)
+
+    def get(self, acqID):
+        """Handles GET requests.
+        """
+        logging.info(f"MoveAcqIDToTrashHandler: {acqID}")
+
+        try:
+            result = move_plate_acq_to_trash(acqID)
+            if result["status"] == "success":
+                self.write(result)
+            else:
+                self.set_status(500)
+                self.write(result)
+        except Exception as e:
+            self.set_status(500)
+            self.write({"status": "error", "message": str(e)})
 
 
 #####

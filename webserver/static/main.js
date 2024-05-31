@@ -10,6 +10,18 @@
       return this.data.id;
     }
 
+    getProjectName(acquisitionId) {
+      return this.getAcquisitions()[acquisitionId]?.project || "None";
+    }
+
+    setProjectTrash(acquisitionId) {
+      this.getAcquisitions()[acquisitionId].project="trash";
+    }
+
+    getAcquisitionFolder(acquisitionId) {
+      return this.getAcquisitions()[acquisitionId]?.folder || "None";
+    }
+
     getLayout() {
       return this.data.layout;
     }
@@ -211,7 +223,7 @@
       console.log("plateBarcode == '' && acquisitionID == '', Do nothing");
       // Do nothing
     } else if (acquisitionID != "") {
-      apiLoadAcquisitionID(acquisitionID);
+      apiLoadAcquisitionID(plateBarcode, acquisitionID);
     } else {
       apiLoadPlateBarcode(plateBarcode);
     }
@@ -610,6 +622,11 @@ function drawPlatesListSidebar_old(origPlatesList){
     })
   }
 
+  function apiLoadAcquisitionID(barcode, acq_id) {
+    console.log("Inside apiLoadAcquisitionID: ", acq_id);
+    apiLoadPlate(barcode, acq_id);
+  }
+
   function apiLoadPlateBarcode(barcode) {
     console.log("Inside apiLoadPlateBarcode: ", barcode);
     apiLoadPlate(barcode);
@@ -623,6 +640,10 @@ function drawPlatesListSidebar_old(origPlatesList){
     }
   }
 
+  function updateWindowURL(barcode, acq_id){
+    window.history.pushState('', '', `?barcode=${barcode}&acqid=${acq_id}`);
+  }
+
 
   function apiLoadPlate(plate_name, select_acq_id=undefined) {
 
@@ -634,12 +655,13 @@ function drawPlatesListSidebar_old(origPlatesList){
     let container = document.getElementById('plate-div');
     removeAllImages(container);
 
-    url = '/api/plate/' + plate_name;
+    url = '/api/plate/' + plate_name + '/' + select_acq_id
     fetch(url)
       .then(function (response) {
         if (response.status === 200) {
 
           //window.history.pushState('', '', url);
+          updateWindowURL(plate_name, select_acq_id);
 
           response.json().then(function (json) {
 
@@ -647,9 +669,7 @@ function drawPlatesListSidebar_old(origPlatesList){
             window.loaded_plates = new Plates(json['data'].plates);
             console.log(window.loaded_plates);
             console.log("Plates loaded")
-
             updateToolbarWithNewPlate(select_acq_id);
-
             redrawPlate(true);
           });
         }
@@ -671,23 +691,23 @@ function drawPlatesListSidebar_old(origPlatesList){
     console.log('plate_name', plate_name);
     console.log('channel', channel);
 
-
     // stop any current animation
     stopAnimation();
     document.getElementById("animate-cbx").checked = false;
 
-    fetch('/api/plate/' + plate_name)
-
+    url = '/api/plate/' + plate_name + '/' + acquisition;
+    fetch(url)
       .then(function (response) {
         if (response.status === 200) {
+
           response.json().then(function (json) {
 
+            //window.history.pushState('', '', url);
+            updateWindowURL(plate_name, acquisition);
+
             window.loaded_plates = new Plates(json['data'].plates);
-
             console.log(window.loaded_plates);
-
             updateToolbarWithNewPlate(acquisition, well, site, channel, zpos);
-
             console.log("done loadPlateFromViewer respone OK");
 
             redrawImageViewer();
@@ -709,53 +729,57 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
   function apiMoveAcquisitionToTrash(id) {
-    // Add your API call here
-    console.log(`Moving Plate Acquisition ID ${id} to trash.`);
-    // Example using fetch:
-    fetch('/api/move-to-trash', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ id: id })
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Success:', data);
-      // Handle success
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-      // Handle error
-    });
+    console.log(`Moving Acquisition ID ${id} to trash.`);
+
+    url = '/api/move-to-trash/' + id;
+    fetch(url, { method: 'GET' })
+      .then(function (response) {
+        if (response.status === 200) {
+          response.json().then(function (json) {
+
+            console.log('response', json);
+            console.log("AcqID trashed on server");
+            getLoadedPlate().setProjectTrash(id);
+            updateProjectNameLabel(getLoadedPlate())
+            console.log("AcqID trashed on client");
+            apiListPlates();
+            redrawPlate(true);
+          });
+        }
+        else {
+          response.text().then(function (text) {
+            displayModalServerError(response.status, text);
+          });
+        }
+      })
+
+      .catch(function (error) {
+        console.log(error);
+        displayModalError(error);
+      });
   }
 
   function updateToolbarWithNewAcquisition() {
-
     updateWellSelect(getLoadedPlate());
     updateSiteSelect(getLoadedPlate());
     updateZSelect(getLoadedPlate());
     updateChannelSelect(getLoadedPlate());
-
+    updatePlateAcqLabel(getLoadedPlate());
+    updateProjectNameLabel(getLoadedPlate());
   }
-
 
   function updateToolbarWithNewPlate(selected_acq_id, selected_well, selected_site, selected_channel, selected_zpos){
 
     console.log("selected_well", selected_well);
-
     updateAcquisitionSelect(getLoadedPlate(), selected_acq_id);
     updateAcquisitionSlider(getLoadedPlate(selected_acq_id));
-
     updateWellSelect(getLoadedPlate(), selected_well);
-
     updateSiteSelect(getLoadedPlate(), selected_site);
     updateZSelect(getLoadedPlate(), selected_zpos);
-
     updateChannelSelect(getLoadedPlate(), selected_channel);
-
     updatePlateNameLabel(getLoadedPlate().getName());
-    // updatePlateAcqLabel(getLoadedPlate());
+    updateProjectNameLabel(getLoadedPlate());
+    updatePlateAcqLabel(getLoadedPlate());
 
     // Enable Animate checkbox
     if (getLoadedPlate().countAcquisitions() > 1) {
@@ -1561,7 +1585,7 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
 
-  function updateAcquisitionSelect(plateObj, selected_acq_id=undefined) {
+  function updateAcquisitionSelect_old(plateObj, selected_acq_id=undefined) {
     let elemSelect = document.getElementById('acquisition-select');
 
     // reset
@@ -1589,6 +1613,36 @@ function drawPlatesListSidebar_old(origPlatesList){
       elemSelect.disabled = false;
     }
 
+  }
+
+  function updateAcquisitionSelect(plateObj, selected_acq_id = undefined) {
+    let elemSelect = document.getElementById('acquisition-select');
+
+    // Reset
+    elemSelect.options.length = 0;
+
+    // Get acquisitions
+    let acquisitions = Object.values(plateObj.getAcquisitions());
+
+    for (let acquisition of acquisitions) {
+
+        let selected = (selected_acq_id == acquisition.id);
+
+        let title = "" + acquisition.id + "   -   " + acquisition.name;
+
+        // Create option element
+        let option = new Option(title, acquisition.id, selected, selected);
+
+        // Set title attribute (not supported)
+        //option.title = title;
+
+        // Add option to select element
+        elemSelect.options.add(option);
+    }
+
+    // Enable or disable if there is more than one option
+    elemSelect.disabled = elemSelect.options.length <= 1;
+    console.log("elemSelect.disabled", elemSelect.disabled);
   }
 
   function updateAcquisitionSliderPos() {
@@ -1795,12 +1849,18 @@ function drawPlatesListSidebar_old(origPlatesList){
     document.getElementById('plate-name-label').title = "Plate: " + plate_name;
   }
 
+  function updateProjectNameLabel(plateObj) {
+    let project_name = plateObj.getProjectName(getSelectedAcquisitionId())
+    document.getElementById('project-name-label').innerHTML = "Proj: " + project_name;
+    document.getElementById('project-name-label').title = "Proj: " + project_name;
+  }
+
   function updatePlateAcqLabel(plateObj) {
 
     let plate_acq_id = getSelectedAcquisitionId()
+    let title = "" + plateObj.getAcquisitionFolder(plate_acq_id);
 
-    document.getElementById('plate-acq-label').innerHTML = "Acq-id: " + plate_acq_id;
-    document.getElementById('plate-acq-label').title = "Acq-id: " + plate_acq_id;
+    document.getElementById('acq-id-label').title = title;
   }
 
   function getChannelIdFromDye(dye, channels){
@@ -2087,9 +2147,8 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
 
-
-
   function acquisitionSelectChanged() {
+    updateWindowURL(getLoadedPlate().getName(), getSelectedAcquisitionId());
     updateToolbarWithNewAcquisition();
     redrawPlate();
   }

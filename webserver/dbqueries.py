@@ -42,6 +42,8 @@ def get_plate(plate_name):
         return_cols = ['plate_barcode',
                        'project',
                        'plate_acquisition_id',
+                       'plate_acquisition_name',
+                       'folder',
                        'timepoint',
                        'path',
                        'well',
@@ -266,3 +268,37 @@ def select_from_db(query):
     finally:
         if conn is not None:
             put_connection(conn)
+
+
+def move_plate_acq_to_trash(acqid):
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        update_query = """
+            UPDATE plate_acquisition
+            SET project = 'trash'
+            WHERE id = %s
+        """
+
+        cursor.execute(update_query, (acqid,))
+        conn.commit()
+
+        cursor.close()
+        put_connection(conn)
+        conn = None
+
+        logging.info(f"Successfully moved plate acquisition ID {acqid} to trash.")
+        return {"status": "success", "message": f"Plate acquisition ID {acqid} moved to trash"}
+
+    except (Exception, psycopg2.DatabaseError) as err:
+        if conn is not None:
+            conn.rollback()
+        logging.exception("Failed to move plate acquisition to trash.")
+        return {"status": "error", "message": str(err)}
+
+    finally:
+        if conn is not None:
+            put_connection(conn)
+
