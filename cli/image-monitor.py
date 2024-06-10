@@ -66,15 +66,6 @@ def make_thumb_path(image, thumbdir):
     thumb_path = os.path.join(thumbdir, image_subpath)
     return thumb_path
 
-
-def insert_meta_into_db(img_meta):
-
-    # First select plate acquisition id, or insert it if not there
-    plate_acq_id = select_or_insert_plate_acq(img_meta)
-    # Insert into images table
-    insert_meta_into_table_images(img_meta, plate_acq_id)
-
-
 def getPlateBarcodeFromPlateAcquisitionName(acquisition_name):
 
     # extract barcode from acquisition_name (if there is one)
@@ -186,13 +177,26 @@ def getChannelMapIDFromMapping(project, plate_acq_name):
         put_connection(conn)
 
 
+def create_imaged_timepoint(img_meta):
+
+    date_iso = img_meta.get('date_iso')
+    if date_iso:
+        timepoint = datetime.fromisoformat(date_iso)
+    else:
+        year = int(img_meta['date_year'])
+        month = int(img_meta['date_month'])
+        day = int(img_meta['date_day_of_month'])
+        timepoint = datetime(year, month, day)
+
+    return timepoint
+
 def insert_plate_acq(img_meta):
 
     conn = None
     try:
 
-        imaged_timepoint = datetime(int(img_meta['date_year']), int(
-            img_meta['date_month']), int(img_meta['date_day_of_month']))
+        imaged_timepoint = create_imaged_timepoint(img_meta=img_meta)
+
         folder = os.path.dirname(img_meta['path'])
 
         # get channel map for speciffic projects/plates
@@ -258,20 +262,17 @@ def make_compressed_copy(img_meta):
         image_tools.any2png(img_meta['path'], img_meta['path_compressed_copy'], COMPRESSION_LEVEL)
 
 def addImageToImagedb(img_meta):
-    # read tiff-meta-tags
-    # make inside try-catch so a corrupted image doesn't stop it all
-    #tiff_meta = ""
-    #try:
-    #    tiff_meta = image_tools.read_tiff_info(img_meta['path'])
-    #except Exception as e:
-    #    logging.error("Exception reading tiff meta: %s", e)
-    #    logging.error("image: " + str(img_meta['path']))
-    #    logging.error( "Continuing since we don't want to break on a single bad image")
 
-    #img_meta['file_meta'] = tiff_meta
+    # check if image exists if so exit, exiting before creating plate_acq means that you can delete plate_acq from db and just keep files
+    if image_exists_in_db(img_meta['path']):
+        logging.debug('image exists in db already, return')
+        return
 
-    # insert into db
-    insert_meta_into_db(img_meta)
+    # First select plate acquisition id, or insert it if not there
+    plate_acq_id = select_or_insert_plate_acq(img_meta)
+
+    # Insert into images table
+    insert_meta_into_table_images(img_meta, plate_acq_id)
 
     # create thumb image
     thumb_path = make_thumb_path(img_meta['path'],
@@ -318,14 +319,7 @@ def add_plate_to_db(images):
         # Skip thumbnails
         if not img_meta['is_thumbnail']:
 
-            # Check if image already exists in db
-            image_exists = image_exists_in_db(img_meta['path'])
-
-            # Insert image if not in db (no result)
-            if image_exists == False:
-                addImageToImagedb(img_meta)
-            else:
-                logging.debug("image exists already in db")
+            addImageToImagedb(img_meta)
 
         if idx % 100 == 1:
                 logging.info("images processed (including thubs):" + str(idx))

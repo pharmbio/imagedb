@@ -1,54 +1,5 @@
 version: "2.4"
 
-networks:
-  image-db-net:
-    external:
-      name: image-db-net
-
-volumes:
-  # this is microimages r-o share
-  mikroimages-bind:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro}
-      o: bind
-  # this is microimages-compressed share
-  mikroimages-compressed-bind:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${SHARE_MIKRO_COMPRESSED?You need to specify env SHARE_MIKRO_COMPRESSED, e.g. SHARE_MIKRO_COMPRESSED=/share/mikro-compressed}
-      o: bind
-  # this is microimages r-o share
-  externalimages-bind:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${SHARE_EXTERNAL?You need to specify env SHARE_EXTERNAL, e.g. SHARE_EXTERNAL=/share/data/external-datasets}
-      o: bind
-  # this is microimages r-o share
-  resultimages-bind:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${SHARE_RESULT?You need to specify env SHARE_RESULT, e.g. SHARE_RESULT=/share/data/cellprofiler}
-      o: bind
-  # this is thumbnail volume
-  imagedb-bind:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${SHARE_IMAGEDB?You need to specify env SHARE_IMAGEDB, e.g. SHARE_IMAGEDB=/share/imagedb}
-      o: bind
-  # approot
-  approot-bind:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${APPROOT?You need to specify env APPROOT, e.g. APPROOT=/home/anders/pharmbio/imageDB/}
-      o: bind
-
 services:
   image-db-cli:
     image: ghcr.io/pharmbio/imagedb-cli
@@ -60,15 +11,9 @@ services:
     environment:
       # CONF_FILE: settings_dev_local.json
       CONF_FILE: ${CONF_FILE?You need to specify env CONF_FILE, e.g. settings_dev_local.json, settings_prod.json}
-      DB_USER: postgres
-      DB_PASS: example
-      DB_PORT: 5432
     volumes:
-      - mikroimages-bind:/share/mikro
-      - mikroimages-compressed-bind:/share/mikro-compressed
-      - externalimages-bind:/share/data/external-datasets
-      - resultimages-bind:/share/data/cellprofiler
-      - imagedb-bind:/share/imagedb
-      - approot-bind:/app
-    networks:
-      - image-db-net
+      - ${APPROOT}:/app
+      - ${SHARE_MIKRO}:/share/mikro
+      - ${SHARE_MIKRO2}:/share/mikro2
+      - ${SHARE_IMAGEDB}:/share/imagedb
+      - ${SHARE_EXTERNAL}:/share/data/external-datasets

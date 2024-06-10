@@ -46,6 +46,9 @@ def parse_path_and_file(path):
   else:
     timepoint = 0
 
+  time_of_day = match.group(6).replace('.',':')
+  date_iso = f"{match.group(3)}-{match.group(4)}-{match.group(5)}T{time_of_day}"
+
   row = match.group(8)
   col = match.group(9)
   well = f'{row}{col}'
@@ -88,9 +91,7 @@ def parse_path_and_file(path):
   metadata = {
       'path': path,
       'filename': os.path.basename(path),
-      'date_year': 1970,
-      'date_month': 1,
-      'date_day_of_month': 1,
+      'date_iso': date_iso,
       'project': match.group(1),
       'magnification': '20x',
       'plate': match.group(2),

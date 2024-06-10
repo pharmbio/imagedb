@@ -5,37 +5,6 @@ networks:
     external:
       name: traefik_web
 
-volumes:
-  # this is microimages r-o share
-  mikroimages-bind:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${SHARE_MIKRO?You need to specify env SHARE_MIKRO, e.g. SHARE_MIKRO=/share/mikro}
-      o: bind
-  # this is microimages r-o share
-  externalimages-bind:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${SHARE_EXTERNAL?You need to specify env SHARE_EXTERNAL, e.g. SHARE_EXTERNAL=/share/data/external-datasets}
-      o: bind
-  # this is thumbnail volume
-  imagedb-bind:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${SHARE_IMAGEDB?You need to specify env SHARE_IMAGEDB, e.g. SHARE_IMAGEDB=/share/pool2/scratch/imagedb}
-      o: bind
-
-# Webroot
-  imgagedb-webroot-bind:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${WEBROOT?You need to specify env WEBROOT, e.g. WEBROOT=/home/anders/projekt/imagedb/webserver}
-      o: bind
-
 services:
   imagedbweb:
     build:
@@ -58,15 +27,12 @@ services:
       - "traefik.http.routers.imagedbweb.tls.certresolver=myresolver"
       # - traefik.frontend.auth.basic=${TRAEFIK_BASIC_AUTH? You need to specify env TRAEFIK_BASIC_AUTH, e.g. TRAEFIK_BASIC_AUTH=username:$blablsbskjfhbsjhslkfsjlkdslkjf/kljsd}
 
-
     networks:
       - traefik
     volumes:
-      - imgagedb-webroot-bind:/app
-      - mikroimages-bind:/share/mikro
-      - imagedb-bind:/share/imagedb
-      - externalimages-bind:/share/data/external-datasets
-      - type: bind
-        source: /share/mikro2
-        target: /share/mikro2
+      - ${APPROOT}:/app
+      - ${SHARE_MIKRO}:/share/mikro
+      - ${SHARE_MIKRO2}:/share/mikro2
+      - ${SHARE_IMAGEDB}:/share/imagedb
+      - ${SHARE_EXTERNAL}:/share/data/external-datasets
 
