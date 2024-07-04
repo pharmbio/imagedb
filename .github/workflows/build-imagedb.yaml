@@ -30,25 +30,16 @@ jobs:
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: "imagedb"
-      #DOCKER_USER: ${{ secrets.DOCKER_USER }}
-      #DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       working-directory: ./webserver/
-      #ingress-working-directory: ./ingress
 
     steps:
       - uses: actions/checkout@v3
 
-      # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
-      # https://github.com/docker/setup-buildx-action
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v2
-
-      #- name: docker login
-      #  run: |
-      #    docker login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GH_TOKEN }}
 
       - name: Login to GHCR
         if: github.event_name != 'pull_request'
@@ -57,17 +48,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          #username: ${{ github.actor }}
-          #password: ${{ secrets.GH_TOKEN }}
 
       - name: Docker meta
         id: meta_imagedb
         uses: docker/metadata-action@v4
         with:
-          # list of Docker images to use as base name for tags
           images: |
             ghcr.io/pharmbio/imagedb
-          # generate Docker tags based on the following events/attributes
           tags: |
             type=schedule
             type=ref,event=branch
@@ -82,7 +69,6 @@ jobs:
         with:
           context: ${{env.working-directory}}
           platforms: linux/amd64,linux/arm64
-          #,linux/arm/v8
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta_imagedb.outputs.tags }}
           labels: ${{ steps.meta_imagedb.outputs.labels }}
