@@ -83,8 +83,7 @@ def parse_path_and_file(path):
 
   z_val = match.group(13)
   if z_val:
-    z = int(z_val[1:-1]) # remove z and
-    channel_pos = z + 1
+    z = int(z_val[1:-1]) # remove leading z and trailing _
   else:
     z = 0
 
@@ -155,7 +154,7 @@ if __name__ == '__main__':
     print("retval = " + str(retval))
 
     retval = parse_path_and_file(
-        "/share/mikro2/squid/BlueWash-auto/labauto-plate3-FA_2023-04-04_16.12.04/t1/G17_s6_x2_y1_z1_BF_LED_matrix_full.tiff")
+        "/share/mikro2/squid/Demo2/Demo2-MiaPaCa-PB900073_2024-06-14_10.15.48/P02_s9_x2_y2_z2_Fluorescence_730_nm_Ex.tiff")
     print("retval = " + str(retval))
 
 
