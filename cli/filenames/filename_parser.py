@@ -127,3 +127,4 @@ if __name__ == '__main__':
 
     retval = parse_path_and_file( "/share/data/external-datasets/Morphomac/torkild/2023-08-11/23764/2023-U35_THP-1_I02_s1_w3_thumbA99DF1CF-9039-4190-8FB9-0594BBE3A896.tif")
     print("\nretval = " + str(retval))
+

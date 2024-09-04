@@ -30,7 +30,7 @@ def parse_path_and_file(path):
         r'.*/[Ss]pheroid-'     # match any path and 'Spheroid-' or 'spheroid-'
         + r'(\d+)'             # well (one or more digits)
         + r'_z(\d+)'           # z (one or more digits)
-        + r'_([A-Z]+)'         # channel (one or more uppercase letters)
+        + r'_([A-Z_]+)'         # channel (one or more uppercase letters or Underscore)
         + r'\.(.*)',           # Extension
         path
     )
@@ -79,7 +79,7 @@ def parse_path_and_file(path):
       'extension': extension,
       'timepoint': 1,
       'channel_map_id': 10,
-      'microscope': "Unknown",
+      'microscope': "Nikon-KI",
       'parser': os.path.basename(__file__)
     }
 
@@ -105,3 +105,6 @@ if __name__ == '__main__':
     retval = parse_path_and_file("/share/data/external-datasets/christa/KI-NIKON/Spheroid-1_z001_CONC.tif")
     print("retval: " + str(retval))
     retval = parse_path_and_file("/share/data/external-datasets/christa/KI-NIKON/spheroid-2_z002_SYTO.tif")
+    print("retval: " + str(retval))
+    retval = parse_path_and_file("/share/data/external-datasets/christa/KI-NIKON/Spheroid-1_z001_PHA_WGA.tif")
+    print("retval: " + str(retval))
