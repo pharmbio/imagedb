@@ -1,6 +1,7 @@
 import re
 import os
 import logging
+import datetime
 
 # file examples
 # /share/data/external-datasets/christa/KI-NIKON/Spheroid-1_z001_CONC.tif
@@ -21,10 +22,8 @@ def parse_path_and_file(path):
     project = "KI-NIKON"
     plate = "KI_NIKON_PLATE_A"
 
-
     logging.debug("project: " + project)
     logging.debug("plate: " + plate)
-
 
     match = re.search(
         r'.*/[Ss]pheroid-'     # match any path and 'Spheroid-' or 'spheroid-'
@@ -41,6 +40,8 @@ def parse_path_and_file(path):
     well_col = match.group(1)
     well = f'A0{well_col}'
 
+    site = 1
+
     z = match.group(2)
 
     channel_name = match.group(3)
@@ -54,25 +55,29 @@ def parse_path_and_file(path):
         logging.debug("no extension")
         return None
 
+    # file creation timestamp
+    c_time = os.path.getctime(path)
+    date_create = datetime.datetime.fromtimestamp(c_time)
+
     # logging
     logging.debug("well" + well)
     logging.debug("z" + str(z))
     logging.debug("channelpos" + str(channel_pos))
     logging.debug("extensionid" + str(extension))
 
-
     metadata = {
       'path': path,
       'filename': os.path.basename(path),
-      'date_year': 2024,
-      'date_month': 1,
-      'date_day_of_month': 1,
+      'date_year': date_create.year,
+      'date_month': date_create.month,
+      'date_day_of_month': date_create.day,
       'project': project,
       'magnification': '?x',
       'plate': plate,
       'plate_acq_name': path,
       'well': well,
-      'wellsample': z,
+      'wellsample': site,
+      'z': z,
       'channel': channel_pos,
       'is_thumbnail': False,
       'guid': 'no-guid',
