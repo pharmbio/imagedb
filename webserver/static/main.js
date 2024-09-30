@@ -27,7 +27,7 @@
     }
 
     getWellLayoutMeta(wellName) {
-      return this.getLayout()?.[wellName];
+      return this.getLayout()?.[wellName] || [];
     }
 
     getAcquisitions() {
@@ -1092,55 +1092,11 @@ function drawPlatesListSidebar_old(origPlatesList){
 
         // if there is layout info for this well, add it
         if(plateObj){
-          let well_meta = plateObj.getWellLayoutMeta(well_name);
-          if(well_meta){
-            let info_div = document.createElement("div");
-            info_div.className = "infoDotDiv";
-            info_div.id = well_name + "_infodiv";
-
-            info_div.setAttribute("data-toggle", "tooltip");
-            info_div.setAttribute("data-placement", "top"); // Placement has to be off element otherwise flicker
-            info_div.setAttribute("data-delay", "0");
-            info_div.setAttribute("data-animation", false);
-            info_div.setAttribute("data-html", true);
-
-            let title = "Well: "            + well_meta.well_id        + "<br>" +
-                        "cbkid: "           + well_meta.cbkid          + "<br>" +
-                        "batchid: "         + well_meta.batch_id       + "<br>" +
-                        "compound-name: "   + well_meta.compound_name  + "<br>" +
-                        "cmpd-conc: "       + well_meta.cmpd_conc      + "<br>" +
-                        "pert-type: "       + well_meta.pert_type      + "<br>" +
-                        "cells/well: "      + well_meta.cells_per_well + "<br>" +
-                        "cell-line: "       + well_meta.cell_line;
-
-            info_div.title = title;
-            info_div.style.backgroundColor = color_from_cbkid(well_meta.cbkid);
-
-            if(isShowCompounds){
-              info_div.style.visibility = 'visible';
-            }else{
-              info_div.style.visibility = 'hidden';
-            }
-
-            if(well_meta && well_meta.cbkid){
-              //console.log('cbkid', well_meta.cbkid);
-            }
-
-            info_div.onmouseover = function(evt){
-              if(well_meta && well_meta.cbkid){
-                console.log('cbkid', well_meta.cbkid);
-                highlight_all(plateObj, well_meta.cbkid);
-              }
-            }
-
-            info_div.onmouseout = function(evt){
-              if(well_meta && well_meta.cbkid){
-                lowlight_all(plateObj, well_meta.cbkid);
-              }
-            }
-
-            well_div.appendChild(info_div);
-
+          let well_meta_list = plateObj.getWellLayoutMeta(well_name);
+          if (well_meta_list && well_meta_list.length > 0) {
+            well_meta_list.forEach((well_meta, index) => {
+              createInfoDiv(plateObj, well_div, well_name, well_meta, index, isShowCompounds);
+            });
           }
         }
 
@@ -1155,6 +1111,52 @@ function drawPlatesListSidebar_old(origPlatesList){
     }
 
     return table;
+  }
+
+  function createInfoDiv(plateObj, well_div, well_name, well_meta, index, isShowCompounds){
+    let info_div = document.createElement("div");
+    info_div.className = "infoDotDiv";
+    info_div.id = `${well_name}_infodiv_${index}`;
+
+    // Set tooltip attributes
+    info_div.setAttribute("data-toggle", "tooltip");
+    info_div.setAttribute("data-placement", "top");
+    info_div.setAttribute("data-delay", "0");
+    info_div.setAttribute("data-animation", false);
+    info_div.setAttribute("data-html", true);
+
+    // Construct the tooltip title
+    let title = `Well: ${well_meta.well_id}<br>` +
+                `cbkid: ${well_meta.cbkid}<br>` +
+                `batchid: ${well_meta.batch_id}<br>` +
+                `compound-name: ${well_meta.compound_name}<br>` +
+                `cmpd-conc: ${well_meta.cmpd_conc}<br>` +
+                `pert-type: ${well_meta.pert_type}<br>` +
+                `cells/well: ${well_meta.cells_per_well}<br>` +
+                `cell-line: ${well_meta.cell_line}`;
+
+    info_div.title = title;
+    info_div.style.backgroundColor = color_from_cbkid(well_meta.cbkid);
+
+    info_div.style.visibility = isShowCompounds ? 'visible' : 'hidden';
+
+    // Offset each info_div by 30 pixels vertically
+    info_div.style.top = (index * 30) + 'px';
+
+    // Event handlers for highlighting
+    info_div.onmouseover = function(evt) {
+      if (well_meta && well_meta.cbkid) {
+        highlight_all(plateObj, well_meta.cbkid);
+      }
+    };
+
+    info_div.onmouseout = function(evt) {
+      if (well_meta && well_meta.cbkid) {
+        lowlight_all(plateObj, well_meta.cbkid);
+      }
+    };
+
+    well_div.appendChild(info_div);
   }
 
   const compColors = {
@@ -1181,36 +1183,26 @@ function drawPlatesListSidebar_old(origPlatesList){
     return color;
   }
 
-  function highlight_all(plateObj, cbkid){
+  function highlight_all(plateObj, cbkid) {
+    let layout = plateObj.getLayout();
 
-    console.log('cbkid', cbkid);
-    layout = plateObj.getLayout();
-
-    let wells = [];
-    for (const [key, value] of Object.entries(layout)) {
-      if(value.cbkid == cbkid){
-        wells.push(key);
-      }
+    let wells = new Set();
+    for (const [well_name, metadata_list] of Object.entries(layout)) {
+      metadata_list.forEach((metadata) => {
+        if (metadata.cbkid == cbkid) {
+          wells.add(well_name);
+        }
+      });
     }
 
-    console.log('wells', wells);
-    console.log('layout', layout);
-
     Array.from(document.getElementsByClassName('infoDotDiv')).forEach(
-      function(element, index, array) {
-
-        dot_well_id = element.id.split('_')[0];
-
-        //console.log('dot_well_id', dot_well_id);
-
-        if(wells.includes(dot_well_id)){
-          console.log('dot_well_id', dot_well_id);
+      function(element) {
+        let dot_well_id = element.id.split('_')[0];
+        if (wells.has(dot_well_id)) {
           element.style.border = '6px solid white';
-          //element.parentElement.style.border = '3px solid white';
         }
       }
     );
-
   }
 
   function lowlight_all(plateObj, cbkid){
@@ -1436,7 +1428,6 @@ function drawPlatesListSidebar_old(origPlatesList){
        trigger : 'hover',
        boundary: 'window'
      });
-
   }
 
   function getSelectedAcquisitionIndex() {

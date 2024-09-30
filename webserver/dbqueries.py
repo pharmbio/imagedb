@@ -6,6 +6,7 @@ import psycopg2.pool
 import psycopg2.extras
 import settings as imgdb_settings
 import platemodel
+from collections import defaultdict
 
 __connection_pool = None
 
@@ -120,11 +121,11 @@ def get_plate(plate_name):
         put_connection(conn)
         conn = None
 
-        # create a dict with well_id as key to metadata
-        layout_dict = {}
+        # create a dict with well_id as key to metadata (metadata is a list of rows since there can be multiple compound combinations per well)
+        layout_dict = defaultdict(list)
         for row in rows:
             well_id = row['well_id']
-            layout_dict[well_id] = row
+            layout_dict[well_id].append(row)
 
         # add layout to plate
         plate = plates_dict[plate_name]
