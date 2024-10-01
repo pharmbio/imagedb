@@ -60,7 +60,7 @@ ul li a {
 .siteDiv{
 }
 
-.infoDotDiv{
+.layoutInfoDotDiv {
     position: absolute;
     margin-left: 4px;
     margin-right: 4px;
@@ -73,6 +73,7 @@ ul li a {
     border-radius: 50%;
     display: inline-block;
 }
+
 
 /*
 .plateThumbImg {

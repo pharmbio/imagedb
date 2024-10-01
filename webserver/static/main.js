@@ -1095,7 +1095,7 @@ function drawPlatesListSidebar_old(origPlatesList){
           let well_meta_list = plateObj.getWellLayoutMeta(well_name);
           if (well_meta_list && well_meta_list.length > 0) {
             well_meta_list.forEach((well_meta, index) => {
-              createInfoDiv(plateObj, well_div, well_name, well_meta, index, isShowCompounds);
+              createLayoutInfoDiv(plateObj, well_div, well_name, well_meta, index, isShowCompounds);
             });
           }
         }
@@ -1113,17 +1113,20 @@ function drawPlatesListSidebar_old(origPlatesList){
     return table;
   }
 
-  function createInfoDiv(plateObj, well_div, well_name, well_meta, index, isShowCompounds){
-    let info_div = document.createElement("div");
-    info_div.className = "infoDotDiv";
-    info_div.id = `${well_name}_infodiv_${index}`;
+  function createLayoutInfoDiv(plateObj, well_div, well_name, well_meta, index, isShowCompounds) {
+    let layout_info_div = document.createElement("div");
+    layout_info_div.className = "layoutInfoDotDiv";
+    layout_info_div.id = `${well_name}_layoutinfodiv_${index}`;
 
     // Set tooltip attributes
-    info_div.setAttribute("data-toggle", "tooltip");
-    info_div.setAttribute("data-placement", "top");
-    info_div.setAttribute("data-delay", "0");
-    info_div.setAttribute("data-animation", false);
-    info_div.setAttribute("data-html", true);
+    layout_info_div.setAttribute("data-toggle", "tooltip");
+    layout_info_div.setAttribute("data-placement", "top");
+    layout_info_div.setAttribute("data-delay", "0");
+    layout_info_div.setAttribute("data-animation", false);
+    layout_info_div.setAttribute("data-html", true);
+
+    // Store the cbkid
+    layout_info_div.setAttribute('data-cbkid', well_meta.cbkid);
 
     // Construct the tooltip title
     let title = `Well: ${well_meta.well_id}<br>` +
@@ -1135,28 +1138,26 @@ function drawPlatesListSidebar_old(origPlatesList){
                 `cells/well: ${well_meta.cells_per_well}<br>` +
                 `cell-line: ${well_meta.cell_line}`;
 
-    info_div.title = title;
-    info_div.style.backgroundColor = color_from_cbkid(well_meta.cbkid);
+    layout_info_div.title = title;
+    layout_info_div.style.backgroundColor = color_from_cbkid(well_meta.cbkid);
 
-    info_div.style.visibility = isShowCompounds ? 'visible' : 'hidden';
+    layout_info_div.style.visibility = isShowCompounds ? 'visible' : 'hidden';
 
-    // Offset each info_div by 30 pixels vertically
-    info_div.style.top = (index * 30) + 'px';
+    // Offset each layout_info_div by 30 pixels vertically
+    layout_info_div.style.top = (index * 30) + 'px';
 
     // Event handlers for highlighting
-    info_div.onmouseover = function(evt) {
-      if (well_meta && well_meta.cbkid) {
-        highlight_all(plateObj, well_meta.cbkid);
-      }
+    layout_info_div.onmouseover = function(evt) {
+        if (well_meta && well_meta.cbkid) {
+            highlight_all_info_div(well_meta.cbkid);
+        }
     };
 
-    info_div.onmouseout = function(evt) {
-      if (well_meta && well_meta.cbkid) {
-        lowlight_all(plateObj, well_meta.cbkid);
-      }
+    layout_info_div.onmouseout = function(evt) {
+        lowlight_all_info_div();
     };
 
-    well_div.appendChild(info_div);
+    well_div.appendChild(layout_info_div);
   }
 
   const compColors = {
@@ -1183,35 +1184,21 @@ function drawPlatesListSidebar_old(origPlatesList){
     return color;
   }
 
-  function highlight_all(plateObj, cbkid) {
-    let layout = plateObj.getLayout();
-
-    let wells = new Set();
-    for (const [well_name, metadata_list] of Object.entries(layout)) {
-      metadata_list.forEach((metadata) => {
-        if (metadata.cbkid == cbkid) {
-          wells.add(well_name);
+  function highlight_all_info_div(cbkid) {
+    Array.from(document.getElementsByClassName('layoutInfoDotDiv')).forEach(
+        function(layout_info_div) {
+            if (layout_info_div.getAttribute('data-cbkid') == cbkid) {
+                layout_info_div.style.border = '6px solid white';
+            }
         }
-      });
-    }
-
-    Array.from(document.getElementsByClassName('infoDotDiv')).forEach(
-      function(element) {
-        let dot_well_id = element.id.split('_')[0];
-        if (wells.has(dot_well_id)) {
-          element.style.border = '6px solid white';
-        }
-      }
     );
   }
 
-  function lowlight_all(plateObj, cbkid){
-    Array.from(document.getElementsByClassName('infoDotDiv')).forEach(
-      function(element, index, array) {
-        if(element.style.border != '1px solid grey'){
-          element.style.border = '1px solid grey';
+  function lowlight_all_info_div() {
+    Array.from(document.getElementsByClassName('layoutInfoDotDiv')).forEach(
+        function(layout_info_div) {
+            layout_info_div.style.border = '1px solid grey';
         }
-      }
     );
   }
 
