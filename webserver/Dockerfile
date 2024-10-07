@@ -7,21 +7,23 @@ RUN apt-get install software-properties-common -y
 RUN add-apt-repository ppa:deadsnakes/ppa -y
 
 RUN apt-get update && apt-get install -y \
-        python3.10 \
-        python3.10-dev \
-        python3.10-distutils \
-        python3-pip 
+    python3.10 \
+    python3.10-dev \
+    python3.10-distutils \
+    python3-pip
 
 # opencv-python lib deps
-RUN apt-get install -y \
-        libsm6 \
-        libxext6 \
-        libxrender-dev
+#RUN apt-get install -y \
+#    ffmpeg \
+#    libsm6 \
+#    libxext6 \
+#    libxrender-dev
+RUN apt-get update && apt-get install libgl1 -y
 
 # install postgres devtools
 RUN apt-get update && apt-get install -y \
-        libpq-dev \
-        curl 
+    libpq-dev \
+    curl
 
 RUN pip --version
 
