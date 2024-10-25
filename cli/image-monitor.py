@@ -83,7 +83,7 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
     conn = None
     try:
 
-        insert_query = "INSERT INTO images(plate_acquisition_id, plate_barcode, timepoint, well, site, channel, z, path) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
+        insert_query = "INSERT INTO images(plate_acquisition_id, plate_barcode, timepoint, well, site, channel, channel_name, z, path) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
         conn = get_connection()
         insert_cursor = conn.cursor()
         insert_cursor.execute(insert_query, (plate_acq_id,
@@ -92,6 +92,7 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
                                              img_meta['well'],
                                              img_meta['wellsample'],
                                              img_meta['channel'],
+                                             img_meta.get('channel_name', None),
                                              img_meta.get('z', 0),
                                              img_meta['path']
                                              ))

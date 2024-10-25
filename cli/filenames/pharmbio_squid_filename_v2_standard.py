@@ -71,9 +71,11 @@ def parse_path_and_file(path):
     channel_pos = channels.index(channel_name) + 1
 
   elif imaging_type == 'BF':
+    channel_name = 'BF'
     channel_pos = 6
-    channel_map_id = 22
+    channel_map_id = 22 # Brightfield and other channels
   else:
+     channel_name = 'Unknown'
      channel_pos = 1
      channel_map_id = 10
 
@@ -101,6 +103,7 @@ def parse_path_and_file(path):
       'y': site_y,
       'z': z,
       'channel': channel_pos,
+      'channel_name': channel_name,
       'is_thumbnail': False,
       'guid': None,
       'extension': match.group(16),
