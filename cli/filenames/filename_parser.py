@@ -6,6 +6,7 @@ from filenames import pharmbio_squid_filename_BF_and_other_and_z
 from filenames import pharmbio_IMX_filename_standard
 from filenames import pharmbio_IMX_filename_older
 from filenames import pharmbio_IMX_filename_relaxed
+from filenames import external_filename_recursion
 from filenames import external_filename_christa
 from filenames import external_filename_cpjump
 from filenames import external_filename_david
@@ -51,6 +52,7 @@ parsers.append(external_filename_cpjump)
 parsers.append(external_filename_david)
 parsers.append(external_filename_opera_rXcXfXpX_chXskXfkXflX)
 parsers.append(external_filename_spheroid_v1)
+parsers.append(external_filename_recursion)
 
 def parse_path_and_file(filename):
 
@@ -101,22 +103,13 @@ if __name__ == '__main__':
     retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/specs1K-v2/P101022-col2-and-3/TimePoint_1/P101022 col 2 and 3_I02_s8_w5.TIF")
     print("\nretval = " + str(retval))
 
-    retval = parse_path_and_file("share/data/external-datasets/compoundcenter/specs1K-v2/YML2_1_3__2022-11-02T10_35_46-Measurement 1/Images/r02c02f04p01-ch4sk1fk1fl1.tiff")
+    retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/specs1K-v2/YML2_1_3__2022-11-02T10_35_46-Measurement 1/Images/r02c02f04p01-ch4sk1fk1fl1.tiff")
     print("\nretval = " + str(retval))
 
     retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/specs1K-v2/P101022_col2-and-3/TimePoint_1/P101022 col 2 and 3_I02_s8_w5.TIF")
     print("\nretval = " + str(retval))
 
     retval = parse_path_and_file("/share/mikro/squid/squid-testplates/RMS-e04-v1-FA-P1-48h-P1-L1_2022-11-30_15-41-14.542994/0/O9_2_2_0_Fluorescence_561_nm_Ex.tiff")
-    print("\nretval = " + str(retval))
-
-    retval = parse_path_and_file( "/share/mikro2/nikon/RMS-test/batch4-RH30-test2/single_images/RMS-P01_WellsD8_Points01c5.tif")
-    print("\nretval = " + str(retval))
-
-    retval = parse_path_and_file( "/share/mikro2/nikon/RMS-test/batch4-RH30-test3/single_images/RMS-P01_Points00_WellsJ6c5.tif")
-    print("\nretval = " + str(retval))
-
-    retval = parse_path_and_file( "/share/mikro2/nikon/RMS-SPECS/RMS-PB000041-FA-RH30/single_images/A11_s1c1.tif")
     print("\nretval = " + str(retval))
 
     retval = parse_path_and_file( "/share/mikro2/nikon/spheroid-test/pilot10-spheroid-P1-9/Well-J18-z1-CONC.ome.tiff")
@@ -126,5 +119,8 @@ if __name__ == '__main__':
     print("\nretval = " + str(retval))
 
     retval = parse_path_and_file( "/share/data/external-datasets/Morphomac/torkild/2023-08-11/23764/2023-U35_THP-1_I02_s1_w3_thumbA99DF1CF-9039-4190-8FB9-0594BBE3A896.tif")
+    print("\nretval = " + str(retval))
+
+    retval = parse_path_and_file( "/share/data/external-datasets/recursion/rxrx3-core/Plate1/H45_s1_4.tif")
     print("\nretval = " + str(retval))
 
