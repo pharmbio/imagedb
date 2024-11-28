@@ -349,23 +349,27 @@ function drawPlatesListSidebar(origPlatesList) {
 
   console.log("platesList", platesList);
 
-  // Sorting and separating the latest acquisitions (only if not filtering)
-  let latestAcquisitions = [];
-  let otherPlates = platesList;
-  if(! filter){
-    const latestAcqCount = 10;
-    let sortedByAcqId = [...platesList].sort((a, b) => b.id - a.id);
-    latestAcquisitions = sortedByAcqId.slice(0, latestAcqCount);
-    otherPlates = sortedByAcqId.slice(latestAcqCount);
+  // Sorting platesList by date descending (or by id descending if date is unavailable)
+  let sortedPlatesList;
+  if (!filter) {
+    sortedPlatesList = [...platesList].sort((a, b) => b.id - a.id);
+  } else {
+    sortedPlatesList = platesList;
   }
 
-  console.log("platesList", platesList);
-  console.log("latestAcquisitions", latestAcquisitions);
-  console.log("otherPlates", otherPlates);
+  // Identifying the latest acquisitions
+  let latestAcquisitions = [];
+  if (!filter) {
+    const latestAcqCount = 10;
+    latestAcquisitions = sortedPlatesList.slice(0, latestAcqCount);
+  }
 
-  // Group the rest by project
+  console.log("sortedPlatesList", sortedPlatesList);
+  console.log("latestAcquisitions", latestAcquisitions);
+
+  // Group sorted plates by project
   let projects = {};
-  otherPlates.forEach(plate => {
+  sortedPlatesList.forEach(plate => {
     if (!projects[plate.project]) {
       projects[plate.project] = [];
     }
@@ -388,10 +392,9 @@ function drawPlatesListSidebar(origPlatesList) {
     return plateItem;
   }
 
-
   // Add "Latest acquisitions" if not filtering
   let latestAcqItem = null;
-  if (!filter) {
+  if (!filter && latestAcquisitions.length > 0) {
     latestAcqItem = document.createElement('li');
     latestAcqItem.innerHTML = "<span style='cursor: pointer;'>Latest acquisitions</span>";
     let latestAcqList = document.createElement('ul');
@@ -408,6 +411,9 @@ function drawPlatesListSidebar(origPlatesList) {
     projectKeys.sort();
   }
 
+  // No need to sort plates within each project since they are already sorted
+  // when we sorted sortedPlatesList
+
   // Add items for all projects
   projectKeys.forEach(projectName => {
     let projectItem = document.createElement('li');
@@ -418,10 +424,7 @@ function drawPlatesListSidebar(origPlatesList) {
     list.appendChild(projectItem);
   });
 
-
-  // Turn sidebar list into a clickable tree-view with projects collapsedm   vb
-  // with this jQuery plugin
-  //
+  // Turn sidebar list into a clickable tree-view with projects collapsed
   $('#result-list').bonsai({
     expandAll: false, // expand all items
     expand: null, // optional function to expand an item
@@ -431,39 +434,38 @@ function drawPlatesListSidebar(origPlatesList) {
     selectAllExclude: null, // a filter selector or function for selectAll
     createInputs: false,
     checkboxes: false, // run quit(this.options) on the root node (requires jquery.qubit)
-    handleDuplicateCheckboxes: false //update any other checkboxes that have the same value
+    handleDuplicateCheckboxes: false // update any other checkboxes that have the same value
   });
 
   // This is a tweak to make filter working
   $('#result-list').bonsai('update');
 
-  // Expand latest_acq by default
-  if(latestAcqItem){
+  // Expand "Latest acquisitions" by default
+  if (latestAcqItem) {
     let bonsai = $('#result-list').data('bonsai');
     bonsai.expand(latestAcqItem);
   }
 
-  // If result is < x items expand all
-  if(platesList.length < 10){
+  // If result is less than 10 items, expand all
+  if (platesList.length < 10) {
     let bonsai = $('#result-list').data('bonsai');
     bonsai.expandAll(list);
   }
 
-  // Tweak to get clickable project-names instead of only the little arrow
-  // the project names are enclosed in <span></span>
-  // https://github.com/aexmachina/jquery-bonsai/issues/23
+  // Tweak to get clickable project names instead of only the little arrow
   $('#result-list').on('click', 'span', function () {
     console.log("click");
     $(this).closest('li').find('> .thumb').click();
   });
 
-  // Activate tooltips (all that have tooltip attribute within the resultlist)
+  // Activate tooltips within the result list
   $('#result-list [data-toggle="tooltip"]').tooltip({
     trigger: 'hover',
     boundary: 'window'
-  })
-
+  });
 }
+
+
 
 function drawPlatesListSidebar_old(origPlatesList){
 
