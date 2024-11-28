@@ -176,20 +176,30 @@
       }
 
       static getWellName(row, col) {
-        let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "\\", "]", "^", "_", "`", "a", "b"];
+        let rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h"];
         return rows[row] + col.toString().padStart(2, '0');
       }
 
-    static getRowIndexFromWellName(name) {
-      let ascVal = name.charCodeAt(0);
-      let rowIndex = ascVal - 64; // Adjusting based on ASCII value of 'A'
-      return rowIndex;
-    }
+      static getRowIndexFromWellName(name) {
+        // Define valid rows again to align with getWellName
+        const rows = [
+          "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+          "a", "b", "c", "d", "e", "f", "g", "h"
+        ];
+    
+        const rowChar = name[0];
+        const rowIndex = rows.indexOf(rowChar);
+        if (rowIndex === -1) {
+          throw new Error(`Invalid well name: ${name}`);
+        }
+    
+        return rowIndex;
+      }
 
-    static getColIndexFromWellName(name) {
-      let colIndex = parseInt(name.substr(1), 10);
-      return colIndex;
-    }
+      static getColIndexFromWellName(name) {
+        let colIndex = parseInt(name.substr(1), 10);
+        return colIndex;
+      }
   }
 
   class Plates {
