@@ -280,11 +280,12 @@ def addImageToImagedb(img_meta):
                                  imgdb_settings.IMAGES_THUMB_FOLDER)
     logging.debug(thumb_path)
 
-    # Only create thumb if not exists already
+    # Only create thumb if not exists already and not skip_thumb is specified and set to True
     # make inside try-catch so a corrupted image doesn't stop it all
     # also try 3 times with some sleep in between to allow for images that are not
     # completely uploaded
-    if not os.path.exists(thumb_path):
+    make_thumb = img_meta.get('make_thumb', True)
+    if make_thumb and not os.path.exists(thumb_path):
 
         #logging.debug(f'makethumb: {thumb_path}')
         attempts = 0
