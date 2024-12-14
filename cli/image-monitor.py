@@ -198,8 +198,6 @@ def insert_plate_acq(img_meta):
 
         imaged_timepoint = create_imaged_timepoint(img_meta=img_meta)
 
-        folder = os.path.dirname(img_meta['path'])
-
         # get channel map for speciffic projects/plates
         specific_ch_map = getChannelMapIDFromMapping(img_meta['project'], img_meta['plate'])
         if specific_ch_map:
@@ -215,7 +213,7 @@ def insert_plate_acq(img_meta):
                                img_meta['microscope'],
                                img_meta['channel_map_id'],
                                img_meta['timepoint'],
-                               folder
+                               img_meta.get('folder', os.path.dirname(img_meta['path']))
                                ))
 
         plate_acq_id = cursor.fetchone()[0]
