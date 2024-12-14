@@ -116,13 +116,11 @@ def select_or_insert_plate_acq(img_meta):
     return plate_acq_id
 
 
-def select_plate_acq_id(image_path):
+def select_plate_acq_id(acquisition_folder):
 
     conn = None
 
     try:
-
-        folder = os.path.dirname(image_path)
 
         query = ("SELECT id "
                  "FROM plate_acquisition "
@@ -130,7 +128,7 @@ def select_plate_acq_id(image_path):
 
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(query, (folder,))
+        cursor.execute(query, (acquisition_folder,))
         plate_acq_id = cursor.fetchone()
         cursor.close()
 
