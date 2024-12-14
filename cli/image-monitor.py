@@ -108,7 +108,7 @@ def insert_meta_into_table_images(img_meta, plate_acq_id):
 def select_or_insert_plate_acq(img_meta):
 
     # First select to see if plate_acq already exists
-    plate_acq_id = select_plate_acq_id(img_meta['path'])
+    plate_acq_id = select_plate_acq_id(img_meta.get('folder', os.path.dirname(img_meta['path'])))
 
     if plate_acq_id is None:
         plate_acq_id = insert_plate_acq(img_meta)
