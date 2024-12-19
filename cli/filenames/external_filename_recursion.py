@@ -92,7 +92,7 @@ def parse_path_and_file(path):
             'guid': None,
             'extension': extension,
             'timepoint': timepoint,
-            'channel_map_id': 1,
+            'channel_map_id': 35,
             'microscope': "Unknown",
             'make_thumb': "False",
             'experiment': experiment,
