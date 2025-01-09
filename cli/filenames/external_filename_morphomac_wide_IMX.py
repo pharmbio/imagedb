@@ -2,6 +2,11 @@ import re
 import os
 import logging
 
+# file examples
+# /share/data/external-datasets/bbbc/BBBC021/Week4_27861/D07_s1_w192A46E20-C4C2-4748-B19D-541F77829FFA.tif
+# /share/data/external-datasets/bbbc/BBBC021/Week5_28961/Week5_130707_E04_s2_w2C65C4A21-EF2A-4E99-BF05-C07F5B1C529E.tif
+
+
 def parse_path_and_file(path):
 
   # If something errors (file not parsable with this parser, then exception and return None)
@@ -10,13 +15,14 @@ def parse_path_and_file(path):
     # https://regex101.com/
 
     # project, plate
-    match = re.search('.*/external-datasets/(.*)/(.*)/', path)
+    match = re.search('.*/external-datasets/Morphomac/widefield/(.*)/TimePoint_(.*?)/.*', path)
     if match is None:
       logging.debug("None match")
       return None
+    project = "Morphomac"
+    plate = match.group(1).replace('/', '-')
+    timepoint = match.group(2)
 
-    project = match.group(1)
-    plate = match.group(2)
 
     logging.debug("project: " + project)
     logging.debug("plate: " + plate)
@@ -57,12 +63,10 @@ def parse_path_and_file(path):
     logging.debug("extensionid" + str(extension))
 
 
-
-
     metadata = {
       'path': path,
       'filename': os.path.basename(path),
-      'date_year': 2024,
+      'date_year': 1970,
       'date_month': 1,
       'date_day_of_month': 1,
       'project': project,
@@ -75,7 +79,7 @@ def parse_path_and_file(path):
       'is_thumbnail': is_thumbnail,
       'guid': guid,
       'extension': extension,
-      'timepoint': 1,
+      'timepoint': timepoint,
       'channel_map_id': 27,
       'microscope': "Unknown",
       'parser': os.path.basename(__file__)
@@ -89,7 +93,6 @@ def parse_path_and_file(path):
     return None
 
 
-
 if __name__ == '__main__':
     #
     # Configure logging
@@ -98,16 +101,6 @@ if __name__ == '__main__':
                         datefmt='%H:%M:%S',
                         level=logging.DEBUG)
 
-
-        # Test with the provided examples
-    paths = [
-      "/share/data/external-datasets/Morphomac/2024-W50-Macrophages/2024-W50-Macrophages_C03_s4_w150ACA59D-CE24-4C6D-9A69-55773E3F4DD6.tif",
-      "/share/data/external-datasets/Morphomac/2024-W50-Macrophages/2024-W50-Macrophages_C03_s2_w2_thumb497B52A2-6A42-4806-ADBE-C3194ED71882.tif",
-      "/share/data/external-datasets/Morphomac/2024-W50-Macrophages/2024-W50-Macrophages_C03_s1_w20886E4D6-AACE-4092-B1E4-7B951AE4581F.tif"
-      "/share/data/external-datasets/Morphomac/Musemakrofager-U44-2024/Musemakrofager-U44-2024_B02_s1_w12FBAB2FF-6003-4BAA-9D58-85488028A363.tif"
-    ]
-
-    for p in paths:
-        retval = parse_path_and_file(p)
-        print("\nInput:", p)
-        print("Parsed metadata:", retval)
+    # Testparse
+    retval = parse_path_and_file("/share/data/external-datasets/Morphomac/widefield/2024-W50-Macrophages-wide/25201/TimePoint_1/2024-W50-Macrophages_E04_s1_w17247AC16-C2A3-41F2-B56D-0ECF158B3234.tif")
+    print("\nretval = " + str(retval))

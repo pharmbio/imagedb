@@ -6,12 +6,12 @@ from filenames import pharmbio_squid_filename_BF_and_other_and_z
 from filenames import pharmbio_IMX_filename_standard
 from filenames import pharmbio_IMX_filename_older
 from filenames import pharmbio_IMX_filename_relaxed
-from filenames import external_filename_recursion
+from filenames import external_filename_yukogawa_spheroid
 from filenames import external_filename_christa
 from filenames import external_filename_cpjump
 from filenames import external_filename_david
 from filenames import external_filename_IMX
-from filenames import external_filename_gbm_IMX
+from filenames import external_filename_morphomac_wide_IMX
 from filenames import external_filename_IMX_v2
 from filenames import external_filename_opera_rXcXfXpX_chXskXfkXflX
 from filenames import external_filename_comp1
@@ -43,16 +43,16 @@ parsers.append(pharmbio_nikon_filename_v9_single)
 parsers.append(pharmbio_IMX_filename_standard)
 parsers.append(pharmbio_IMX_filename_older)
 parsers.append(pharmbio_IMX_filename_relaxed)
+parsers.append(external_filename_yukogawa_spheroid)
 parsers.append(external_filename_comp1)
 parsers.append(external_filename_christa)
-parsers.append(external_filename_gbm_IMX)
+parsers.append(external_filename_morphomac_wide_IMX)
 parsers.append(external_filename_IMX_v2)
 parsers.append(external_filename_IMX)
 parsers.append(external_filename_cpjump)
 parsers.append(external_filename_david)
 parsers.append(external_filename_opera_rXcXfXpX_chXskXfkXflX)
 parsers.append(external_filename_spheroid_v1)
-parsers.append(external_filename_recursion)
 
 def parse_path_and_file(filename):
 
@@ -121,6 +121,6 @@ if __name__ == '__main__':
     retval = parse_path_and_file( "/share/data/external-datasets/Morphomac/torkild/2023-08-11/23764/2023-U35_THP-1_I02_s1_w3_thumbA99DF1CF-9039-4190-8FB9-0594BBE3A896.tif")
     print("\nretval = " + str(retval))
 
-    retval = parse_path_and_file( "/share/data/external-datasets/recursion/rxrx3-core/Plate1/H45_s1_4.tif")
+    retval = parse_path_and_file( "/share/data/external-datasets/Morphomac/widefield/2024-W50-Macrophages-wide/25201/TimePoint_1/2024-W50-Macrophages_E04_s1_w17247AC16-C2A3-41F2-B56D-0ECF158B3234.tif")
     print("\nretval = " + str(retval))
 
