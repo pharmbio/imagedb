@@ -73,9 +73,9 @@ def parse_path_and_file(path):
     metadata = {
       'path': path,
       'filename': os.path.basename(path),
-      'date_year': 1970,
-      'date_month': 1,
-      'date_day_of_month': 1,
+      'date_year': 2024,
+      'date_month': 10,
+      'date_day_of_month': 16,
       'project': project,
       'magnification': '?x',
       'plate': plate,
@@ -116,3 +116,5 @@ if __name__ == '__main__':
     retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/CBCS-compound-collection/P101056-U2OS-CBCS-JUMP-v1-MoA90-L1-KI-Opera-20X/Images/r13c06f05p01-ch1sk1fk1fl1.tiff")
     print(str(retval))
 
+    retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/minispheroid_celllines/240925_HepG2C3A_CP__2024-10-16T11_03_13-Measurement_1b/Images/r08c08f04p02-ch5sk1fk1fl1.tiff")
+    print(str(retval))
