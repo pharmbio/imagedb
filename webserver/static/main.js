@@ -61,34 +61,190 @@
     getFirstZPositionKey(acquisitionId, wellKey, siteKey) {
       return Object.keys(this.getZPositions(acquisitionId, wellKey, siteKey))[0];
     }
-
+/*
     getSiteNames(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const sites = this.getSites(acquisitionId, firstWellKey);
       return Object.values(sites).map(site => site.id);
     }
+*/
+    getSiteNames(acquisitionId) {
+      const startTime = performance.now();
 
+      const siteNamesSet = new Set();
+      const wells = this.getWells(acquisitionId);
+      for (const wellKey of Object.keys(wells)) {
+        const sites = this.getSites(acquisitionId, wellKey);
+        for (const site of Object.values(sites)) {
+          siteNamesSet.add(site.id);
+        }
+      }
+
+      // Convert set to array and sort numerically
+      const sortedSiteNames = Array.from(siteNamesSet).sort((a, b) => Number(a) - Number(b));
+      const elapsed = performance.now() - startTime;
+      console.log(`Collecting and sorting unique site names took ${elapsed.toFixed(2)} ms`);
+      
+      return sortedSiteNames;
+    }
+
+    /*
     getChannelNames(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
       const firstZPositionKey = this.getFirstZPositionKey(acquisitionId, firstWellKey, firstSiteKey);
       const channels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey, firstZPositionKey);
       return Object.values(channels).map(channel => channel.dye);
-      }
+    }
+    */
 
+    getChannelNames(acquisitionId) {
+      const startTime = performance.now();
+    
+      const channelNamesSet = new Set();
+      const wells = this.getWells(acquisitionId);
+      
+      for (const wellKey of Object.keys(wells)) {
+        const sites = this.getSites(acquisitionId, wellKey);
+        for (const siteKey of Object.keys(sites)) {
+          const zPositions = this.getZPositions(acquisitionId, wellKey, siteKey);
+          for (const zKey of Object.keys(zPositions)) {
+            const channels = this.getChannels(acquisitionId, wellKey, siteKey, zKey);
+            for (const channel of Object.values(channels)) {
+              channelNamesSet.add(channel.dye);
+            }
+          }
+        }
+      }
+    
+      console.log("channelNamesSet", channelNamesSet);
+
+      // Convert the Set to an Array and sort numerically when possible.
+      const sortedChannelNames = Array.from(channelNamesSet).sort((a, b) => {
+        const numA = Number(a);
+        const numB = Number(b);
+        const isNumA = !isNaN(numA);
+        const isNumB = !isNaN(numB);
+        
+        if (isNumA && isNumB) {
+          return numA - numB;
+        }
+        return a.localeCompare(b);
+      });
+    
+      console.log("sortedChannelNames", sortedChannelNames);
+
+      const elapsed = performance.now() - startTime;
+      console.log(`Collecting and sorting unique channel names took ${elapsed.toFixed(2)} ms`);
+    
+      return sortedChannelNames;
+    }
+
+    
+    /*
     getAvailableChannels(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
       const firstZPositionKey = this.getFirstZPositionKey(acquisitionId, firstWellKey, firstSiteKey);
       return this.getChannels(acquisitionId, firstWellKey, firstSiteKey, firstZPositionKey);
     }
+    */
 
+    /*
+    getAvailableChannels(acquisitionId) {
+      const startTime = performance.now();
+    
+      const firstWellKey = this.getFirstWellKey(acquisitionId);
+      const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
+      const firstZPositionKey = this.getFirstZPositionKey(acquisitionId, firstWellKey, firstSiteKey);
+      const availableChannels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey, firstZPositionKey);
+    
+      const elapsed = performance.now() - startTime;
+      console.log(`Collecting available channels took ${elapsed.toFixed(2)} ms`);
+    
+      return availableChannels;
+    }
+      */
+
+    getAvailableChannels(acquisitionId) {
+      const startTime = performance.now();
+    
+      // We'll use a Map to ensure uniqueness.
+      // The key will be a string composed of channel.id and channel.dye.
+      const uniqueChannelsMap = new Map();
+      const wells = this.getWells(acquisitionId);
+    
+      for (const wellKey of Object.keys(wells)) {
+        const sites = this.getSites(acquisitionId, wellKey);
+        for (const siteKey of Object.keys(sites)) {
+          const zPositions = this.getZPositions(acquisitionId, wellKey, siteKey);
+          for (const zKey of Object.keys(zPositions)) {
+            const channels = this.getChannels(acquisitionId, wellKey, siteKey, zKey);
+            for (const channel of Object.values(channels)) {
+              // Create a unique key. Adjust this as needed.
+              const key = `${channel.id}-${channel.dye}`;
+              // If not already in the map, add it.
+              if (!uniqueChannelsMap.has(key)) {
+                // Save only the needed properties.
+                uniqueChannelsMap.set(key, { id: channel.id, dye: channel.dye });
+              }
+            }
+          }
+        }
+      }
+    
+      // Convert the map values to an array.
+      // Here, we sort by channel.id numerically when possible,
+      // otherwise we sort lexicographically.
+      const uniqueChannels = Array.from(uniqueChannelsMap.values()).sort((a, b) => {
+        const numA = Number(a.id);
+        const numB = Number(b.id);
+        const isNumA = !isNaN(numA);
+        const isNumB = !isNaN(numB);
+        if (isNumA && isNumB) {
+          return numA - numB;
+        }
+        return a.id.localeCompare(b.id);
+      });
+    
+      const elapsed = performance.now() - startTime;
+      console.log(`Collecting and sorting unique channels took ${elapsed.toFixed(2)} ms`);
+
+      console.log(`uniqueChannels`, uniqueChannels);
+    
+      return uniqueChannels;
+    }
+    
+
+    /*
     getAvailableZpos(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
       return Object.keys(this.getZPositions(acquisitionId, firstWellKey, firstSiteKey));
-    }
+    }*/
 
+    getAvailableZpos(acquisitionId) {
+        const startTime = performance.now();
+        const zPosSet = new Set();
+        const wells = this.getWells(acquisitionId);
+      
+        for (const wellKey of Object.keys(wells)) {
+          const sites = this.getSites(acquisitionId, wellKey);
+          for (const siteKey of Object.keys(sites)) {
+            const zPositions = this.getZPositions(acquisitionId, wellKey, siteKey);
+            for (const zKey of Object.keys(zPositions)) {
+              zPosSet.add(zKey);
+            }
+          }
+        }
+      
+        // Convert the set to an array and sort numerically.
+        const sortedZPos = Array.from(zPosSet).sort((a, b) => Number(a) - Number(b));
+        const elapsed = performance.now() - startTime;
+        console.log(`Collecting unique Z positions took ${elapsed.toFixed(2)} ms`);
+        return sortedZPos;
+    }
+    
     getPlateSize(siteNames) {
       // Loop through wellNames (for all acquisitions) and see if size is outside 96 or 384 plate limit
       // if not return 96, 384 or 1536
@@ -1384,7 +1540,9 @@ function drawPlatesListSidebar_old(origPlatesList){
             //console.log('site.z_positions', site.z_positions);
 
 
-            if(site.z_positions[zpos[0]].channels != null){
+            if(site && site.z_positions && site.z_positions && site.z_positions[zpos[0]] && site.z_positions[zpos[0]].channels != null){
+
+              console.log("site.z_positions[zpos[0]].channels", site.z_positions[zpos[0]].channels);
 
               let url = createMergeThumbImgURLFromChannels(site.z_positions[zpos[0]].channels);
               let img = document.createElement('img');
@@ -1884,7 +2042,7 @@ function drawPlatesListSidebar_old(origPlatesList){
 
     // }
 
-    let channel_names = plateObj.getChannelNames(getSelectedAcquisitionId())
+    let channel_names = Object.values(channels).map(channel => channel.dye);
     let is_subset = ['HOECHST','MITO', 'PHAandWGA'].every(val => channel_names.includes(val))
     if(is_subset){
       b = getChannelIdFromDye('HOECHST', channels);
