@@ -14,7 +14,8 @@ import filenames.filename_parser
 import image_tools
 import settings as imgdb_settings
 import file_utils
-import db_utils
+
+from database import Database
 from image import Image
 
 
@@ -26,13 +27,13 @@ def addImageToImagedb(img: Image):
         return
 
     # First select plate acquisition id, or insert it if not there
-    plate_acq_id = db_utils.select_or_insert_plate_acq(img)
+    plate_acq_id = Database.get_instance().select_or_insert_plate_acq(img)
 
     # Insert into images table
-    img_id = db_utils.insert_meta_into_table_images(img, plate_acq_id)
+    img_id = Database.get_instance().insert_meta_into_table_images(img, plate_acq_id)
 
     # Insert into upload_to_s3 table
-    db_utils.insert_into_upload_table(img, plate_acq_id, img_id)
+    Database.get_instance().insert_into_upload_table(img, plate_acq_id, img_id)
 
     # create thumb image
     thumb_path = img.make_thumb_path(imgdb_settings.IMAGES_THUMB_FOLDER)
@@ -79,7 +80,6 @@ def add_plate_to_db(images):
 
         # Skip thumbnails
         if not img.is_thumbnail():
-
             addImageToImagedb(img)
 
         if idx % 100 == 1:
@@ -99,21 +99,21 @@ def update_finished_plate_acquisitions_from_file():
     global processed
 
     # first get unfinished acq from database
-    unfinished = db_utils.select_unfinished_plate_acq_folder()
+    unfinished = Database.get_instance().select_unfinished_plate_acq_folder()
 
     for plate_acq_folder in unfinished:
 
         # if coordinates.csv file in plate_acq folder, then set finished
         finished_flag_file = os.path.join(plate_acq_folder, "coordinates.csv")
         if os.path.exists(finished_flag_file):
-            db_utils.update_acquisition_finished(plate_acq_folder, time.time())
+            Database.get_instance().update_acquisition_finished(plate_acq_folder, time.time())
 
 
 def update_finished_plate_acquisitions_from_cutoff_time(cutoff_time):
     global processed
 
     # first get unfinished acq from database
-    unfinished = db_utils.select_unfinished_plate_acq_folder()
+    unfinished = Database.get_instance().select_unfinished_plate_acq_folder()
 
     for plate_acq_folder in unfinished:
 
@@ -125,7 +125,7 @@ def update_finished_plate_acquisitions_from_cutoff_time(cutoff_time):
                 logging.info("cutoff_time=" + str(cutoff_time))
                 if proc_time < cutoff_time:
                     folder = os.path.dirname(img_path)
-                    db_utils.update_acquisition_finished(folder, cutoff_time)
+                    Database.get_instance().update_acquisition_finished(folder, cutoff_time)
 
                 # latest proc_time for this acquisition is found, time to break
                 break
@@ -167,6 +167,14 @@ processed: Dict[str, float] = {}
 
 def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, proj_root_dirs, exhaustive_initial_poll, continuous_polling):
 
+    Database.get_instance().initialize_connection_pool(
+                user=imgdb_settings.DB_USER,
+                password=imgdb_settings.DB_PASS,
+                host=imgdb_settings.DB_HOSTNAME,
+                port=imgdb_settings.DB_PORT,
+                database=imgdb_settings.DB_NAME
+    )
+
     global processed, blacklist
 
     is_initial_poll = True
@@ -188,7 +196,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
         cutoff_time = time.time() - latest_file_change_margin
 
         # get finished ones from db
-        finished_acq_folders = db_utils.select_finished_plate_acq_folder()
+        finished_acq_folders = Database.get_instance().select_finished_plate_acq_folder()
 
         # get all image dirs within root dirs (yields dirs sorted by date, most recent first)
         for img_dir in file_utils.find_dirs_containing_img_files_recursive_from_list_of_paths(proj_root_dirs):

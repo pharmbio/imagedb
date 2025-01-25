@@ -2,8 +2,6 @@ import os
 import re
 from datetime import datetime
 
-import db_utils
-
 class Image:
 
     def __init__(self, meta: dict):
@@ -56,6 +54,9 @@ class Image:
 
     def get_project(self):
         return self.get('project')
+    
+    def get_microscope(self):
+        return self.get('microscope')
 
     def get_channel_map_id(self):
         ## get channel map for speciffic projects/plates
@@ -98,7 +99,8 @@ class Image:
             barcode = plate
             return barcode
     def exists_in_db(self) -> bool:
-        return db_utils.image_exists_in_db(self)
+        from database import Database
+        return Database.get_instance().image_exists_in_db(self)
 
     def make_thumb_path(self, thumbdir: str) -> str:
         image_subpath = self.get_path().strip("/")
