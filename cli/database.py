@@ -117,6 +117,7 @@ class Database:
                 status
             )
             VALUES (%s, %s, %s, %s, 'waiting')
+            ON CONFLICT (path) DO NOTHING
             RETURNING id
         """
         conn = self.get_connection()

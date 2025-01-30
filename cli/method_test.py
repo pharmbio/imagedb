@@ -4,6 +4,7 @@ from filenames.filename_parser import parse_path_and_file
 from database import Database
 from image import Image
 import settings as imgdb_settings
+import image_monitor
 
 
 def setup_logging():
@@ -45,9 +46,32 @@ def delete_and_upload_one_testimage():
     # Insert into upload_to_s3 table
     Database.get_instance().insert_into_upload_table(img, plate_acq_id, img_id)
 
+def delete_and_upload_one_testdir():
+
+    img_path = "/share/mikro2/squid/anders-test/Testplate_monitor_2023-04-18_14.16.04/"
+
+
+def test_polling_loop():
+
+    poll_dirs_margin_days = 5
+    latest_file_change_margin = 7200
+    sleep_time = 5
+    proj_root_dirs = ["/share/mikro2/squid/anders-test/"]
+    exhaustive_initial_poll = False
+    continuous_polling = False
+
+    image_monitor.polling_loop(poll_dirs_margin_days,
+                               latest_file_change_margin,
+                               sleep_time,
+                               proj_root_dirs,
+                               exhaustive_initial_poll,
+                               continuous_polling
+    )
+
 def main():
 
-    delete_and_upload_one_testimage()
+    # delete_and_upload_one_testimage()
+    test_polling_loop()
 
 
 if __name__ == "__main__":
