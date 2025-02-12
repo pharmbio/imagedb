@@ -33,7 +33,8 @@ def addImageToImagedb(img: Image):
     img_id = Database.get_instance().insert_meta_into_table_images(img, plate_acq_id)
 
     # Insert into upload_to_s3 table
-    Database.get_instance().insert_into_upload_table(img, plate_acq_id, img_id)
+    if img.is_upload_to_s3():
+        Database.get_instance().insert_into_upload_table(img, plate_acq_id, img_id)
 
     # create thumb image
     thumb_path = img.make_thumb_path(imgdb_settings.IMAGES_THUMB_FOLDER)

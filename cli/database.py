@@ -188,9 +188,9 @@ class Database:
                         img.get_plate_barcode(),
                         img.get_plate(),
                         img.get_project(),
-                        img.get("imaged"),
-                        img.get("microscope"),
-                        img.get("channel_map_id"),
+                        img.get_imaged(),
+                        img.get_microscope(),
+                        img.get_channel_map_id(),
                         img.get_timepoint(),
                         img.get_folder()
                     )
@@ -303,6 +303,29 @@ class Database:
             conn.commit()
         except Exception as err:
             logging.exception("Error deleting image metadata from images table.")
+            conn.rollback()
+            raise err
+        finally:
+            self.release_connection(conn)
+
+    def set_plate_acq_unfinished(self, plate_acq_id: Any) -> None:
+        """
+        Sets the 'finished' column to NULL for the specified plate_acquisition ID.
+        """
+        query = """
+            UPDATE plate_acquisition
+            SET finished = NULL
+            WHERE id = %s
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, (plate_acq_id,))
+                if cursor.rowcount != 1:
+                    raise Exception("Update did not affect exactly one row.")
+            conn.commit()
+        except Exception as err:
+            logging.exception("Error setting plate acquisition to unfinished (NULL).")
             conn.rollback()
             raise err
         finally:

@@ -40,7 +40,7 @@ def parse_path_and_file(path):
         logging.debug(f"plate: {plate}")
 
         match = re.search(
-            r'.*/(AssayPlate_Corning_[0-9]+)_([A-H]\d{2})_'  # e.g. ..._G16_
+            r'.*/(AssayPlate_Corning_[0-9]+)_([A-Z]\d{2})_'  # e.g. ..._G16_
             r'T([0-9]+)'                                     # T0001
             r'F([0-9]+)'                                     # F001
             r'L([0-9]+)'                                     # L01
@@ -81,21 +81,21 @@ def parse_path_and_file(path):
             'date_year': 2024,
             'date_month': 10,
             'date_day_of_month': 1,
-            'project': project,              
-            'magnification': '?x',           
-            'plate': plate,                  
+            'project': project,
+            'magnification': '?x',
+            'plate': plate,
             'plate_acq_name': path,
-            'well': well,                    
-            'wellsample': site,              
-            'channel': channel,              
-            'z': z,                          
+            'well': well,
+            'wellsample': site,
+            'channel': channel,
+            'z': z,
             'is_thumbnail': False,
             'guid': None,
-            'extension': extension,          
-            'timepoint': timepoint,          
-            'channel_map_id': 29,            
+            'extension': extension,
+            'timepoint': timepoint,
+            'channel_map_id': 29,
             'microscope': "Yukogawa",
-            'experiment': experiment,        
+            'experiment': experiment,
             'parser': os.path.basename(__file__),
         }
 
@@ -121,6 +121,7 @@ if __name__ == '__main__':
     test_paths = [
         "/share/data/external-datasets/spher-colo52-az/CellPainting_cellpainttestwithBOMI_20241028_132131/AssayPlate_Corning_3830/AssayPlate_Corning_3830_G16_T0001F001L01A05Z40C05.tif",
         "/share/data/external-datasets/spher-colo52-az/CellPainting_20241220clearedspheroidsBOMI_20241220_151510/AssayPlate_Corning_3830/AssayPlate_Corning_3830_F16_T0001F001L01A04Z58C04.tif"
+        "/share/data/external-datasets/spher-colo52-az/CellPainting_20241220clearedspheroidsBOMI_20241220_151510/AssayPlate_Corning_3830/AssayPlate_Corning_3830_I02_T0001F001L01A01Z01C01.tif"
     ]
 
     for test_path in test_paths:
@@ -129,4 +130,4 @@ if __name__ == '__main__':
 
 
 
-    
+

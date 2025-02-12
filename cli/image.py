@@ -54,7 +54,7 @@ class Image:
 
     def get_project(self):
         return self.get('project')
-    
+
     def get_microscope(self):
         return self.get('microscope')
 
@@ -109,6 +109,16 @@ class Image:
 
     def is_make_thumb(self) -> bool:
         return self.get('make_thumb', True)
+
+    def is_upload_to_s3(self) -> bool:
+        excludes = ['/share/data/external-datasets/']
+
+        path = self.get_path()
+        if path:
+            for exclude in excludes:
+                if exclude in path:
+                    return False
+        return True
 
 
     def __str__(self):

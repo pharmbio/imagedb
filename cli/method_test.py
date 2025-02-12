@@ -16,8 +16,6 @@ def setup_logging():
         stream=sys.stdout  # or use filename='app.log' to write to a file
     )
 
-
-
 setup_logging()
 db = Database.get_instance()
 db.initialize_connection_pool(
@@ -46,17 +44,29 @@ def delete_and_upload_one_testimage():
     # Insert into upload_to_s3 table
     Database.get_instance().insert_into_upload_table(img, plate_acq_id, img_id)
 
-def delete_and_upload_one_testdir():
 
-    img_path = "/share/mikro2/squid/anders-test/Testplate_monitor_2023-04-18_14.16.04/"
+def reset_test_data_in_db():
+    img_path = "/share/mikro2/squid/anders-test/Testplate_monitor_2023-04-18_14.16.04/A03_s1_x0_y0_BF_LED_matrix_full.tiff"
+    img_meta = parse_path_and_file(img_path)
+    img = Image.from_meta(img_meta)
+    plate_acq_id = Database.get_instance().select_plate_acq_id(img=img)
+    Database.get_instance().set_plate_acq_unfinished(plate_acq_id)
+    Database.get_instance().delete_image_meta_from_table_images(img)
 
+    img_path = "/share/data/external-datasets/anders-test/testplate-external-data/20230509-IF27-3013-P1-L1_A03_s1_w546F0B8D6-46F3-469F-BBD1-FA5F08E30B07.tif"
+    img_meta = parse_path_and_file(img_path)
+    img = Image.from_meta(img_meta)
+    plate_acq_id = Database.get_instance().select_plate_acq_id(img=img)
+    Database.get_instance().set_plate_acq_unfinished(plate_acq_id)
+    Database.get_instance().delete_image_meta_from_table_images(img)
 
 def test_polling_loop():
 
     poll_dirs_margin_days = 5
     latest_file_change_margin = 7200
     sleep_time = 5
-    proj_root_dirs = ["/share/mikro2/squid/anders-test/"]
+    proj_root_dirs = ["/share/mikro2/squid/anders-test/",
+                      "/share/data/external-datasets/anders-test/testplate-external-data/"]
     exhaustive_initial_poll = False
     continuous_polling = False
 
@@ -70,7 +80,8 @@ def test_polling_loop():
 
 def main():
 
-    # delete_and_upload_one_testimage()
+    #delete_and_upload_one_testimage()
+    reset_test_data_in_db()
     test_polling_loop()
 
 
