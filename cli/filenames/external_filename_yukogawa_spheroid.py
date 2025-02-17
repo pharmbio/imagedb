@@ -93,7 +93,7 @@ def parse_path_and_file(path):
             'guid': None,
             'extension': extension,
             'timepoint': timepoint,
-            'channel_map_id': 29,
+            'channel_map_id': 36,
             'microscope': "Yukogawa",
             'experiment': experiment,
             'parser': os.path.basename(__file__),
@@ -120,8 +120,9 @@ if __name__ == '__main__':
     # Test parse
     test_paths = [
         "/share/data/external-datasets/spher-colo52-az/CellPainting_cellpainttestwithBOMI_20241028_132131/AssayPlate_Corning_3830/AssayPlate_Corning_3830_G16_T0001F001L01A05Z40C05.tif",
-        "/share/data/external-datasets/spher-colo52-az/CellPainting_20241220clearedspheroidsBOMI_20241220_151510/AssayPlate_Corning_3830/AssayPlate_Corning_3830_F16_T0001F001L01A04Z58C04.tif"
-        "/share/data/external-datasets/spher-colo52-az/CellPainting_20241220clearedspheroidsBOMI_20241220_151510/AssayPlate_Corning_3830/AssayPlate_Corning_3830_I02_T0001F001L01A01Z01C01.tif"
+        "/share/data/external-datasets/spher-colo52-az/CellPainting_20241220clearedspheroidsBOMI_20241220_151510/AssayPlate_Corning_3830/AssayPlate_Corning_3830_F16_T0001F001L01A04Z58C04.tif",
+        "/share/data/external-datasets/spher-colo52-az/CellPainting_20241220clearedspheroidsBOMI_20241220_151510/AssayPlate_Corning_3830/AssayPlate_Corning_3830_I02_T0001F001L01A01Z01C01.tif",
+        "/share/data/external-datasets/spher-colo52-az/CellPainting_20250127Cellpaintcleared3D_20250127_171120/AssayPlate_Corning_3830/AssayPlate_Corning_3830_B02_T0001F001L01A01Z27C01.tif"
     ]
 
     for test_path in test_paths:
