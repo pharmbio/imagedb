@@ -1974,8 +1974,14 @@ function drawPlatesListSidebar_old(origPlatesList){
     // reset
     elemSelect.options.length = 0;
 
-    // add as many options as sites
+    // add as many options as zpos
     let z_positions = plateObj.getAvailableZpos(getSelectedAcquisitionId());
+
+    // if z_selection not specified, select one in middle
+    if (!selected_z && z_positions && z_positions.length > 0) {
+      let middleIndex = Math.floor(z_positions.length / 2);
+      selected_z = "[" + z_positions[middleIndex] + "]";
+    }
 
     // Loop through the names array
     for (let zpos of z_positions) {
