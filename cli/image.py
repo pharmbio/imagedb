@@ -111,7 +111,8 @@ class Image:
         return self.get('make_thumb', True)
 
     def is_upload_to_s3(self) -> bool:
-        excludes = ['/share/data/external-datasets/']
+        excludes = ['/share/data/external-datasets/',
+                    '/share/mikro2/squid/martin-tissue-slide/']
 
         path = self.get_path()
         if path:
