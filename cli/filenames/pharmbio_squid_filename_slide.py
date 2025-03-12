@@ -66,7 +66,7 @@ def parse_path_and_file(path):
     channel_pos = channels.index(channel_name) + 1
 
 
-  elif imaging_type == 'BF':
+  elif imaging_type.startswith('bfledfull'):
     channel_name = 'BF'
     channel_pos = 6
     channel_map_id = 22 # Brightfield and other channels
@@ -78,11 +78,14 @@ def parse_path_and_file(path):
   logging.debug(f"channel_map_id: {channel_map_id}")
 
   site = int(match.group(6))
+  site = 1 # always 1 on slide....
   site_x = int(match.group(7))
   site_y = int(match.group(8))
 
   letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
-  well = f"{letters[site_x]}{site_y:02d}"
+  well = f"{letters[site_y]}{site_x:02d}"
+
+
 
   z_val = match.group(9)
   if z_val:
@@ -143,6 +146,12 @@ if __name__ == '__main__':
     retval = parse_path_and_file(
         "/share/mikro/squid/martin-tissue-slide/slide-acquisition2/A1_s881_x18_y28_z1_fluo405.tiff")
     print("retval = " + str(retval))
+
+    retval = parse_path_and_file(
+        "/share/mikro2/squid/martin-tissue-slide/slide-acquisition2/A1_s127_x32_y4_z1_bfledfull.tiff")
+    print("retval = " + str(retval))
+
+    
 
     
 
