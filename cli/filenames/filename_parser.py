@@ -25,12 +25,13 @@ from filenames import pharmbio_nikon_filename_v6_multi
 from filenames import pharmbio_nikon_filename_v7_single
 from filenames import pharmbio_nikon_filename_v8_single
 from filenames import pharmbio_nikon_filename_v9_single
-
+from filenames import pharmbio_squid_filename_slide
 
 parsers = []
 parsers.append(pharmbio_squid_filename_BF_and_other_and_z)
 parsers.append(pharmbio_squid_filename_v1)
 parsers.append(pharmbio_squid_filename_v2_standard)
+parsers.append(pharmbio_squid_filename_slide)
 parsers.append(pharmbio_nikon_filename_v1)
 parsers.append(pharmbio_nikon_filename_v2_exported)
 parsers.append(pharmbio_nikon_filename_v3_multi)

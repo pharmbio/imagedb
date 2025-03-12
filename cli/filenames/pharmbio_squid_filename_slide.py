@@ -1,6 +1,7 @@
 import re
 import os
 import logging
+import datetime
 
 # Adopted from: https://github.com/HASTE-project/haste-image-analysis-container2/tree/master/haste/image_analysis_container2/filenames
 #
@@ -89,10 +90,17 @@ def parse_path_and_file(path):
   else:
     z = 0
 
+  # Get file creation timestamp
+  c_time = os.path.getctime(path)
+  date_create = datetime.datetime.fromtimestamp(c_time)
+
+  # Format as ISO 8601 (YYYY-MM-DDTHH:MM:SS)
+  date_iso = date_create.strftime("%Y-%m-%dT%H:%M:%S")
+
   metadata = {
       'path': path,
       'filename': os.path.basename(path),
-      'date_iso': "date_iso",
+      'date_iso': date_iso,
       'project': match.group(1),
       'magnification': '?x',
       'plate': match.group(2),

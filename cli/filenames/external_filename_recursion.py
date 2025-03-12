@@ -58,7 +58,7 @@ def parse_path_and_file(path):
             second_letter = well[1].upper()
             if 'A' <= second_letter <= 'Z':  # Check if it's a valid second letter
                 normalized_well = chr(ord('a') + (ord(second_letter) - ord('A')))
-                well = normalized_well + well[2:]  # Replace the first part with normalized value
+                well = normalized_well + well[i2:]  # Replace the first part with normalized value
 
         # Return if wrong extension
         valid_extensions = ("tif", "tiff", "png", "jpg", "jpeg")
