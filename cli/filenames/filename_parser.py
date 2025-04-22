@@ -50,8 +50,8 @@ parsers.append(external_filename_yukogawa_spheroid)
 parsers.append(external_filename_comp1)
 parsers.append(external_filename_christa)
 parsers.append(external_filename_morphomac_wide_IMX)
-parsers.append(external_filename_IMX_v2)
 parsers.append(external_filename_IMX)
+parsers.append(external_filename_IMX_v2)
 parsers.append(external_filename_cpjump)
 parsers.append(external_filename_david)
 parsers.append(external_filename_opera_rXcXfXpX_chXskXfkXflX)
@@ -127,6 +127,6 @@ if __name__ == '__main__':
     retval = parse_path_and_file( "/share/data/external-datasets/Morphomac/widefield/2024-W50-Macrophages-wide/25201/TimePoint_1/2024-W50-Macrophages_E04_s1_w17247AC16-C2A3-41F2-B56D-0ECF158B3234.tif")
     print("\nretval = " + str(retval))
 
-    retval = parse_path_and_file( "/share/data/external-datasets/christa_crc/CRC-104-Growdex-10X-stained/2025-03-14/25468/TimePoint_1/ZStep_20/CRC-104-Growdex-10X-stained_O18_s3_w1BDD61EF7-D950-46CE-8A55-EBC514171E41.tif")
+    retval = parse_path_and_file( "/share/data/external-datasets/christa-patient-painting/CRC-104-Growdex-10X-stained/2025-03-14/25468/TimePoint_1/ZStep_20/CRC-104-Growdex-10X-stained_O18_s3_w1BDD61EF7-D950-46CE-8A55-EBC514171E41.tif")
     print("\nretval = " + str(retval))
 
