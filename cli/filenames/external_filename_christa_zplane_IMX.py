@@ -110,7 +110,7 @@ def parse_path_and_file(path: str):
             "guid":              guid,
             "extension":         extension,
             "timepoint":         timepoint,
-            "channel_map_id":    1,
+            "channel_map_id":    37,
             "microscope":        "Unknown",
             "make_thumb":        "False",
             "parser":            os.path.basename(__file__),
