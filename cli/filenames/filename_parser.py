@@ -130,3 +130,6 @@ if __name__ == '__main__':
     retval = parse_path_and_file( "/share/data/external-datasets/christa-patient-painting/CRC-104-Growdex-10X-stained/2025-03-14/25468/TimePoint_1/ZStep_20/CRC-104-Growdex-10X-stained_O18_s3_w1BDD61EF7-D950-46CE-8A55-EBC514171E41.tif")
     print("\nretval = " + str(retval))
 
+    retval = parse_path_and_file( "/share/mikro2/squid/martin-tissue-slide/slide-15/A1_s65_x16_y2_z1_fluo561.tiff")
+    print("\nretval = " + str(retval))
+

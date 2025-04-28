@@ -84,7 +84,7 @@
       const sortedSiteNames = Array.from(siteNamesSet).sort((a, b) => Number(a) - Number(b));
       const elapsed = performance.now() - startTime;
       console.log(`Collecting and sorting unique site names took ${elapsed.toFixed(2)} ms`);
-      
+
       return sortedSiteNames;
     }
 
@@ -100,10 +100,10 @@
 
     getChannelNames(acquisitionId) {
       const startTime = performance.now();
-    
+
       const channelNamesSet = new Set();
       const wells = this.getWells(acquisitionId);
-      
+
       for (const wellKey of Object.keys(wells)) {
         const sites = this.getSites(acquisitionId, wellKey);
         for (const siteKey of Object.keys(sites)) {
@@ -116,7 +116,7 @@
           }
         }
       }
-    
+
       console.log("channelNamesSet", channelNamesSet);
 
       // Convert the Set to an Array and sort numerically when possible.
@@ -125,22 +125,22 @@
         const numB = Number(b);
         const isNumA = !isNaN(numA);
         const isNumB = !isNaN(numB);
-        
+
         if (isNumA && isNumB) {
           return numA - numB;
         }
         return a.localeCompare(b);
       });
-    
+
       console.log("sortedChannelNames", sortedChannelNames);
 
       const elapsed = performance.now() - startTime;
       console.log(`Collecting and sorting unique channel names took ${elapsed.toFixed(2)} ms`);
-    
+
       return sortedChannelNames;
     }
 
-    
+
     /*
     getAvailableChannels(acquisitionId) {
       const firstWellKey = this.getFirstWellKey(acquisitionId);
@@ -153,27 +153,27 @@
     /*
     getAvailableChannels(acquisitionId) {
       const startTime = performance.now();
-    
+
       const firstWellKey = this.getFirstWellKey(acquisitionId);
       const firstSiteKey = this.getFirstSiteKey(acquisitionId, firstWellKey);
       const firstZPositionKey = this.getFirstZPositionKey(acquisitionId, firstWellKey, firstSiteKey);
       const availableChannels = this.getChannels(acquisitionId, firstWellKey, firstSiteKey, firstZPositionKey);
-    
+
       const elapsed = performance.now() - startTime;
       console.log(`Collecting available channels took ${elapsed.toFixed(2)} ms`);
-    
+
       return availableChannels;
     }
       */
 
     getAvailableChannels(acquisitionId) {
       const startTime = performance.now();
-    
+
       // We'll use a Map to ensure uniqueness.
       // The key will be a string composed of channel.id and channel.dye.
       const uniqueChannelsMap = new Map();
       const wells = this.getWells(acquisitionId);
-    
+
       for (const wellKey of Object.keys(wells)) {
         const sites = this.getSites(acquisitionId, wellKey);
         for (const siteKey of Object.keys(sites)) {
@@ -192,7 +192,7 @@
           }
         }
       }
-    
+
       // Convert the map values to an array.
       // Here, we sort by channel.id numerically when possible,
       // otherwise we sort lexicographically.
@@ -206,15 +206,15 @@
         }
         return a.id.localeCompare(b.id);
       });
-    
+
       const elapsed = performance.now() - startTime;
       console.log(`Collecting and sorting unique channels took ${elapsed.toFixed(2)} ms`);
 
       console.log(`uniqueChannels`, uniqueChannels);
-    
+
       return uniqueChannels;
     }
-    
+
 
     /*
     getAvailableZpos(acquisitionId) {
@@ -227,7 +227,7 @@
         const startTime = performance.now();
         const zPosSet = new Set();
         const wells = this.getWells(acquisitionId);
-      
+
         for (const wellKey of Object.keys(wells)) {
           const sites = this.getSites(acquisitionId, wellKey);
           for (const siteKey of Object.keys(sites)) {
@@ -237,14 +237,14 @@
             }
           }
         }
-      
+
         // Convert the set to an array and sort numerically.
         const sortedZPos = Array.from(zPosSet).sort((a, b) => Number(a) - Number(b));
         const elapsed = performance.now() - startTime;
         console.log(`Collecting unique Z positions took ${elapsed.toFixed(2)} ms`);
         return sortedZPos;
     }
-    
+
     getPlateSize(siteNames) {
       // Loop through wellNames (for all acquisitions) and see if size is outside 96 or 384 plate limit
       // if not return 96, 384 or 1536
@@ -261,9 +261,10 @@
         }
       }
 
-      if (maxRow > 16 || maxCol > 24) return { rows: 32, cols: 48, sites: siteNames };
-      if (maxRow > 8 || maxCol > 12) return { rows: 16, cols: 24, sites: siteNames };
-      return { rows: 8, cols: 12, sites: siteNames };
+      if (maxRow > 32 || maxCol > 48) return { rows: maxRow, cols: maxCol, sites: siteNames }; // Custom size
+      if (maxRow > 16 || maxCol > 24) return { rows: 32, cols: 48, sites: siteNames }; // 1535
+      if (maxRow > 8 || maxCol > 12) return { rows: 16, cols: 24, sites: siteNames }; // 384
+      return { rows: 8, cols: 12, sites: siteNames }; // 96
     }
 
 
@@ -342,13 +343,13 @@
           "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
           "a", "b", "c", "d", "e", "f", "g", "h"
         ];
-    
+
         const rowChar = name[0];
         const rowIndex = rows.indexOf(rowChar);
         if (rowIndex === -1) {
           throw new Error(`Invalid well name: ${name}`);
         }
-    
+
         return rowIndex;
       }
 

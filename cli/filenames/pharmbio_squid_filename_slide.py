@@ -36,6 +36,10 @@ def parse_path_and_file(path):
   if match is None:
     return None
 
+  plate = match.group(2)
+  if not plate.startswith("slide-"):
+    return None
+
   logging.debug(f'match: {match.groups() }')
 
   tp = match.group(3)
@@ -85,8 +89,6 @@ def parse_path_and_file(path):
   letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
   well = f"{letters[site_y]}{site_x:02d}"
 
-
-
   z_val = match.group(9)
   if z_val:
     z = int(z_val[1:-1]) # remove leading z and trailing _
@@ -106,7 +108,7 @@ def parse_path_and_file(path):
       'date_iso': date_iso,
       'project': match.group(1),
       'magnification': '?x',
-      'plate': match.group(2),
+      'plate': plate,
       'plate_acq_name': path,
       'well': well,
       'wellsample': site,
@@ -151,9 +153,15 @@ if __name__ == '__main__':
         "/share/mikro2/squid/martin-tissue-slide/slide-acquisition2/A1_s127_x32_y4_z1_bfledfull.tiff")
     print("retval = " + str(retval))
 
-    
+    retval = parse_path_and_file(
+        "/share/mikro2/squid/martin-tissue-slide/slide-15/A1_s999_x50_y20_z1_fluo730.tiff")
+    print("retval = " + str(retval))
 
-    
+
+
+
+
+
 
 
 
