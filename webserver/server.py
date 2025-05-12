@@ -7,7 +7,8 @@ import tornado.ioloop
 from handlers.query_handlers import (ListAllPlatesQueryHandler,
                                      GetPlateQueryHandler,
                                      ListImageAnalysesHandler,
-                                     MoveAcqIDToTrashHandler)
+                                     MoveAcqIDToTrashHandler,
+                                     SearchCompoundQueryHandler)
 
 from handlers.image_handlers import (ImageMergeHandler,
                                      ThumbImageMergeHandler)
@@ -83,6 +84,8 @@ ROUTES = [
           (r'/image-viewer/(?P<plate>.+)/tp/(?P<acquisition>.+)/well/(?P<well>.+)/site/(?P<site>.+)/zpos/(?P<zpos>.+)/ch/(?P<channel>.+)/url/(?P<imageurl>.+)', ImageViewerTemplateHandler),
           (r'/bstest.html', DefaultTemplateHandler),
           (r'/index.html', IndexTemplateHandler),
+          (r'/search.html', DefaultTemplateHandler),
+          (r'/api/search-compound', SearchCompoundQueryHandler),
           (r'/', IndexTemplateHandler),
          ]
 

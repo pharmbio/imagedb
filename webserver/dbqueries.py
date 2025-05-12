@@ -32,7 +32,7 @@ def put_connection(pooled_connection):
         __connection_pool.putconn(pooled_connection)
 
 
-def get_plate(plate_name):
+def get_plate_old(plate_name):
     logging.info("inside get_plate, plate_name:" + plate_name)
 
     conn = None
@@ -141,6 +141,64 @@ def get_plate(plate_name):
     finally:
         if conn is not None:
             put_connection(conn)
+
+
+def get_plate_json_via_python(plate_name, well_filter=None):
+    """
+    Original Python-based get_plate, renamed with optional well_filter.
+    """
+    logging.info(f"inside get_plate_json_via_python: {plate_name}, wells={well_filter}")
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        # Query images_minimal_view
+        cols = [
+            'plate_barcode','project','plate_acquisition_id','plate_acquisition_name',
+            'folder','timepoint','path','well','site','z','channel','dye','cell_line'
+        ]
+        query = f"SELECT {','.join(cols)} FROM images_minimal_view WHERE plate_barcode = %s"
+        params = [plate_name]
+        if well_filter:
+            query += " AND well = ANY(%s)"
+            params.append(well_filter)
+        query += " ORDER BY timepoint, plate_acquisition_id, well, site, z, channel"
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        plates_dict = {}
+        for img in rows:
+            pid = img['plate_barcode']
+            plate = plates_dict.setdefault(pid, platemodel.Plate(pid))
+            plate.add_data(img)
+        # Query layout
+        layout_query = "SELECT * FROM plate_v1 WHERE barcode = %s"
+        layout_params = [plate_name]
+        if well_filter:
+            layout_query += " AND well_id = ANY(%s)"
+            layout_params.append(well_filter)
+        layout_query += " ORDER BY well_id"
+        cursor.execute(layout_query, layout_params)
+        layout_rows = cursor.fetchall()
+        layout_dict = defaultdict(list)
+        for lr in layout_rows:
+            layout_dict[lr['well_id']].append(lr)
+        # Attach layout
+        if plate_name in plates_dict:
+            plates_dict[plate_name].add_layout(layout_dict)
+        else:
+            p = platemodel.Plate(plate_name)
+            p.add_layout(layout_dict)
+            plates_dict[plate_name] = p
+        return {'plates': plates_dict}
+    finally:
+        if conn:
+            cursor.close()
+            put_connection(conn)
+
+
+def get_plate(plate_name, well_filter=None):
+
+    return get_plate_json_via_python(plate_name, well_filter)
 
 
 def list_all_plates():
@@ -302,4 +360,42 @@ def move_plate_acq_to_trash(acqid):
     finally:
         if conn is not None:
             put_connection(conn)
+
+
+def search_compounds(term: str):
+    """
+    Free‐text search across batchid, cbkid, libid, libtxt, smiles, inchi, inkey, name
+    in the plate_v1 view, joined to plate_acquisition for context.
+    """
+    conn = get_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        like = f"%{term}%"
+        query = (
+            "SELECT "
+            "  pa.id AS plate_acquisition_id, "
+            "  pa.name AS plate_acquisition_name, "
+            "  pa.plate_barcode AS barcode, "
+            "  pv.well_id, "
+            "  pv.batchid, pv.cbkid, pv.libid, pv.libtxt, "
+            "  pv.smiles, pv.inchi, pv.inkey, pv.compound_name "
+            "FROM plate_v1 pv "
+            "JOIN plate_acquisition pa ON pv.barcode = pa.plate_barcode "
+            "WHERE "
+            "  pv.batchid::text   ILIKE %(like)s OR "
+            "  pv.cbkid            ILIKE %(like)s OR "
+            "  pv.libid            ILIKE %(like)s OR "
+            "  pv.libtxt           ILIKE %(like)s OR "
+            "  pv.smiles           ILIKE %(like)s OR "
+            "  pv.inchi            ILIKE %(like)s OR "
+            "  pv.inkey            ILIKE %(like)s OR "
+            "  pv.compound_name    ILIKE %(like)s "
+            "ORDER BY pa.id, pv.well_id"
+        )
+        cursor.execute(query, {"like": like})
+        results = cursor.fetchall()
+        return results
+    finally:
+        cursor.close()
+        put_connection(conn)
 

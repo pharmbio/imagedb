@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1"> <!-- shrink-to-fit=no -->
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>Search – imagedb-pharmb.io</title>
+
+  <link rel="shortcut icon" href="/static/pharmbio_logo_square_64x64.png" type="image/x-icon">
+
+  <!-- Bootstrap core CSS -->
+  <link href="/static/theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom sidebar CSS (for consistent layout) -->
+  <link href="/static/theme/css/simple-sidebar.css" rel="stylesheet">
+  <!-- imagedb custom styles -->
+  <link rel="stylesheet" href="/static/main.css?version=1.x">
+</head>
+
+<body>
+
+  <div class="d-flex" id="wrapper">
+    <!-- Page Content Wrapper -->
+    <div id="page-content-wrapper">
+      <!-- Navbar -->
+      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+        <form id="search-form" class="w-100" onsubmit="return false;">
+          <div class="input-group">
+            <input onkeyup="filterchanged();"
+                   type="text"
+                   id="search-textfield"
+                   class="form-control input-sm"
+                   placeholder="Filter plates"
+                   autofocus>
+            <button type="button"
+                    onclick="filterchanged();"
+                    class="btn btn-info btn-sm ml-2">
+              Search
+            </button>
+            {% raw xsrf_form_html() %}
+          </div>
+        </form>
+      </nav>
+    </div>
+    <!-- /#page-content-wrapper -->
+  </div>
+  <!-- /#wrapper -->
+
+  <!-- Search Results -->
+  <div class="container-fluid mt-3">
+    <div id="search-results" class="row">
+      <!-- JavaScript will populate search results here -->
+    </div>
+  </div>
+
+  <!-- Core JavaScript -->
+  <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
+  <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <!-- imagedb main script (provides filterchanged(), getSearchFilterText(), etc.) -->
+  <script src="/static/main.js?version=1.23"></script>
+
+  <script>
+    $(document).ready(function() {
+      // Focus the search field on load
+      $('#search-textfield').focus();
+      // Trigger initial filter (optional)
+      filterchanged();
+    });
+  </script>
+
+</body>
+
+</html>
