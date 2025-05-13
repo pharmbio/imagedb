@@ -1,75 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1"> <!-- shrink-to-fit=no -->
-  <meta name="description" content="">
-  <meta name="author" content="">
-
-  <title>Search – imagedb-pharmb.io</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>ImageDB – Compound Search</title>
   <link rel="shortcut icon" href="/static/pharmbio_logo_square_64x64.png" type="image/x-icon">
 
-  <!-- Bootstrap core CSS -->
+  <!-- ─── Bootstrap & layout CSS ─── -->
   <link href="/static/theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Custom sidebar CSS (for consistent layout) -->
   <link href="/static/theme/css/simple-sidebar.css" rel="stylesheet">
-  <!-- imagedb custom styles -->
+
+  <!-- ─── imagedb custom CSS ─── -->
   <link rel="stylesheet" href="/static/main.css?version=1.x">
+  <link rel="stylesheet" href="/static/json-viewer/json-viewer.css">
+  <link rel="stylesheet" href="/static/jquery-bonzai/jquery.bonsai.css">
+
+  <!-- ─── Range‐slider CSS ─── -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/css/ion.rangeSlider.min.css"/>
+
+  <style>
+    /* Plate grouping */
+    .plate-group + .plate-group { margin-top: 2rem; }
+    .plate-header { font-weight: bold; margin-bottom: .5rem; }
+
+    /* fixed‐width thumbnail grid */
+    .image-grid {
+      display: grid;
+      /* both min and max are the same so columns never stretch */
+      grid-template-columns: repeat(auto-fit, minmax(120px, 120px));
+      gap: 1rem;
+      justify-content: start;
+    }
+
+    .thumb-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #f8f8f8;
+    }
+    .thumb-card img {
+      display: block;
+      width: 100%;
+      height: auto;
+      transition: filter .2s;
+    }
+    .thumb-meta {
+      position: absolute;
+      bottom: 0;
+      left: 0; right: 0;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      font-size: .8rem;
+      padding: .2rem;
+      text-align: center;
+    }
+  </style>
 </head>
 
 <body>
-
   <div class="d-flex" id="wrapper">
-    <!-- Page Content Wrapper -->
     <div id="page-content-wrapper">
-      <!-- Navbar -->
+
+      <!-- Navbar as search bar -->
       <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-        <form id="search-form" class="w-100" onsubmit="return false;">
-          <div class="input-group">
-            <input onkeyup="filterchanged();"
-                   type="text"
-                   id="search-textfield"
-                   class="form-control input-sm"
-                   placeholder="Filter plates"
-                   autofocus>
-            <button type="button"
-                    onclick="filterchanged();"
-                    class="btn btn-info btn-sm ml-2">
-              Search
-            </button>
+        <div class="container-fluid">
+          <form id="search-form" class="form-inline w-100" onsubmit="return false;">
+            <input
+              type="text"
+              id="q"
+              class="form-control mr-2"
+              placeholder="batchid, name, inchi, etc."
+              required
+              style="min-width:250px;"
+              value="BJ1894655"
+            >
+            <button type="submit" class="btn btn-info">Search</button>
             {% raw xsrf_form_html() %}
-          </div>
-        </form>
+          </form>
+        </div>
       </nav>
-    </div>
-    <!-- /#page-content-wrapper -->
-  </div>
-  <!-- /#wrapper -->
 
-  <!-- Search Results -->
-  <div class="container-fluid mt-3">
-    <div id="search-results" class="row">
-      <!-- JavaScript will populate search results here -->
+      <div class="container-fluid mt-3">
+        <!-- Brightness & Zoom -->
+        <div class="form-inline mb-3">
+          <label class="mr-4">
+            Brightness:
+            <input type="range"
+                   id="brightness-range"
+                   class="form-control-range ml-2"
+                   min="50"
+                   max="3000"
+                   value="100">
+          </label>
+          <label>
+            Zoom:
+            <input type="range"
+                   id="zoom-range"
+                   class="form-control-range ml-2"
+                   min="50"
+                   max="200"
+                   value="100">
+          </label>
+        </div>
+
+        <!-- Results grouped by plate -->
+        <div id="results-container"></div>
+      </div>
     </div>
   </div>
 
-  <!-- Core JavaScript -->
+  <!-- Vendor JS -->
   <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
   <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <!-- imagedb main script (provides filterchanged(), getSearchFilterText(), etc.) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/js/ion.rangeSlider.min.js"></script>
+  <script src="/static/json-viewer/json-viewer.js"></script>
+  <script src="/static/jquery-bonzai/jquery.bonsai.js"></script>
+
+  <!-- imagedb logic -->
   <script src="/static/main.js?version=1.23"></script>
 
   <script>
-    $(document).ready(function() {
-      // Focus the search field on load
-      $('#search-textfield').focus();
-      // Trigger initial filter (optional)
-      filterchanged();
+    const resultsContainer = document.getElementById('results-container');
+
+    // brightness up to 3000%
+    window.getSelectedBrightnessValue = () =>
+      parseInt(document.getElementById('brightness-range').value, 10) || 100;
+    // zoom factor 0.5–2.0
+    window.getSelectedZoomValue = () =>
+      (parseInt(document.getElementById('zoom-range').value, 10) || 100) / 100;
+
+    function applyImageSettings() {
+      const b = getSelectedBrightnessValue() / 100;
+      const z = getSelectedZoomValue();
+      // update brightness on all thumbs
+      document.querySelectorAll('.thumb-card img').forEach(img => {
+        img.style.filter = `brightness(${b})`;
+      });
+      // resize grid‐cells to fixed width = 120px * zoom
+      const basePx = 120;
+      const newSize = basePx * z;
+      document.querySelectorAll('.image-grid').forEach(grid => {
+        grid.style.gridTemplateColumns =
+          `repeat(auto-fit, minmax(${newSize}px, ${newSize}px))`;
+      });
+    }
+
+    // hook sliders
+    document.getElementById('brightness-range')
+      .addEventListener('input', applyImageSettings);
+    document.getElementById('zoom-range')
+      .addEventListener('input', applyImageSettings);
+
+    // render grouped results
+    async function renderSearchResults(q) {
+      const resp = await fetch('/api/search-compound?q=' + encodeURIComponent(q));
+      const { plates } = await resp.json();
+      resultsContainer.innerHTML = '';
+      if (!plates || plates.length === 0) {
+        resultsContainer.textContent = 'No results found.';
+        return;
+      }
+
+      plates.forEach(({ plate }) => {
+        const acqs = Array.isArray(plate.acquisitions)
+          ? plate.acquisitions
+          : Object.values(plate.acquisitions || {});
+
+        acqs.forEach(acq => {
+          const group = document.createElement('div');
+          group.className = 'plate-group';
+
+          // header: name | barcode | project
+          const header = document.createElement('div');
+          header.className = 'plate-header';
+          header.textContent = [
+            acq.name || '—',
+            acq.barcode || '—',
+            acq.project || '—'
+          ].join(' | ');
+          group.append(header);
+
+          // fixed‐width grid for this plate
+          const grid = document.createElement('div');
+          grid.className = 'image-grid';
+
+          Object.entries(acq.wells || {}).forEach(([wellId, wellData]) => {
+            Object.entries(wellData.sites || {}).forEach(([siteKey, siteInfo]) => {
+              const zInfo = Object.values(siteInfo.z_positions || {})[0] || {};
+              let arr = Array.isArray(zInfo.channels)
+                ? zInfo.channels
+                : Object.values(zInfo.channels || {});
+              while (arr.length < 3) arr.push(arr[arr.length-1]||{});
+              const paths = arr.slice(0,3).map(c => encodeURIComponent(c.path||''));
+              const thumbUrl = `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+
+              const card = document.createElement('div');
+              card.className = 'thumb-card';
+              card.onclick = () => openViewer(wellId, siteKey);
+
+              const img = document.createElement('img');
+              img.src = thumbUrl;
+              img.alt = `Well ${wellId} / Site ${siteKey}`;
+
+              const meta = document.createElement('div');
+              meta.className = 'thumb-meta';
+              meta.textContent = `Well ${wellId} • Site ${siteKey}`;
+
+              card.append(img, meta);
+              grid.append(card);
+            });
+          });
+
+          group.append(grid);
+          resultsContainer.append(group);
+        });
+      });
+
+      applyImageSettings();
+    }
+
+    // wire up form + initial load
+    document.getElementById('search-form')
+      .addEventListener('submit', e => {
+        e.preventDefault();
+        renderSearchResults(document.getElementById('q').value.trim());
+      });
+    window.addEventListener('load', () => {
+      renderSearchResults(document.getElementById('q').value.trim());
     });
   </script>
-
 </body>
-
 </html>
