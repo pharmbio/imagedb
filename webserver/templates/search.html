@@ -6,33 +6,29 @@
   <title>ImageDB – Compound Search</title>
   <link rel="shortcut icon" href="/static/pharmbio_logo_square_64x64.png" type="image/x-icon">
 
-  <!-- ─── Bootstrap & layout CSS ─── -->
+  <!-- Bootstrap & layout CSS -->
   <link href="/static/theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link href="/static/theme/css/simple-sidebar.css" rel="stylesheet">
 
-  <!-- ─── imagedb custom CSS ─── -->
+  <!-- imagedb custom CSS -->
   <link rel="stylesheet" href="/static/main.css?version=1.x">
   <link rel="stylesheet" href="/static/json-viewer/json-viewer.css">
   <link rel="stylesheet" href="/static/jquery-bonzai/jquery.bonsai.css">
 
-  <!-- ─── Range‐slider CSS ─── -->
+  <!-- Range‐slider CSS -->
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/css/ion.rangeSlider.min.css"/>
 
+  <!-- thumb grid + card styling -->
   <style>
-    /* Plate grouping */
     .plate-group + .plate-group { margin-top: 2rem; }
     .plate-header { font-weight: bold; margin-bottom: .5rem; }
-
-    /* fixed‐width thumbnail grid */
     .image-grid {
       display: grid;
-      /* both min and max are the same so columns never stretch */
       grid-template-columns: repeat(auto-fit, minmax(120px, 120px));
       gap: 1rem;
       justify-content: start;
     }
-
     .thumb-card {
       position: relative;
       overflow: hidden;
@@ -48,8 +44,7 @@
     }
     .thumb-meta {
       position: absolute;
-      bottom: 0;
-      left: 0; right: 0;
+      bottom: 0; left: 0; right: 0;
       background: rgba(0,0,0,0.5);
       color: #fff;
       font-size: .8rem;
@@ -105,9 +100,31 @@
           </label>
         </div>
 
-        <!-- Results grouped by plate -->
+        <!-- Results grouped by plate-acquisition -->
         <div id="results-container"></div>
       </div>
+
+      <!-- Error Modal -->
+      <div id="error-modal" class="modal fade" tabindex="-1" role="dialog"
+           aria-labelledby="error-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="error-modal-label">JavaScript Error</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <pre id="error-message" style="white-space: pre-wrap;"></pre>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -122,113 +139,148 @@
   <script src="/static/main.js?version=1.23"></script>
 
   <script>
-    const resultsContainer = document.getElementById('results-container');
+    document.addEventListener('DOMContentLoaded', () => {
+      const resultsContainer = document.getElementById('results-container');
+      const brightnessEl     = document.getElementById('brightness-range');
+      const zoomEl           = document.getElementById('zoom-range');
+      const errorModal       = $('#error-modal');
+      const errorMessagePre  = document.getElementById('error-message');
 
-    // brightness up to 3000%
-    window.getSelectedBrightnessValue = () =>
-      parseInt(document.getElementById('brightness-range').value, 10) || 100;
-    // zoom factor 0.5–2.0
-    window.getSelectedZoomValue = () =>
-      (parseInt(document.getElementById('zoom-range').value, 10) || 100) / 100;
+      // Brightness & Zoom getters
+      window.getSelectedBrightnessValue = () =>
+        brightnessEl ? parseInt(brightnessEl.value, 10) : 100;
+      window.getSelectedZoomValue = () =>
+        zoomEl ? (parseInt(zoomEl.value, 10) || 100) / 100 : 1;
 
-    function applyImageSettings() {
-      const b = getSelectedBrightnessValue() / 100;
-      const z = getSelectedZoomValue();
-      // update brightness on all thumbs
-      document.querySelectorAll('.thumb-card img').forEach(img => {
-        img.style.filter = `brightness(${b})`;
-      });
-      // resize grid‐cells to fixed width = 120px * zoom
-      const basePx = 120;
-      const newSize = basePx * z;
-      document.querySelectorAll('.image-grid').forEach(grid => {
-        grid.style.gridTemplateColumns =
-          `repeat(auto-fit, minmax(${newSize}px, ${newSize}px))`;
-      });
-    }
-
-    // hook sliders
-    document.getElementById('brightness-range')
-      .addEventListener('input', applyImageSettings);
-    document.getElementById('zoom-range')
-      .addEventListener('input', applyImageSettings);
-
-    // render grouped results
-    async function renderSearchResults(q) {
-      const resp = await fetch('/api/search-compound?q=' + encodeURIComponent(q));
-      const { plates } = await resp.json();
-      resultsContainer.innerHTML = '';
-      if (!plates || plates.length === 0) {
-        resultsContainer.textContent = 'No results found.';
-        return;
+      function applyImageSettings() {
+        const b = getSelectedBrightnessValue() / 100;
+        const z = getSelectedZoomValue();
+        document.querySelectorAll('.thumb-card img').forEach(img => {
+          img.style.filter = `brightness(${b})`;
+        });
+        const newSize = 120 * z;
+        document.querySelectorAll('.image-grid').forEach(grid => {
+          grid.style.gridTemplateColumns =
+            `repeat(auto-fit, minmax(${newSize}px, ${newSize}px))`;
+        });
       }
 
-      plates.forEach(({ plate }) => {
-        const acqs = Array.isArray(plate.acquisitions)
-          ? plate.acquisitions
-          : Object.values(plate.acquisitions || {});
+      // Wire sliders
+      if (brightnessEl) brightnessEl.addEventListener('input', applyImageSettings);
+      if (zoomEl)       zoomEl.addEventListener('input', applyImageSettings);
 
-        acqs.forEach(acq => {
-          const group = document.createElement('div');
-          group.className = 'plate-group';
+      // Helper to show server-side errors
+      function showError(message) {
+        if (errorMessagePre) errorMessagePre.textContent = message;
+        errorModal.modal('show');
+      }
 
-          // header: name | barcode | project
-          const header = document.createElement('div');
-          header.className = 'plate-header';
-          header.textContent = [
-            acq.name || '—',
-            acq.barcode || '—',
-            acq.project || '—'
-          ].join(' | ');
-          group.append(header);
+      // Main search/render function with manual error handling
+      async function renderSearchResults(q) {
+        resultsContainer.innerHTML = '';    // clear previous
+        applyImageSettings();               // reset brightness/zoom
 
-          // fixed‐width grid for this plate
-          const grid = document.createElement('div');
-          grid.className = 'image-grid';
+        let resp, data;
+        try {
+          resp = await fetch('/api/search-compound?q=' + encodeURIComponent(q));
+        } catch (networkErr) {
+          return showError(`Network error: ${networkErr.message}`);
+        }
 
-          Object.entries(acq.wells || {}).forEach(([wellId, wellData]) => {
-            Object.entries(wellData.sites || {}).forEach(([siteKey, siteInfo]) => {
-              const zInfo = Object.values(siteInfo.z_positions || {})[0] || {};
-              let arr = Array.isArray(zInfo.channels)
-                ? zInfo.channels
-                : Object.values(zInfo.channels || {});
-              while (arr.length < 3) arr.push(arr[arr.length-1]||{});
-              const paths = arr.slice(0,3).map(c => encodeURIComponent(c.path||''));
-              const thumbUrl = `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+        if (!resp.ok) {
+          // assume server sends { error: "…" } JSON on failure
+          try {
+            data = await resp.json();
+            return showError(data.error || `Server returned ${resp.status}`);
+          } catch {
+            return showError(`Server error: ${resp.status} ${resp.statusText}`);
+          }
+        }
 
-              const card = document.createElement('div');
-              card.className = 'thumb-card';
-              card.onclick = () => openViewer(wellId, siteKey);
+        // OK response
+        data = await resp.json();
+        const plates = data.plates || [];
+        if (!plates.length) {
+          resultsContainer.textContent = 'No results found.';
+          return;
+        }
 
-              const img = document.createElement('img');
-              img.src = thumbUrl;
-              img.alt = `Well ${wellId} / Site ${siteKey}`;
+        // Render acquisition by acquisition
+        for (const { plate } of plates) {
+          const acqs = Array.isArray(plate.acquisitions)
+            ? plate.acquisitions
+            : Object.values(plate.acquisitions || {});
 
-              const meta = document.createElement('div');
-              meta.className = 'thumb-meta';
-              meta.textContent = `Well ${wellId} • Site ${siteKey}`;
+          for (const acq of acqs) {
+            // group wrapper + header
+            const group = document.createElement('div');
+            group.className = 'plate-group';
+            const header = document.createElement('div');
+            header.className = 'plate-header';
+            header.textContent = [
+              acq.name  || '—',
+              acq.barcode || '—',
+              acq.project || '—'
+            ].join(' | ');
+            group.append(header);
 
-              card.append(img, meta);
-              grid.append(card);
-            });
-          });
+            // image grid
+            const grid = document.createElement('div');
+            grid.className = 'image-grid';
+            group.append(grid);
+            resultsContainer.append(group);
 
-          group.append(grid);
-          resultsContainer.append(group);
+            // yield so UI updates per-acquisition
+            await new Promise(r => requestAnimationFrame(r));
+
+            // fill wells & sites
+            for (const [wellId, wellData] of Object.entries(acq.wells || {})) {
+              for (const [siteKey, siteInfo] of Object.entries(wellData.sites || {})) {
+                // build thumbnail URL
+                const zInfo = Object.values(siteInfo.z_positions || {})[0] || {};
+                let arr = Array.isArray(zInfo.channels)
+                  ? zInfo.channels
+                  : Object.values(zInfo.channels || {});
+                while (arr.length < 3) arr.push(arr[arr.length-1] || {});
+                const paths = arr.slice(0,3).map(c => encodeURIComponent(c.path || ''));
+                const thumbUrl = `/api/image-merge-thumb/ch1/${paths[0]}` +
+                                 `/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+
+                const card = document.createElement('div');
+                card.className = 'thumb-card';
+                card.onclick = () => openViewer(wellId, siteKey);
+
+                const img = document.createElement('img');
+                img.src = thumbUrl;
+                img.alt = `Well ${wellId} / Site ${siteKey}`;
+
+                const meta = document.createElement('div');
+                meta.className = 'thumb-meta';
+                meta.textContent = `Well ${wellId} • Site ${siteKey}`;
+
+                card.append(img, meta);
+                grid.append(card);
+              }
+            }
+
+            // reapply brightness/zoom after each block
+            applyImageSettings();
+          }
+        }
+      }
+
+      // Wire form submit & initial load
+      const form = document.getElementById('search-form');
+      if (form) {
+        form.addEventListener('submit', e => {
+          e.preventDefault();
+          renderSearchResults(document.getElementById('q').value.trim());
         });
+      }
+      window.addEventListener('load', () => {
+        const q = document.getElementById('q').value.trim();
+        if (q) renderSearchResults(q);
       });
-
-      applyImageSettings();
-    }
-
-    // wire up form + initial load
-    document.getElementById('search-form')
-      .addEventListener('submit', e => {
-        e.preventDefault();
-        renderSearchResults(document.getElementById('q').value.trim());
-      });
-    window.addEventListener('load', () => {
-      renderSearchResults(document.getElementById('q').value.trim());
     });
   </script>
 </body>

@@ -362,11 +362,11 @@ def move_plate_acq_to_trash(acqid):
             put_connection(conn)
 
 
-def search_compounds(term: str, limit: int = 1000):
+def search_compounds(term: str, limit: int = 100):
     """
     Free‐text search across batchid, cbkid, libid, libtxt, smiles, inchi, inkey, name
     in the plate_v1 view, joined to plate_acquisition for context.
-    Returns at most `limit` rows (default 1000).
+    Returns at most `limit` wells (rows) in total.
     """
     conn = get_connection()
     try:
@@ -395,8 +395,7 @@ def search_compounds(term: str, limit: int = 1000):
             "LIMIT %(limit)s"
         )
         cursor.execute(query, {"like": like, "limit": limit})
-        results = cursor.fetchall()
-        return results
+        return cursor.fetchall()
     finally:
         cursor.close()
         put_connection(conn)
