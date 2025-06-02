@@ -6,282 +6,172 @@
   <title>ImageDB – Compound Search</title>
   <link rel="shortcut icon" href="/static/pharmbio_logo_square_64x64.png" type="image/x-icon">
 
-  <!-- Bootstrap & layout CSS -->
+  <!-- Bootstrap & your CSS -->
   <link href="/static/theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/static/theme/css/simple-sidebar.css" rel="stylesheet">
-
-  <!-- imagedb custom CSS -->
+  <link href="/static/theme/css/simple-sidebar.css"          rel="stylesheet">
   <link rel="stylesheet" href="/static/main.css?version=1.x">
-  <link rel="stylesheet" href="/static/json-viewer/json-viewer.css">
-  <link rel="stylesheet" href="/static/jquery-bonzai/jquery.bonsai.css">
-
-  <!-- Range‐slider CSS -->
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/css/ion.rangeSlider.min.css"/>
-
-  <!-- thumb grid + card styling -->
   <style>
-    .plate-group + .plate-group { margin-top: 2rem; }
-    .plate-header { font-weight: bold; margin-bottom: .5rem; }
+    .plate-group + .plate-group { margin-top:2rem }
+    .plate-header { font-weight:bold; margin-bottom:.5rem }
     .image-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 120px));
-      gap: 1rem;
-      justify-content: start;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(120px,120px));
+      gap:1rem;
     }
-    .thumb-card {
-      position: relative;
-      overflow: hidden;
-      border-radius: 4px;
-      cursor: pointer;
-      background: #f8f8f8;
-    }
-    .thumb-card img {
-      display: block;
-      width: 100%;
-      height: auto;
-      transition: filter .2s;
-    }
+    .thumb-card { position:relative; overflow:hidden; border-radius:4px; background:#f8f8f8; cursor:pointer }
+    .thumb-card img { width:100%; height:auto; transition:filter .2s }
     .thumb-meta {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      background: rgba(0,0,0,0.5);
-      color: #fff;
-      font-size: .8rem;
-      padding: .2rem;
-      text-align: center;
+      position:absolute; bottom:0; left:0; right:0;
+      background:rgba(0,0,0,0.5); color:#fff;
+      font-size:.8rem; padding:.2rem; text-align:center;
     }
   </style>
 </head>
-
 <body>
-  <div class="d-flex" id="wrapper">
-    <div id="page-content-wrapper">
-
-      <!-- Navbar as search bar -->
-      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-        <div class="container-fluid">
-          <form id="search-form" class="form-inline w-100" onsubmit="return false;">
-            <input
-              type="text"
-              id="q"
-              class="form-control mr-2"
-              placeholder="batchid, name, inchi, etc."
-              required
-              style="min-width:250px;"
-              value="BJ1894655"
-            >
-            <button type="submit" class="btn btn-info">Search</button>
-            {% raw xsrf_form_html() %}
-          </form>
-        </div>
-      </nav>
-
-      <div class="container-fluid mt-3">
-        <!-- Brightness & Zoom -->
-        <div class="form-inline mb-3">
-          <label class="mr-4">
-            Brightness:
-            <input type="range"
-                   id="brightness-range"
-                   class="form-control-range ml-2"
-                   min="50"
-                   max="3000"
-                   value="100">
-          </label>
-          <label>
-            Zoom:
-            <input type="range"
-                   id="zoom-range"
-                   class="form-control-range ml-2"
-                   min="50"
-                   max="200"
-                   value="100">
-          </label>
-        </div>
-
-        <!-- Results grouped by plate-acquisition -->
-        <div id="results-container"></div>
-      </div>
-
-      <!-- Error Modal -->
-      <div id="error-modal" class="modal fade" tabindex="-1" role="dialog"
-           aria-labelledby="error-modal-label" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="error-modal-label">JavaScript Error</h5>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <pre id="error-message" style="white-space: pre-wrap;"></pre>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
+  <nav class="navbar navbar-light bg-light border-bottom">
+    <form id="search-form" class="form-inline mx-3" onsubmit="return false;">
+      <input type="text" id="q" class="form-control mr-2" placeholder="batchid, name, inchi…" required>
+      <button class="btn btn-info">Search</button>
+    </form>
+  </nav>
+  <div class="container-fluid mt-3">
+    <div class="form-inline mb-3">
+      <label class="mr-3">
+        Brightness
+        <input type="range" id="brightness-range" min="50" max="3000" value="100" class="form-control-range ml-2">
+      </label>
+      <label>
+        Zoom
+        <input type="range" id="zoom-range" min="50" max="200" value="100" class="form-control-range ml-2">
+      </label>
     </div>
+    <div id="results-container"></div>
   </div>
 
-  <!-- Vendor JS -->
+  <!-- Error Modal -->
+  <div id="error-modal" class="modal fade">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Error</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body"><pre id="error-message" style="white-space:pre-wrap"></pre></div>
+    </div></div>
+  </div>
+
+  <!-- JS includes -->
   <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
   <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.3.0/js/ion.rangeSlider.min.js"></script>
-  <script src="/static/json-viewer/json-viewer.js"></script>
-  <script src="/static/jquery-bonzai/jquery.bonsai.js"></script>
-
-  <!-- imagedb logic -->
   <script src="/static/main.js?version=1.23"></script>
-
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const resultsContainer = document.getElementById('results-container');
-      const brightnessEl     = document.getElementById('brightness-range');
-      const zoomEl           = document.getElementById('zoom-range');
-      const errorModal       = $('#error-modal');
-      const errorMessagePre  = document.getElementById('error-message');
+  document.addEventListener('DOMContentLoaded', () => {
+    const resultsContainer = document.getElementById('results-container');
+    const brightnessEl     = document.getElementById('brightness-range');
+    const zoomEl           = document.getElementById('zoom-range');
+    const errorModal       = $('#error-modal');
+    const errorMsgPre      = document.getElementById('error-message');
 
-      // Brightness & Zoom getters
-      window.getSelectedBrightnessValue = () =>
-        brightnessEl ? parseInt(brightnessEl.value, 10) : 100;
-      window.getSelectedZoomValue = () =>
-        zoomEl ? (parseInt(zoomEl.value, 10) || 100) / 100 : 1;
-
-      function applyImageSettings() {
-        const b = getSelectedBrightnessValue() / 100;
-        const z = getSelectedZoomValue();
-        document.querySelectorAll('.thumb-card img').forEach(img => {
-          img.style.filter = `brightness(${b})`;
-        });
-        const newSize = 120 * z;
-        document.querySelectorAll('.image-grid').forEach(grid => {
-          grid.style.gridTemplateColumns =
-            `repeat(auto-fit, minmax(${newSize}px, ${newSize}px))`;
-        });
-      }
-
-      // Wire sliders
-      if (brightnessEl) brightnessEl.addEventListener('input', applyImageSettings);
-      if (zoomEl)       zoomEl.addEventListener('input', applyImageSettings);
-
-      // Helper to show server-side errors
-      function showError(message) {
-        if (errorMessagePre) errorMessagePre.textContent = message;
-        errorModal.modal('show');
-      }
-
-      // Main search/render function with manual error handling
-      async function renderSearchResults(q) {
-        resultsContainer.innerHTML = '';    // clear previous
-        applyImageSettings();               // reset brightness/zoom
-
-        let resp, data;
-        try {
-          resp = await fetch('/api/search-compound?q=' + encodeURIComponent(q));
-        } catch (networkErr) {
-          return showError(`Network error: ${networkErr.message}`);
-        }
-
-        if (!resp.ok) {
-          // assume server sends { error: "…" } JSON on failure
-          try {
-            data = await resp.json();
-            return showError(data.error || `Server returned ${resp.status}`);
-          } catch {
-            return showError(`Server error: ${resp.status} ${resp.statusText}`);
-          }
-        }
-
-        // OK response
-        data = await resp.json();
-        const plates = data.plates || [];
-        if (!plates.length) {
-          resultsContainer.textContent = 'No results found.';
-          return;
-        }
-
-        // Render acquisition by acquisition
-        for (const { plate } of plates) {
-          const acqs = Array.isArray(plate.acquisitions)
-            ? plate.acquisitions
-            : Object.values(plate.acquisitions || {});
-
-          for (const acq of acqs) {
-            // group wrapper + header
-            const group = document.createElement('div');
-            group.className = 'plate-group';
-            const header = document.createElement('div');
-            header.className = 'plate-header';
-            header.textContent = [
-              acq.name  || '—',
-              acq.barcode || '—',
-              acq.project || '—'
-            ].join(' | ');
-            group.append(header);
-
-            // image grid
-            const grid = document.createElement('div');
-            grid.className = 'image-grid';
-            group.append(grid);
-            resultsContainer.append(group);
-
-            // yield so UI updates per-acquisition
-            await new Promise(r => requestAnimationFrame(r));
-
-            // fill wells & sites
-            for (const [wellId, wellData] of Object.entries(acq.wells || {})) {
-              for (const [siteKey, siteInfo] of Object.entries(wellData.sites || {})) {
-                // build thumbnail URL
-                const zInfo = Object.values(siteInfo.z_positions || {})[0] || {};
-                let arr = Array.isArray(zInfo.channels)
-                  ? zInfo.channels
-                  : Object.values(zInfo.channels || {});
-                while (arr.length < 3) arr.push(arr[arr.length-1] || {});
-                const paths = arr.slice(0,3).map(c => encodeURIComponent(c.path || ''));
-                const thumbUrl = `/api/image-merge-thumb/ch1/${paths[0]}` +
-                                 `/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
-
-                const card = document.createElement('div');
-                card.className = 'thumb-card';
-                card.onclick = () => openViewer(wellId, siteKey);
-
-                const img = document.createElement('img');
-                img.src = thumbUrl;
-                img.alt = `Well ${wellId} / Site ${siteKey}`;
-
-                const meta = document.createElement('div');
-                meta.className = 'thumb-meta';
-                meta.textContent = `Well ${wellId} • Site ${siteKey}`;
-
-                card.append(img, meta);
-                grid.append(card);
-              }
-            }
-
-            // reapply brightness/zoom after each block
-            applyImageSettings();
-          }
-        }
-      }
-
-      // Wire form submit & initial load
-      const form = document.getElementById('search-form');
-      if (form) {
-        form.addEventListener('submit', e => {
-          e.preventDefault();
-          renderSearchResults(document.getElementById('q').value.trim());
-        });
-      }
-      window.addEventListener('load', () => {
-        const q = document.getElementById('q').value.trim();
-        if (q) renderSearchResults(q);
+    function applyImageSettings() {
+      const b = (parseInt(brightnessEl.value,10)||100)/100;
+      const z = (parseInt(zoomEl.value,10)||100)/100;
+      document.querySelectorAll('.thumb-card img').forEach(img => {
+        img.style.filter = `brightness(${b})`;
       });
-    });
+      const size = 120 * z;
+      document.querySelectorAll('.image-grid').forEach(grid => {
+        grid.style.gridTemplateColumns =
+          `repeat(auto-fit,minmax(${size}px,${size}px))`;
+      });
+    }
+    brightnessEl.addEventListener('input', applyImageSettings);
+    zoomEl.addEventListener('input',       applyImageSettings);
+
+    function showError(text) {
+      errorMsgPre.textContent = text;
+      errorModal.modal('show');
+    }
+
+    async function renderSearchResults(term) {
+      resultsContainer.innerHTML = '';
+      applyImageSettings();
+
+      // Phase 1: Fetch flat list
+      let resp = await fetch(
+        `/api/search-compound?q=${encodeURIComponent(term)}&limit=1000`
+      );
+      if (!resp.ok) {
+        const t = await resp.text().catch(()=>resp.statusText);
+        return showError(`Search failed: ${t}`);
+      }
+      const { results } = await resp.json();
+      if (!results.length) {
+        return resultsContainer.textContent = 'No results found.';
+      }
+
+      // group by barcode
+      const byBarcode = results.reduce((m,r) => {
+        m[r.barcode] = m[r.barcode] || [];
+        m[r.barcode].push(r.well_id);
+        return m;
+      }, {});
+
+      // For each plate (barcode), fetch its full JSON via get_plate endpoint
+      for (const [barcode, wells] of Object.entries(byBarcode)) {
+        // skeleton block
+        const group = document.createElement('div');
+        group.className = 'plate-group';
+        group.innerHTML = `
+          <div class="plate-header">${barcode}</div>
+          <div class="image-grid"></div>
+        `;
+        resultsContainer.append(group);
+        const grid = group.querySelector('.image-grid');
+
+        // Phase 2: fetch plate with well filter
+        resp = await fetch(
+          `/api/plate?barcode=${encodeURIComponent(barcode)}`
+          + `&wells=${wells.join(',')}`
+        );
+        if (!resp.ok) {
+          showError(`Failed to load plate ${barcode}`);
+          continue;
+        }
+        const plate = await resp.json();  // your standard get_plate handler
+        // assume plate.wells = { wellId: { sites: { … } } }
+        for (const [wellId, wellData] of Object.entries(plate.wells||{})) {
+          for (const [siteKey, siteInfo] of Object.entries(wellData.sites||{})) {
+            const zInfo = Object.values(siteInfo.z_positions||{})[0]||{};
+            let ch = Array.isArray(zInfo.channels)
+                       ? zInfo.channels
+                       : Object.values(zInfo.channels||{});
+            while (ch.length<3) ch.push(ch[ch.length-1]||{});
+            const paths = ch.slice(0,3).map(c=>encodeURIComponent(c.path||''));
+            const thumb = `/api/image-merge-thumb/`
+              + `ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+
+            const card = document.createElement('div');
+            card.className = 'thumb-card';
+            card.innerHTML = `
+              <img src="${thumb}" alt="Well ${wellId} • Site ${siteKey}">
+              <div class="thumb-meta">Well ${wellId} • Site ${siteKey}</div>
+            `;
+            card.onclick = () => openViewer(wellId, siteKey);
+            grid.append(card);
+          }
+        }
+
+        applyImageSettings();
+        // let browser update
+        await new Promise(r=>requestAnimationFrame(r));
+      }
+    }
+
+    document.getElementById('search-form')
+      .addEventListener('submit', e => {
+        e.preventDefault();
+        renderSearchResults(document.getElementById('q').value.trim());
+      });
+  });
   </script>
 </body>
 </html>

@@ -8,9 +8,10 @@ import image_monitor
 
 
 def setup_logging():
-    # Setup logging first
+    LOG_LEVEL = imgdb_settings.LOG_LEVEL.upper()
+    level_logging = getattr(logging, LOG_LEVEL, logging.INFO)  # Default to INFO if unknown
     logging.basicConfig(
-        level=logging.DEBUG,  # Set to DEBUG, INFO, etc. as desired
+        level=level_logging,  # Set to DEBUG, INFO, etc. as desired
         format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
         stream=sys.stdout  # or use filename='app.log' to write to a file
@@ -25,6 +26,8 @@ db.initialize_connection_pool(
     port=imgdb_settings.DB_PORT,
     database=imgdb_settings.DB_NAME
 )
+
+logging.debug(f"imgdb_settings.DB_PORT: {imgdb_settings.DB_PORT}")
 
 def delete_and_upload_one_testimage():
 
@@ -65,9 +68,10 @@ def test_polling_loop():
     poll_dirs_margin_days = 5
     latest_file_change_margin = 7200
     sleep_time = 5
-    proj_root_dirs = ["/share/mikro2/squid/anders-test/",
+    proj_root_dirs = ["/share/mikro3/squid/",
+                      "/share/mikro2/squid/",
                       "/share/data/external-datasets/anders-test/testplate-external-data/"]
-    exhaustive_initial_poll = False
+    exhaustive_initial_poll = True
     continuous_polling = False
 
     image_monitor.polling_loop(poll_dirs_margin_days,

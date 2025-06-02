@@ -122,7 +122,7 @@ if __name__ == '__main__':
         "/share/data/external-datasets/spher-colo52-az/CellPainting_cellpainttestwithBOMI_20241028_132131/AssayPlate_Corning_3830/AssayPlate_Corning_3830_G16_T0001F001L01A05Z40C05.tif",
         "/share/data/external-datasets/spher-colo52-az/CellPainting_20241220clearedspheroidsBOMI_20241220_151510/AssayPlate_Corning_3830/AssayPlate_Corning_3830_F16_T0001F001L01A04Z58C04.tif",
         "/share/data/external-datasets/spher-colo52-az/CellPainting_20241220clearedspheroidsBOMI_20241220_151510/AssayPlate_Corning_3830/AssayPlate_Corning_3830_I02_T0001F001L01A01Z01C01.tif",
-        "/share/data/external-datasets/spher-colo52-az/CellPainting_20250127Cellpaintcleared3D_20250127_171120/AssayPlate_Corning_3830/AssayPlate_Corning_3830_B02_T0001F001L01A01Z27C01.tif"
+        "/share/data/external-datasets/spher-colo52-az/CellPainting_20250127Cellpaintcleared3D_20250127_171120/AssayPlate_Corning_3830/AssayPlate_Corning_3830_H23_T0001F001L01A05Z62C05.tif"
     ]
 
     for test_path in test_paths:

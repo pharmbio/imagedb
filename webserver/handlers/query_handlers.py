@@ -125,47 +125,37 @@ class MoveAcqIDToTrashHandler(tornado.web.RequestHandler):
             self.write({"status": "error", "message": str(e)})
 
 class SearchCompoundQueryHandler(tornado.web.RequestHandler):
-    def prepare(self):
-        self.set_header("Content-Type", "application/json")
-
+    """
+    GET /api/search-compound?q=…[&limit=1000]
+      → returns JSON: { results: [ { barcode, plate_acquisition_id, well_id }, … ] }
+      up to `limit` rows (default 1000).
+    """
     def get(self):
-        q = self.get_argument("q", "").strip()
+        q     = self.get_argument("q", "").strip()
+        limit = self.get_argument("limit", 1000)
+        try:
+            limit = int(limit)
+        except ValueError:
+            limit = 1000
+
         if not q:
-            return self.write(json.dumps({"plates": []}))
+            return self.write(json.dumps({"results": []}))
 
         try:
-            # 1) Do the free-text search, get flat rows
-            hits = search_compounds(q)
+            # search_compounds(term, limit) should cap total rows
+            hits = search_compounds(q, limit=limit)
 
-            # 2) Group matching well_ids by (barcode, acquisition)
-            plates_map: dict[tuple, set] = {}
-            for r in hits:
-                key = (
-                    r["barcode"],
-                    r["plate_acquisition_id"],
-                    r["plate_acquisition_name"],
-                )
-                plates_map.setdefault(key, set()).add(r["well_id"])
+            # build minimal flat result
+            results = [
+                {
+                  "barcode":                r["barcode"],
+                  "plate_acquisition_id":   r["plate_acquisition_id"],
+                  "well_id":                r["well_id"]
+                }
+                for r in hits
+            ]
 
-            # 3) For each plate/acq, pull only those wells
-            result_plates = []
-            for (barcode, acq_id, acq_name), wells in plates_map.items():
-                # well_filter trims the plate JSON to only these wells
-                full_plate = get_plate(barcode, well_filter=list(wells))
-
-                logging.info(f"{full_plate}")
-
-                plate_data = full_plate["plates"].get(barcode, {})
-
-                result_plates.append({
-                    "barcode": barcode,
-                    "plate_acquisition_id": acq_id,
-                    "plate_acquisition_name": acq_name,
-                    "plate": plate_data
-                })
-
-            # 4) Return the array of filtered plates
-            self.write(json.dumps({"plates": result_plates}, default=myserialize))
+            self.write(json.dumps({"results": results}))
 
         except Exception as e:
             logging.exception("Error in SearchCompoundQueryHandler")

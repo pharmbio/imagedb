@@ -8,6 +8,7 @@ with open(conf_file) as json_file:
   IMAGES_CACHE_FOLDER = os.getenv("IMAGES_CACHE_DIR", js_conf["IMAGES_CACHE_DIR"])
   IMAGES_THUMB_FOLDER = os.getenv("IMAGES_THUMB_DIR", js_conf["IMAGES_THUMB_DIR"])
   ERROR_LOG_DIR = os.getenv("ERROR_LOG_DIR", js_conf["ERROR_LOG_DIR"])
+  LOG_LEVEL = os.getenv("LOG_LEVEL", js_conf.get("LOG_LEVEL", "INFO"))
 
   DB_USER = os.getenv("DB_USER", js_conf["DB_USER"])
   DB_PASS = os.getenv("DB_PASS", js_conf["DB_PASS"])

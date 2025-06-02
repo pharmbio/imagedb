@@ -228,6 +228,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                     break  # Exit the inner loop as we found a match
             # If the directory is blacklisted, continue with the next img_dir
             if is_blacklisted:
+
                 continue
 
             try:
@@ -286,11 +287,13 @@ def main():
     #
     # Configure logging
     #
+    LOG_LEVEL = imgdb_settings.LOG_LEVEL.upper()
+    level_logging = getattr(logging, LOG_LEVEL, logging.INFO)  # Default to INFO if unknown
     logging.basicConfig(
         format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
-        level=logging.INFO
-)
+        level=level_logging
+    )
 
     rootLogger = logging.getLogger()
 
