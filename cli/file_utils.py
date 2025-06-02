@@ -25,17 +25,18 @@ def find_dirs_containing_img_files_recursive_from_list_of_paths(path_list: List[
 def find_dirs_containing_img_files_recursive(path: str, sort_dir_entries: bool = False):
     """
     Yield directories that either:
-      - Contain at least one image file (matches IMAGE_EXTENSIONS without excluded prefixes/extensions), OR
+      - Contain at least one image file (matching IMAGE_EXTENSIONS without excluded prefixes/extensions), OR
       - Contain any MARKER_FILES.
 
-    This version:
-      1. Tries os.path.exists(path/marker) for each marker → if found, yield & return.
-      2. Only if no marker was found, does a single os.scandir(path):
-         • Gather subdirectories to recurse into.
-         • Stop at the first image-extension match, yield & continue recursion.
-      3. Logs timing at every major step.
+    Behavior:
+      1. Try os.path.exists(path/marker) for each marker → if found, yield & return immediately.
+      2. If no marker found:
+         a. Do a single os.scandir(path).
+         b. Scan files for the first image-extension match; if found, yield & return (no recursion).
+         c. Otherwise, collect subdirectories, sort them if requested, and recurse into each.
+      3. Log timing for each major step.
     """
-    # ── 1) Try each marker via direct os.path.exists() ─────────────────────────
+    # ── 1) Marker check via os.path.exists() ───────────────────────────────────
     t0 = time.perf_counter()
     for marker in MARKER_FILES:
         marker_path = os.path.join(path, marker)
@@ -47,25 +48,22 @@ def find_dirs_containing_img_files_recursive(path: str, sort_dir_entries: bool =
             f"in {(t_after_exists - t_check):.3f}s → {exists}"
         )
         if exists:
-            # We found a marker; yield and immediately return (no further scans in this folder)
             logging.debug(
                 f"[MARKER] Found {marker!r} in {path!r} "
                 f"after {(t_after_exists - t0):.3f}s total"
             )
             yield Path(path)
 
-            # If a "single_images" subfolder exists, yield that too (but still no deeper recursion here)
             single_dir = Path(path) / "single_images"
             if single_dir.exists():
                 logging.debug(f"[YIELD ] 'single_images' subdir in {path!r}")
                 yield single_dir
 
-            # Stop processing this folder altogether
-            return
+            return  # stop processing this folder entirely
 
-    # ── 2) No marker found → list directory once to look for images & subdirs ───
+    # ── 2) No marker found → one scandir to get entries ─────────────────────────
     t1 = time.perf_counter()
-    logging.debug(f"[SCANDIR-START] No marker in {path!r}, now scandir to detect images/subdirs")
+    logging.debug(f"[SCANDIR-START] No marker in {path!r}; scandir to detect files/subdirs")
 
     try:
         entries = list(os.scandir(path))
@@ -79,17 +77,12 @@ def find_dirs_containing_img_files_recursive(path: str, sort_dir_entries: bool =
         f"in {(t2 - t1):.3f}s"
     )
 
-    subdirs = []
+    # ── 2a) Scan files (unsorted) for first image match ─────────────────────────
     found_image = False
-
     for e in entries:
-        # skip hidden names immediately
         if e.name.startswith('.'):
             continue
-
-        if e.is_dir(follow_symlinks=False):
-            subdirs.append(e.path)
-        elif e.is_file(follow_symlinks=False):
+        if e.is_file(follow_symlinks=False):
             name_l = e.name.lower()
             if (
                 name_l.endswith(IMAGE_EXTENSIONS)
@@ -104,7 +97,7 @@ def find_dirs_containing_img_files_recursive(path: str, sort_dir_entries: bool =
                 )
                 break
 
-    # ── 3) If an image was found, yield this directory ─────────────────────────
+    # ── 3) If an image was found, yield this directory and return ────────────────
     if found_image:
         logging.debug(f"[YIELD ] {path!r} (image present)")
         yield Path(path)
@@ -114,12 +107,37 @@ def find_dirs_containing_img_files_recursive(path: str, sort_dir_entries: bool =
             logging.debug(f"[YIELD ] 'single_images' subdir in {path!r}")
             yield single_dir
 
-    # ── 4) Recurse into each subdirectory (only now) ───────────────────────────
-    for subdir in subdirs:
+        return  # stop processing this folder entirely
+
+    # ── 4) No marker and no image → collect subdirectory paths ───────────────────
+    subdir_paths = []
+    for e in entries:
+        if e.name.startswith('.'):
+            continue
+        if e.is_dir(follow_symlinks=False):
+            subdir_paths.append(e.path)
+
+    # ── 5) Sort subdirectories by descending mtime if requested ────────────────
+    if sort_dir_entries and subdir_paths:
+        t_sort_start = time.perf_counter()
+        try:
+            subdir_paths.sort(
+                key=lambda sub: os.stat(sub).st_mtime,
+                reverse=True
+            )
+        except Exception as e:
+            logging.exception(f"Error sorting subdirs in {path!r}: {e}")
+        t_sort_end = time.perf_counter()
+        logging.debug(
+            f"[SORT-DIRS] Sorted {len(subdir_paths)} subdirs in {path!r} "
+            f"in {(t_sort_end - t_sort_start):.3f}s"
+        )
+
+    # ── 6) Recurse into subdirectories (possibly sorted) ────────────────────────
+    for subdir in subdir_paths:
         logging.debug(f"[RECURSE] Entering subdir: {subdir!r} under parent {path!r}")
         yield from find_dirs_containing_img_files_recursive(subdir, sort_dir_entries)
         logging.debug(f"[RETURN ] Back from subdir: {subdir!r} to parent {path!r}")
-
 
 def find_dirs_containing_img_files_recursive_old(path: str, sort_dir_entries: bool = False):
     """

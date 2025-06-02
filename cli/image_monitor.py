@@ -206,7 +206,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
             # remove finished acquisitions
             if str(img_dir) in finished_acq_folders:
-                logging.debug(f"removed because finished: {img_dir}")
+                logging.info(f"removed because finished: {img_dir}")
                 continue
 
             # remove old dirs
