@@ -5,6 +5,7 @@ from database import Database
 from image import Image
 import settings as imgdb_settings
 import image_monitor
+import file_utils
 
 
 def setup_logging():
@@ -82,11 +83,24 @@ def test_polling_loop():
                                continuous_polling
     )
 
+def test_loop_img_dirs():
+    # get all image dirs within root dirs (yields dirs sorted by date, most recent first)
+    proj_root_dirs = ["/share/mikro3/squid/",
+                      "/share/mikro2/squid/",
+                      "/share/data/external-datasets/anders-test/testplate-external-data/"]
+
+    for img_dir in file_utils.find_dirs_containing_img_files_recursive_from_list_of_paths(proj_root_dirs):
+        logging.debug(f"imgdir: {img_dir}")
+
+
 def main():
 
     #delete_and_upload_one_testimage()
-    reset_test_data_in_db()
-    test_polling_loop()
+    
+    #reset_test_data_in_db()
+    #test_polling_loop()
+
+    test_loop_img_dirs()
 
 
 if __name__ == "__main__":
