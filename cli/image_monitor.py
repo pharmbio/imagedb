@@ -206,7 +206,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
             # remove finished acquisitions
             if str(img_dir) in finished_acq_folders:
-                logging.info(f"removed because finished: {img_dir}")
+                logging.debug(f"removed because finished: {img_dir}")
                 continue
 
             # remove old dirs
@@ -228,7 +228,6 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                     break  # Exit the inner loop as we found a match
             # If the directory is blacklisted, continue with the next img_dir
             if is_blacklisted:
-
                 continue
 
             try:
