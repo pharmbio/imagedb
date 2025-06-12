@@ -170,6 +170,13 @@ def import_plate_images_and_meta(plate_dir: str):
 
     all_images = sorted(file_utils.get_all_image_files(plate_dir))
 
+    # if no images and marker present, bail out and let polling_loop blacklist
+    if not all_images:
+        marker = os.path.join(plate_dir, "coordinates.csv")
+        if os.path.exists(marker):
+            logging.info("no images in %s but found marker file, blacklisting", plate_dir)
+            raise Exception("No images and marker file present — blacklist this dir")
+
     # create a new list with only images not in processed dict
     new_images = [img for img in all_images if img not in processed]
 
