@@ -78,7 +78,7 @@ def process_image(img_path: str):
     img = Image.from_meta(img_meta)
 
     # Skip thumbnails but add images
-    if img.is_thumbnail():
+    if not img.is_thumbnail():
         addImageToImagedb(img)
 
     # mark processed
@@ -91,7 +91,7 @@ def add_plate_to_db(images: List[str]):
     total = len(images)
     logging.info(f"start add_plate_metadata to db, total images (including thumbs): {total}")
 
-    max_workers = getattr(imgdb_settings, 'THREADPOOL_WORKERS', 4)
+    max_workers = getattr(imgdb_settings, 'THREADPOOL_WORKERS', 5)
     futures = []
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         # submit all tasks
