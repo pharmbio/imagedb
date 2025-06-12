@@ -23,3 +23,4 @@ with open(conf_file) as json_file:
   LATEST_FILE_CHANGE_MARGIN = os.getenv('LATEST_FILE_CHANGE_MARGIN', js_conf["LATEST_FILE_CHANGE_MARGIN"]) # sec (always try insert images within this time from latest_filedate_last_poll)
   PROJ_ROOT_DIRS = os.getenv('PROJ_ROOT_DIRS', js_conf["PROJ_ROOT_DIRS"])
   CONTINUOUS_POLLING = os.getenv('CONTINUOUS_POLLING', js_conf["CONTINUOUS_POLLING"]).lower() == 'true'
+  THREADPOOL_WORKERS = os.getenv('THREADPOOL_WORKERS', js_conf["THREADPOOL_WORKERS"])

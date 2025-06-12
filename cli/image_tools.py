@@ -69,7 +69,7 @@ def makeThumb_opencv(path, thumbpath, overwrite):
 
       if "nikon" in path:
         img = cv2.imread(path, cv2.IMREAD_ANYDEPTH)
-        img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        img = cv2.normalize(img, img, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U) # use img as destination since it preserves memory
       else:
         img = cv2.imread(path)
 
@@ -82,7 +82,7 @@ def makeThumb_opencv(path, thumbpath, overwrite):
 
       # save thumb
       cv2.imwrite(thumbpath_with_ext, imRes)
-    except cv2.error as e:
+    except cv2.error as e: # type: ignore[name-defined]
 
         # handle error: empty frame
         if e.err == "!ssize.empty()":

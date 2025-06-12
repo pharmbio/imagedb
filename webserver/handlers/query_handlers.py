@@ -132,7 +132,7 @@ class SearchCompoundQueryHandler(tornado.web.RequestHandler):
     """
     def get(self):
         q     = self.get_argument("q", "").strip()
-        limit = self.get_argument("limit", 1000)
+        limit = self.get_argument("limit", "1000")
         try:
             limit = int(limit)
         except ValueError:

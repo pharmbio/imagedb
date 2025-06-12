@@ -18,8 +18,14 @@
       grid-template-columns:repeat(auto-fit,minmax(120px,120px));
       gap:1rem;
     }
-    .thumb-card { position:relative; overflow:hidden; border-radius:4px; background:#f8f8f8; cursor:pointer }
-    .thumb-card img { width:100%; height:auto; transition:filter .2s }
+    .thumb-card {
+      position:relative; overflow:hidden;
+      border-radius:4px; background:#f8f8f8;
+      cursor:pointer;
+    }
+    .thumb-card img {
+      width:100%; height:auto; transition:filter .2s;
+    }
     .thumb-meta {
       position:absolute; bottom:0; left:0; right:0;
       background:rgba(0,0,0,0.5); color:#fff;
@@ -28,21 +34,26 @@
   </style>
 </head>
 <body>
+
   <nav class="navbar navbar-light bg-light border-bottom">
     <form id="search-form" class="form-inline mx-3" onsubmit="return false;">
-      <input type="text" id="q" class="form-control mr-2" placeholder="batchid, name, inchi…" required>
+      <input type="text" id="q" class="form-control mr-2"
+             placeholder="batchid, name, inchi…" required>
       <button class="btn btn-info">Search</button>
     </form>
   </nav>
+
   <div class="container-fluid mt-3">
     <div class="form-inline mb-3">
       <label class="mr-3">
         Brightness
-        <input type="range" id="brightness-range" min="50" max="3000" value="100" class="form-control-range ml-2">
+        <input type="range" id="brightness-range" min="50" max="3000"
+               value="100" class="form-control-range ml-2">
       </label>
       <label>
         Zoom
-        <input type="range" id="zoom-range" min="50" max="200" value="100" class="form-control-range ml-2">
+        <input type="range" id="zoom-range" min="50" max="200"
+               value="100" class="form-control-range ml-2">
       </label>
     </div>
     <div id="results-container"></div>
@@ -59,7 +70,6 @@
     </div></div>
   </div>
 
-  <!-- JS includes -->
   <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
   <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script src="/static/main.js?version=1.23"></script>
@@ -80,7 +90,7 @@
       const size = 120 * z;
       document.querySelectorAll('.image-grid').forEach(grid => {
         grid.style.gridTemplateColumns =
-          `repeat(auto-fit,minmax(${size}px,${size}px))`;
+          `repeat(auto-fit, minmax(${size}px,${size}px))`;
       });
     }
     brightnessEl.addEventListener('input', applyImageSettings);
@@ -95,7 +105,7 @@
       resultsContainer.innerHTML = '';
       applyImageSettings();
 
-      // Phase 1: Fetch flat list
+      // Phase 1: flat list of { barcode, plate_acquisition_id, well_id }
       let resp = await fetch(
         `/api/search-compound?q=${encodeURIComponent(term)}&limit=1000`
       );
@@ -108,46 +118,68 @@
         return resultsContainer.textContent = 'No results found.';
       }
 
-      // group by barcode
-      const byBarcode = results.reduce((m,r) => {
-        m[r.barcode] = m[r.barcode] || [];
-        m[r.barcode].push(r.well_id);
-        return m;
-      }, {});
+      // Group by acquisition (barcode + acqId)
+      const byAcq = {};
+      for (const r of results) {
+        const key = `${r.barcode}|${r.plate_acquisition_id}`;
+        if (!byAcq[key]) {
+          byAcq[key] = {
+            barcode: r.barcode,
+            acqId:   r.plate_acquisition_id,
+            wells:   []
+          };
+        }
+        byAcq[key].wells.push(r.well_id);
+      }
 
-      // For each plate (barcode), fetch its full JSON via get_plate endpoint
-      for (const [barcode, wells] of Object.entries(byBarcode)) {
-        // skeleton block
+      // Phase 1 skeleton blocks
+      for (const { barcode, acqId } of Object.values(byAcq)) {
         const group = document.createElement('div');
-        group.className = 'plate-group';
-        group.innerHTML = `
-          <div class="plate-header">${barcode}</div>
+        group.className     = 'plate-group';
+        group.dataset.acqId = acqId;
+        group.innerHTML     = `
+          <div class="plate-header">
+            ${barcode} | Acquisition ${acqId}
+          </div>
           <div class="image-grid"></div>
         `;
         resultsContainer.append(group);
-        const grid = group.querySelector('.image-grid');
+        await new Promise(r => requestAnimationFrame(r));
+      }
 
-        // Phase 2: fetch plate with well filter
+      // Phase 2: fetch + render each acquisition’s images
+      for (const { barcode, acqId, wells } of Object.values(byAcq)) {
+        const group = document.querySelector(`[data-acq-id="${acqId}"]`);
+        const grid  = group.querySelector('.image-grid');
+
+        // Path-based fetch to include both acqId & wells
         resp = await fetch(
-          `/api/plate?barcode=${encodeURIComponent(barcode)}`
-          + `&wells=${wells.join(',')}`
+          `/api/plate/${encodeURIComponent(barcode)}/`
+          + `${acqId}/`
+          + `${wells.join(',')}`
         );
         if (!resp.ok) {
-          showError(`Failed to load plate ${barcode}`);
+          showError(`Failed to load plate ${barcode} acq ${acqId}`);
           continue;
         }
-        const plate = await resp.json();  // your standard get_plate handler
-        // assume plate.wells = { wellId: { sites: { … } } }
-        for (const [wellId, wellData] of Object.entries(plate.wells||{})) {
+
+        // Handler returns single plate_data with .acquisitions…
+        const plateData   = await resp.json();
+        const acqus       = plateData.acquisitions || [];
+        const acqRecord   = acqus[0];
+        if (!acqRecord || !acqRecord.wells) continue;
+
+        grid.innerHTML = '';
+        for (const [wellId, wellData] of Object.entries(acqRecord.wells)) {
           for (const [siteKey, siteInfo] of Object.entries(wellData.sites||{})) {
             const zInfo = Object.values(siteInfo.z_positions||{})[0]||{};
             let ch = Array.isArray(zInfo.channels)
                        ? zInfo.channels
                        : Object.values(zInfo.channels||{});
-            while (ch.length<3) ch.push(ch[ch.length-1]||{});
+            while (ch.length < 3) ch.push(ch[ch.length-1]||{});
             const paths = ch.slice(0,3).map(c=>encodeURIComponent(c.path||''));
-            const thumb = `/api/image-merge-thumb/`
-              + `ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+            const thumb = `/api/image-merge-thumb/` +
+                          `ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
 
             const card = document.createElement('div');
             card.className = 'thumb-card';
@@ -161,8 +193,7 @@
         }
 
         applyImageSettings();
-        // let browser update
-        await new Promise(r=>requestAnimationFrame(r));
+        await new Promise(r => requestAnimationFrame(r));
       }
     }
 

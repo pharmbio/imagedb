@@ -6,7 +6,7 @@
   "DB_USER": "postgres",
   "DB_PASS": "example",
   "DB_PORT": 30432,
-  "DB_HOSTNAME": "anything.k8s-prod.pharmb.io",
+  "DB_HOSTNAME": "anything.k8s.pharmb.io",
   "DB_NAME": "imagedb",
 
   "EXHAUSTIVE_INITIAL_POLL": "true",

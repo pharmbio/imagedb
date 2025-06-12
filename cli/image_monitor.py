@@ -10,6 +10,8 @@ from typing import Dict, List
 import json
 from datetime import datetime
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import filenames.filename_parser
 import image_tools
 import settings as imgdb_settings
@@ -31,6 +33,11 @@ def addImageToImagedb(img: Image):
 
     # Insert into images table
     img_id = Database.get_instance().insert_meta_into_table_images(img, plate_acq_id)
+
+    # return if nothing was inserted
+    if img_id is None:
+        # conflict → someone else beat us to it; skip upload & thumb
+        return
 
     # Insert into upload_to_s3 table
     if img.is_upload_to_s3():
@@ -61,34 +68,46 @@ def addImageToImagedb(img: Image):
                 attempts += 1
                 time.sleep(10)
 
-def add_plate_to_db(images):
+def process_image(img_path: str):
+    # parse meta
+    img_meta = filenames.filename_parser.parse_path_and_file(img_path)
+     # img meta should never be None
+    if img_meta is None:
+        raise Exception('img_meta is None')
+    
+    img = Image.from_meta(img_meta)
+
+    # Skip thumbnails but add images
+    if img.is_thumbnail():
+        addImageToImagedb(img)
+
+    # mark processed
+    processed[img.get_path()] = time.time()
+
+
+def add_plate_to_db(images: List[str]):
     global processed
 
     logging.info(f"start add_plate_metadata to db, len(images)(including thumbs): {len(images)}")
 
-    # Loop all Images
-    for idx, img_path in enumerate(images):
+    # how many threads? tune in settings
+    max_workers = getattr(imgdb_settings, 'THREAD_WORKERS', 4)
+    futures = []
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        # submit all
+        for img_path in images:
+            futures.append(pool.submit(process_image, img_path))
 
-        img_meta = filenames.filename_parser.parse_path_and_file(img_path)
-
-        # img meta should never be None
-        if img_meta is None:
-            raise Exception('img_meta is None')
-
-        logging.debug(img_meta)
-
-        img = Image.from_meta(img_meta)
-
-        # Skip thumbnails
-        if not img.is_thumbnail():
-            addImageToImagedb(img)
-
-        if idx % 100 == 1:
-                logging.info("images processed (including thubs):" + str(idx))
-                logging.info("images total to process(including thumbs):" + str(len(images)))
-
-        # Add image to processed images (path as key and timestamp as value)
-        processed[ img.get_path() ] = time.time()
+        # as soon as one fails, cancel the rest and re-raise
+        for fut in as_completed(futures):
+            try:
+                fut.result()
+            except Exception as e:
+                # cancel all the other pending tasks
+                for other in futures:
+                    other.cancel()
+                # propagate the error up to import_plate_images_and_meta
+                raise
 
     logging.info("done add_plate_metadata to db")
 
