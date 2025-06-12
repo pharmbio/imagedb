@@ -88,26 +88,32 @@ def process_image(img_path: str):
 def add_plate_to_db(images: List[str]):
     global processed
 
-    logging.info(f"start add_plate_metadata to db, len(images)(including thumbs): {len(images)}")
+    total = len(images)
+    logging.info(f"start add_plate_metadata to db, total images (including thumbs): {total}")
 
-    # how many threads? tune in settings
-    max_workers = getattr(imgdb_settings, 'THREAD_WORKERS', 4)
+    max_workers = getattr(imgdb_settings, 'THREADPOOL_WORKERS', 4)
     futures = []
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        # submit all
+        # submit all tasks
         for img_path in images:
             futures.append(pool.submit(process_image, img_path))
 
-        # as soon as one fails, cancel the rest and re-raise
+        # process results as they come in
+        done_count = 0
         for fut in as_completed(futures):
+            done_count += 1
             try:
                 fut.result()
-            except Exception as e:
-                # cancel all the other pending tasks
+            except Exception:
+                # cancel remaining tasks
                 for other in futures:
                     other.cancel()
-                # propagate the error up to import_plate_images_and_meta
+                # re-raise so your outer loop blacklists the folder
                 raise
+
+            # log progress every 100
+            if done_count % 100 == 0 or done_count == total:
+                logging.info(f"images processed (including thumbs): {done_count}/{total}")
 
     logging.info("done add_plate_metadata to db")
 
