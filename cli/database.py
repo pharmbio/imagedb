@@ -229,8 +229,7 @@ class Database:
                 folder
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (folder) DO UPDATE
-              SET folder = EXCLUDED.folder
+            ON CONFLICT (folder) DO NOTHING
             RETURNING id
         """
 
@@ -250,9 +249,18 @@ class Database:
                         folder
                     )
                 )
-                plate_acq_id = cursor.fetchone()[0]
+                row = cursor.fetchone()
+                if row:
+                    # we inserted a brand new record
+                    plate_acq_id = row[0]
+                else:
+                    # it was already there—fetch the existing id
+                    cursor.execute("SELECT id FROM plate_acquisition WHERE folder = %s", (folder,))
+                    plate_acq_id = cursor.fetchone()[0]
+
             conn.commit()
             return plate_acq_id
+
 
         except Exception:
             conn.rollback()
