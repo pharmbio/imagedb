@@ -210,62 +210,51 @@ class Database:
         finally:
             self.release_connection(conn)
 
-    def select_or_insert_plate_acq(self, img: Image) -> Any:
-        """
-        Returns an existing plate_acquisition id, or inserts a new record if none exists.
-        This uses a single atomic UPSERT so that concurrent threads/processes
-        can’t slip in two identical rows.
-        """
+    def select_or_insert_plate_acq(self, img: Image) -> int:
         folder = img.get_folder()
-        query = """
-            INSERT INTO plate_acquisition (
-                plate_barcode,
-                name,
-                project,
-                imaged,
-                microscope,
-                channel_map_id,
-                timepoint,
-                folder
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (folder) DO NOTHING
-            RETURNING id
-        """
-
         conn = self.get_connection()
         try:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    query,
-                    (
-                        img.get_plate_barcode(),
-                        img.get_plate(),
-                        img.get_project(),
-                        img.get_imaged(),
-                        img.get_microscope(),
-                        img.get_channel_map_id(),
-                        img.get_timepoint(),
-                        folder
-                    )
-                )
-                row = cursor.fetchone()
+            with conn.cursor() as cur:
+                # 1) Try to find an existing row
+                cur.execute("SELECT id FROM plate_acquisition WHERE folder = %s", (folder,))
+                row = cur.fetchone()
                 if row:
-                    # we inserted a brand new record
-                    plate_acq_id = row[0]
-                else:
-                    # it was already there—fetch the existing id
-                    cursor.execute("SELECT id FROM plate_acquisition WHERE folder = %s", (folder,))
-                    plate_acq_id = cursor.fetchone()[0]
+                    return row[0]
 
+                # 2) Not found → try to insert
+                cur.execute("""
+                    INSERT INTO plate_acquisition (
+                        plate_barcode, name, project,
+                        imaged, microscope, channel_map_id,
+                        timepoint, folder
+                    ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                    RETURNING id
+                """, (
+                    img.get_plate_barcode(),
+                    img.get_plate(),
+                    img.get_project(),
+                    img.get_imaged(),
+                    img.get_microscope(),
+                    img.get_channel_map_id(),
+                    img.get_timepoint(),
+                    folder
+                ))
+                new_id = cur.fetchone()[0]
             conn.commit()
-            return plate_acq_id
+            return new_id
 
+        except psycopg2.IntegrityError:
+            # race: someone else inserted at the same time
+            conn.rollback()
+            with conn.cursor() as cur:
+                cur.execute("SELECT id FROM plate_acquisition WHERE folder = %s", (folder,))
+                return cur.fetchone()[0]
 
         except Exception:
             conn.rollback()
             logging.exception("Error in select_or_insert_plate_acq")
             raise
+
         finally:
             self.release_connection(conn)
 
