@@ -11,17 +11,19 @@ import datetime
 #
 #
 
-__pattern_path_and_file = re.compile('^'
-                                     + '.*/nikon/'      # any until /nikon/
-                                       + '(.*?)/'       # project (1)
-                                       + '(.*?)/'       # plate (2)
-                                       + '(.*?/)?'                        # Optional subdir (3), e.g. /single_images/
-                                       + 'Well-([A-Z])([0-9]+)' #  well (4,5)
-                                       + '-z([0-9]+)' #  z (6)
-                                       + '-(.*).ome' #  channel (7)
-                                       + '.*(\..*)'                 # Extension [8]
-                                     ,
-                                     re.IGNORECASE)  # Windows has case-insensitive filenames
+__pattern_path_and_file = re.compile(
+    r'^'
+    r'.*/nikon/'             # any until /nikon/
+    r'(.*?)/'                # project (1)
+    r'(.*?)/'                # plate (2)
+    r'(.*?/)?'               # Optional subdir (3), e.g. /single_images/
+    r'Well-([A-Z])([0-9]+)'  # well (4,5)
+    r'-z([0-9]+)'            # z (6)
+    r'-(.*)\.ome'            # channel (7), escaped dot
+    r'(.*(\..*))'            # Extension (8)
+    ,
+    re.IGNORECASE
+)
 
 
 def parse_path_and_file(path):
@@ -41,7 +43,7 @@ def parse_path_and_file(path):
   well = f'{row}{col:02d}'
 
   z = int(match.group(6))
-  site = z
+  site = 0
 
   channel_name = match.group(7)
   channels = ['MITO', 'PHAandWGA', 'HOECHST', 'SYTO', 'CONC']
@@ -92,6 +94,10 @@ if __name__ == '__main__':
 
     retval = parse_path_and_file(
         "/share/mikro2/nikon/spheroid-test/pilot10-spheroid-P1-9/Well-J18-z1-CONC.ome.tiff")
+    print("retval = " + str(retval))
+
+    retval = parse_path_and_file(
+        "/share/mikro2/nikon/Erica/Neuroblastoma/SiMaSpheres48hBoNT-A-C/Well-P01-z11-PHAandWGA.ome.tiff")
     print("retval = " + str(retval))
 
 

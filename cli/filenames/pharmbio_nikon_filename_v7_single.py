@@ -11,18 +11,20 @@ import datetime
 #
 #
 
-__pattern_path_and_file = re.compile('^'
-                                     + '.*/nikon/'      # any until /nikon/
-                                       + '(.*?)/'       # project (1)
-                                       + '(.*?)/'       # plate (2)
-                                       + '(.*?/)?'                        # Optional subdir (3), e.g. /single_images/
-                                       + '([0-9]{4})([0-9]{2})([0-9]{2})' # date (yyyy, mm, dd) (4,5,6)
-                                       + '_.*Point([A-Z])([0-9]+)' #  well (7,8)
-                                       + '_.*ZStack([0-9]+)' #  z (9)
-                                       + '_Channel(.*)_Spheroid.ome' #  channel (10)
-                                       + '.*(\..*)'                 # Extension [11]
-                                     ,
-                                     re.IGNORECASE)  # Windows has case-insensitive filenames
+__pattern_path_and_file = re.compile(
+    r'^'
+    r'.*/nikon/'                        # any until /nikon/
+    r'(.*?)/'                           # project (1)
+    r'(.*?)/'                           # plate (2)
+    r'(.*?/)?'                          # Optional subdir (3), e.g. /single_images/
+    r'([0-9]{4})([0-9]{2})([0-9]{2})'   # date (yyyy, mm, dd) (4,5,6)
+    r'_.*Point([A-Z])([0-9]+)'          # well (7,8)
+    r'_.*ZStack([0-9]+)'                # z (9)
+    r'_Channel(.*)_Spheroid\.ome'       # channel (10)
+    r'(.*(\..*))'                       # Extension [11]
+    ,
+    re.IGNORECASE
+)
 
 
 def parse_path_and_file(path):
@@ -42,7 +44,7 @@ def parse_path_and_file(path):
   well = f'{row}{col:02d}'
 
   z = int(match.group(9))
-  site = z
+  site = 0
 
   channel_name = match.group(10)
   channels = ['MITO', 'PHAandWGA', 'SYTO', 'HOECHST']

@@ -69,9 +69,12 @@ def test_polling_loop():
     poll_dirs_margin_days = 5
     latest_file_change_margin = 7200
     sleep_time = 5
-    proj_root_dirs = ["/share/mikro3/squid/",
-                      "/share/mikro2/squid/",
-                      "/share/data/external-datasets/anders-test/testplate-external-data/"]
+
+    proj_root_dirs = ["/share/mikro2/nikon/"]
+
+    #proj_root_dirs = ["/share/mikro3/squid/",
+    #                  "/share/mikro2/squid/",
+    #                  "/share/data/external-datasets/anders-test/testplate-external-data/"]
     exhaustive_initial_poll = True
     continuous_polling = False
 
@@ -85,9 +88,11 @@ def test_polling_loop():
 
 def test_loop_img_dirs():
     # get all image dirs within root dirs (yields dirs sorted by date, most recent first)
-    proj_root_dirs = ["/share/mikro3/squid/",
-                      "/share/mikro2/squid/",
-                      "/share/data/external-datasets/anders-test/testplate-external-data/"]
+    proj_root_dirs = ["/share/mikro2/nikon/"]
+
+    #                  "/share/mikro3/squid/",
+    #                  "/share/mikro2/squid/",
+    #                  "/share/data/external-datasets/anders-test/testplate-external-data/"]
 
     for img_dir in file_utils.find_dirs_containing_img_files_recursive_from_list_of_paths(proj_root_dirs):
         logging.debug(f"imgdir: {img_dir}")
@@ -98,9 +103,9 @@ def main():
     #delete_and_upload_one_testimage()
     
     #reset_test_data_in_db()
-    #test_polling_loop()
+    test_polling_loop()
 
-    test_loop_img_dirs()
+    #test_loop_img_dirs()
 
 
 if __name__ == "__main__":
