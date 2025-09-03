@@ -76,30 +76,28 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
         body = "application/json"
         self.set_header(header, body)
 
-    def get(self, plate, acqID):
-        """Handles GET requests.
-        """
-        logging.info("plate_name: " + str(plate))
+    def get(self):
+       """Handles GET requests using query parameters:
+       /api/plate?barcode=...&acqID=...&wells=A01,B03
+       """
+       # Accept multiple possible param names for robustness
+       plate = self.get_argument('barcode', default=None)
+       acqID = self.get_argument('acqID', default=None)
+       wells_arg = self.get_argument('wells', default=None)
 
-        plates_dict = get_plate(plate)
+       if not plate:
+           raise tornado.web.HTTPError(400, reason="Missing required parameter: barcode")
 
-        data = {"data": plates_dict}
+       logging.info("plate_name: " + str(plate))
 
-        # Serialize to json the data with the plates dict containing the platemodel objects
-        # use other function than tornado default json serializer since we are serializing
-        # custom objects
+       # Prepare optional well filter (comma-separated)
+       well_filter = None
+       if wells_arg:
+           well_filter = [w.strip() for w in wells_arg.split(',') if w.strip()]
 
-        json_string = json.dumps(data, default=myserialize) # default=lambda x: x.__dict__)
-        logging.info("done with json.dumps")
+       plates_dict = get_plate(plate, well_filter)
 
-        #json_string = jsonpickle.encode(data, unpicklable=False)
-        #logging.info("done with jsonpickle")
-        json_string = json_string.replace("</", "<\\/")
-        logging.info("done replace jsonstring")
-
-        self.write(json_string)
-
-        logging.info("done write json_string")
+       data = {"data": plates_dict}
 
 
 class MoveAcqIDToTrashHandler(tornado.web.RequestHandler):

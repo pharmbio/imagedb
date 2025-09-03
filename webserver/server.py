@@ -78,7 +78,7 @@ ROUTES = [
           (r'/api/move-to-trash/(?P<acqID>.+)', MoveAcqIDToTrashHandler),
           (r'/api/list-plates', ListAllPlatesQueryHandler),
           (r'/api/list/image_analyses/(?P<limit>.+)/(?P<sortorder>.+)/(?P<plate_barcode>.+)', ListImageAnalysesHandler),
-          (r'/api/plate/(?P<barcode>[^/]+)(?:/(?P<acqID>\d+))?(?:/(?P<wells>[^/]+))?$', GetPlateQueryHandler),
+          (r'/api/plate$', GetPlateQueryHandler),  # query-style
           (r'/api/image-merge/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ImageMergeHandler),
           (r'/api/image-merge-thumb/ch1/(?P<ch1>.+)/ch2/(?P<ch2>.+)/ch3/(?P<ch3>.+)/channels.png', ThumbImageMergeHandler),
           (r'/image-viewer/(?P<plate>.+)/tp/(?P<acquisition>.+)/well/(?P<well>.+)/site/(?P<site>.+)/zpos/(?P<zpos>.+)/ch/(?P<channel>.+)/url/(?P<imageurl>.+)', ImageViewerTemplateHandler),

@@ -814,8 +814,7 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
 
-  function apiLoadPlate(plate_name, select_acq_id=undefined) {
-
+  function apiLoadPlate(plate_name, acq_id = undefined, wells = undefined) {
     // stop any current animation
     stopAnimation();
     document.getElementById("animate-cbx").checked = false;
@@ -824,13 +823,23 @@ function drawPlatesListSidebar_old(origPlatesList){
     let container = document.getElementById('plate-div');
     removeAllImages(container);
 
-    url = '/api/plate/' + plate_name + '/' + select_acq_id
+    // --- Build query string dynamically ---
+    let url = `/api/plate?barcode=${encodeURIComponent(plate_name)}`;
+    if (acq_id !== undefined && acq_id !== null && acq_id !== "") {
+      url += `&acqID=${encodeURIComponent(acq_id)}`;
+    }
+    if (wells !== undefined && wells !== null && wells.length > 0) {
+      // wells can be array or string
+      let wellsParam = Array.isArray(wells) ? wells.join(",") : wells;
+      url += `&wells=${encodeURIComponent(wellsParam)}`;
+    }
+
     fetch(url)
       .then(function (response) {
         if (response.status === 200) {
 
           //window.history.pushState('', '', url);
-          updateWindowURL(plate_name, select_acq_id);
+          updateWindowURL(plate_name, acq_id);
 
           response.json().then(function (json) {
 
@@ -838,7 +847,7 @@ function drawPlatesListSidebar_old(origPlatesList){
             window.loaded_plates = new Plates(json['data'].plates);
             console.log(window.loaded_plates);
             console.log("Plates loaded")
-            updateToolbarWithNewPlate(select_acq_id);
+            updateToolbarWithNewPlate(acq_id);
             redrawPlate(true);
           });
         }

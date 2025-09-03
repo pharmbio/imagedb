@@ -143,28 +143,74 @@ def get_plate_old(plate_name):
             put_connection(conn)
 
 
-def get_plate_json_via_python(plate_name, well_filter=None):
+def get_plate(plate_name, acqid=None, well_filter=None):
     """
-    Original Python-based get_plate, renamed with optional well_filter.
+    Fetch plate data for a given barcode, optionally filtering by acquisition id and wells.
+
+    Args:
+        plate_name (str): Plate barcode.
+        acqid (int|str|None): Optional acquisition id to filter images_minimal_view (plate_acquisition_id).
+        well_filter (list[str]|str|None): Optional list of well ids (e.g. ["A01","B03"]) or a comma-separated string.
+
+    Returns:
+        dict: {'plates': {<barcode>: Plate(...)}}
     """
-    logging.info(f"inside get_plate_json_via_python: {plate_name}, wells={well_filter}")
+    logging.info(f"inside get_plate: {plate_name}, acqid: {acqid}, wells: {well_filter}")
+
+    # Normalize inputs
+    # Accept comma-separated string for well_filter and normalize to uppercase without spaces
+    if isinstance(well_filter, str):
+        well_filter = [w.strip().upper() for w in well_filter.split(",") if w.strip()]
+    elif isinstance(well_filter, (list, tuple)):
+        well_filter = [str(w).strip().upper() for w in well_filter if str(w).strip()]
+    else:
+        well_filter = None
+
+    # Normalize acqid to int if possible
+    if acqid is not None and acqid != "":
+        try:
+            acqid = int(acqid)
+        except (TypeError, ValueError):
+            logging.warning("acqid provided but not an int; ignoring: %r", acqid)
+            acqid = None
+    else:
+        acqid = None
+
     conn = None
+    cursor = None
     try:
         conn = get_connection()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # --------------------------
         # Query images_minimal_view
+        # --------------------------
         cols = [
             'plate_barcode','project','plate_acquisition_id','plate_acquisition_name',
             'folder','timepoint','path','well','site','z','channel','dye','cell_line'
         ]
-        query = f"SELECT {','.join(cols)} FROM images_minimal_view WHERE plate_barcode = %s"
+
+        where = ["plate_barcode = %s"]
         params = [plate_name]
+
+        if acqid is not None:
+            where.append("plate_acquisition_id = %s")
+            params.append(acqid)
+
         if well_filter:
-            query += " AND well = ANY(%s)"
+            # psycopg2 will adapt a Python list -> PostgreSQL array; ANY(%s) matches array membership
+            where.append("well = ANY(%s)")
             params.append(well_filter)
-        query += " ORDER BY timepoint, plate_acquisition_id, well, site, z, channel"
+
+        query = f"""
+            SELECT {','.join(cols)}
+            FROM images_minimal_view
+            WHERE {' AND '.join(where)}
+            ORDER BY timepoint, plate_acquisition_id, well, site, z, channel
+        """
         cursor.execute(query, params)
         rows = cursor.fetchall()
+
         plates_dict = {}
         for img in rows:
             pid = img['plate_barcode']
@@ -189,16 +235,13 @@ def get_plate_json_via_python(plate_name, well_filter=None):
             p = platemodel.Plate(plate_name)
             p.add_layout(layout_dict)
             plates_dict[plate_name] = p
+
+        logging.info(f"plates_dict: {plates_dict}")
+
         return {'plates': plates_dict}
     finally:
         if conn:
-            cursor.close()
             put_connection(conn)
-
-
-def get_plate(plate_name, well_filter=None):
-
-    return get_plate_json_via_python(plate_name, well_filter)
 
 
 def list_all_plates():
