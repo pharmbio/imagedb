@@ -196,9 +196,9 @@ def get_plate_json_via_python(plate_name, well_filter=None):
             put_connection(conn)
 
 
-def get_plate(plate_name, well_filter=None):
+def get_plate(plate_name, acqID=None, well_filter=None):
 
-    return get_plate_json_via_python(plate_name, well_filter)
+    return get_plate_old(plate_name)
 
 
 def list_all_plates():

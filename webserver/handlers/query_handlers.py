@@ -76,10 +76,10 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
         body = "application/json"
         self.set_header(header, body)
 
-    def get(self, plate, acqID):
+    def get(self, plate, acqID, wells):
         """Handles GET requests.
         """
-        logging.info("plate_name: " + str(plate))
+        logging.info(f"plate_name: {plate}, acqID: {acqID}, wells: {wells}")
 
         plates_dict = get_plate(plate)
 

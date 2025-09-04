@@ -814,7 +814,7 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
 
-  function apiLoadPlate(plate_name, select_acq_id=undefined) {
+  function apiLoadPlate(plate_name, select_acq_id=undefined, select_well=undefined) {
 
     // stop any current animation
     stopAnimation();
@@ -824,7 +824,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     let container = document.getElementById('plate-div');
     removeAllImages(container);
 
-    url = '/api/plate/' + plate_name + '/' + select_acq_id
+    url = '/api/plate/' + plate_name + '/' + select_acq_id + '/' + select_well;
     fetch(url)
       .then(function (response) {
         if (response.status === 200) {
@@ -864,7 +864,7 @@ function drawPlatesListSidebar_old(origPlatesList){
     stopAnimation();
     document.getElementById("animate-cbx").checked = false;
 
-    url = '/api/plate/' + plate_name + '/' + acquisition;
+    url = '/api/plate/' + plate_name + '/' + acquisition + '/' + undefined;
     fetch(url)
       .then(function (response) {
         if (response.status === 200) {
