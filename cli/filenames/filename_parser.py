@@ -2,7 +2,7 @@ import os
 import logging
 from filenames import pharmbio_squid_filename_v1
 from filenames import pharmbio_squid_filename_v2_standard
-from filenames import pharmbio_squidplus_filename_standard
+from filenames import pharmbio_squid_filename_standard_new
 from filenames import pharmbio_squid_filename_BF_and_other_and_z
 from filenames import pharmbio_IMX_filename_standard
 from filenames import pharmbio_IMX_filename_older
@@ -32,7 +32,7 @@ from filenames import external_filename_christa_zplane_IMX
 parsers = []
 parsers.append(pharmbio_squid_filename_BF_and_other_and_z)
 parsers.append(pharmbio_squid_filename_v1)
-parsers.append(pharmbio_squidplus_filename_standard)
+parsers.append(pharmbio_squid_filename_standard_new)
 parsers.append(pharmbio_squid_filename_v2_standard)
 parsers.append(pharmbio_squid_filename_slide)
 parsers.append(pharmbio_nikon_filename_v1)

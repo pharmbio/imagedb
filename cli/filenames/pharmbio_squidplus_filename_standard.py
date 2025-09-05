@@ -60,7 +60,6 @@ def parse_path_and_file(path):
 
     channels_v1 = ['405', '488', '561', '638', '730']
     channels_v2 = ['385', '470', '510', '560', '640']
-    channels_v3 = ['405', '445', '514', '561', '640'] 
 
     if channel_name in channels_v1:
       channels = channels_v1
@@ -68,9 +67,6 @@ def parse_path_and_file(path):
     elif channel_name in channels_v2:
       channels = channels_v2
       channel_map_id = 28
-    elif channel_name in channels_v3:
-      channels = channels_v3
-      channel_map_id = 10
 
     channel_pos = channels.index(channel_name) + 1
 
@@ -79,9 +75,9 @@ def parse_path_and_file(path):
     channel_pos = 6
     channel_map_id = 22 # Brightfield and other channels
   else:
-    channel_name = 'Unknown'
-    channel_pos = 1
-    channel_map_id = 10
+     channel_name = 'Unknown'
+     channel_pos = 1
+     channel_map_id = 10
 
   site = int(match.group(10))
   site_x = int(match.group(11))
@@ -161,18 +157,5 @@ if __name__ == '__main__':
     print("retval = " + str(retval))
 
     retval = parse_path_and_file(
-        "/share/mikro3/squid/testsquidplus/testsiteindices_2025-08-25_11.37.37/G8_s1_x0_y0_z0_Fluorescence_405_nm_Ex.tiff")
-    print("retval = " + str(retval))
-
-    retval = parse_path_and_file(
         "/share/mikro2/squid/Demo2/Demo2-MiaPaCa-PB900073_2024-06-14_10.15.48/P02_s9_x2_y2_z2_Fluorescence_730_nm_Ex.tiff")
     print("retval = " + str(retval))
-
-    retval = parse_path_and_file(
-        "/share/mikro3/squid/anders/test-new-squid_2025-08-26_13.06.11/O06_s9_x2_y2_z0_Fluorescence_514_nm_Ex.tiff")
-    print("\nretval = " + str(retval))
-
-
-
-
-
