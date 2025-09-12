@@ -88,7 +88,7 @@ def parse_path_and_file(path: str) -> Optional[Dict[str, Any]]:
             "guid": m.group("guid"),
             "extension": extension,
             "timepoint": int(timepoint),
-            "channel_map_id": 6,
+            "channel_map_id": 41,
             "microscope": "Opera",
             "parser": os.path.basename(__file__)
         }
