@@ -3,97 +3,95 @@ import os
 import logging
 import datetime
 
-# Example path:
-# /share/data/external-datasets/nanoscale/Plate_5/hs/55195c81-c4c6-4327-b7fc-b0b50de675b2/images/r03c07/r03c07f01p01-ch01t01.tiff
+# Adopted from: https://github.com/HASTE-project/haste-image-analysis-container2/tree/master/haste/image_analysis_container2/filenames
+#
+# file example
+#
+# /share/mikro2/nikon/spheroid-test/pilot10-spheroid-P1-9/Well-J18-z1-CONC.ome.tiff
+#
+#
 
-PATH_RE = re.compile(
-    r".*/external-datasets/"
-    r"(?P<project>[^/]+)/"
-    r"(?P<plate>[^/]+)/"
-    r"hs/(?P<guid>[^/]+)/"
-    r"images/"
-    r"r(?P<row>\d+)c(?P<col>\d+)/"
-    r"r(?P=row)c(?P=col)f(?P<site>\d+)p(?P<z>\d+)-"
-    r"ch(?P<channel>\d+)"
-    r"(?:t(?P<timepoint>\d+))?"
-    r"\.(?P<extension>tif|tiff|png|jpg|jpeg)$",
-    re.IGNORECASE
-)
+__pattern_path_and_file = re.compile(r'^'
+                                     r'.*/nikon/'      # any until /nikon/
+                                     r'(.*?)/'         # project (1)
+                                     r'(.*?)/'         # plate (2)
+                                     r'(.*?/)?'        # Optional subdir (3), e.g. /single_images/
+                                     r'([A-Z])([0-9]+)'# well (4,5)
+                                     r'_S([0-9]+)'     # site (6)
+                                     r'.*Channel_([0-9]+).*.ome' # channel (7)
+                                     r'.*(\..*)'       # Extension [8]
+                                     ,
+                                     re.IGNORECASE)  # Windows has case-insensitive filenames
+
 
 def parse_path_and_file(path):
-    try:
-        logging.debug("inside parse_path_and_file")
+ # If something errors (file not parsable with this parser, then exception and return None)
+ try:
+  match = re.search(__pattern_path_and_file, path)
 
-        m = PATH_RE.search(path)
-        if m is None:
-            return None
+  logging.debug(f'match: {match}')
 
-        # file creation timestamp
-        c_time = os.path.getctime(path)
-        date_create = datetime.datetime.fromtimestamp(c_time)
+  if match is None:
+    return None
 
-        # everything before /hs/
-        match_folder = re.match(r"^(?P<folder>.*?)/hs/", path)
-        if match_folder is None:
-            return None
-        folder = match_folder.group("folder")
+  logging.debug(f'match: {match.groups() }')
 
-        # Pull named groups
-        project   = m.group("project")
-        plate     = m.group("plate")
-        row       = m.group("row")
-        col       = m.group("col")
-        site      = m.group("site")
-        z         = m.group("z")
-        channel   = m.group("channel")
-        extension = m.group("extension").lower()
-        timepoint = m.group("timepoint") or "1"
+  row = match.group(4)
+  col = int(match.group(5))
+  well = f'{row}{col:02d}'
 
-        row_as_chr = chr(64 + int(row))
-        well = f"{row_as_chr}{col}"
+  site = int(match.group(6))
 
-        metadata = {
-            "path": path,
-            "folder": folder,
-            "filename": os.path.basename(path),
-            "date_year": date_create.year,
-            "date_month": date_create.month,
-            "date_day_of_month": date_create.day,
-            "project": project,
-            "magnification": "?x",
-            "plate": plate,
-            "plate_acq_name": path,
-            "well": well,
-            "wellsample": site,
-            "z": z,
-            "channel": channel,
-            "is_thumbnail": False,
-            "guid": m.group("guid"),
-            "extension": extension,
-            "timepoint": int(timepoint),
-            "channel_map_id": 6,
-            "microscope": "Opera",
-            "parser": os.path.basename(__file__)
-        }
+  channel_name = match.group(7)
+  channels = ['405', '446', '477', '545', '637']
+  channel_pos = channels.index(channel_name) + 1
 
-        return metadata
+   # file creation timestamp
+  c_time = os.path.getctime(path)
+  date_create = datetime.datetime.fromtimestamp(c_time)
 
-    except Exception:
-        logging.exception("could not parse")
-        return None
+  metadata = {
+      'path': path,
+      'filename': os.path.basename(path),
+      'date_year': date_create.year,
+      'date_month': date_create.month,
+      'date_day_of_month': date_create.day,
+      'project': match.group(1),
+      'magnification': 'x',
+      'plate': match.group(2),
+      'plate_acq_name': path,
+      'well': well,
+      'wellsample': site,
+      'z': 0,
+      'channel': channel_pos,
+      'is_thumbnail': False,
+      'guid': None,
+      'extension': match.group(8),
+      'timepoint': 1,
+      'channel_map_id': 26,
+      'microscope': "nikon",
+      'parser': os.path.basename(__file__)
+  }
+
+  return metadata
+
+ except:
+    logging.exception("exception")
+    logging.debug("could not parse")
+    return None
 
 
 if __name__ == '__main__':
-    #
     # Configure logging
     #
-    logging.basicConfig(
-        format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-        datefmt='%H:%M:%S',
-        level=logging.DEBUG
-    )
+    logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                        datefmt='%H:%M:%S',
+                        level=logging.DEBUG)
 
-    # Test parse
-    test_path = "/share/data/external-datasets/nanoscale/Plate_5/hs/55195c81-c4c6-4327-b7fc-b0b50de675b2/images/r03c07/r03c07f01p01-ch01t01.tiff"
-    retval = parse_path_and_file(test_path)
-    print(str(retval))
+
+    retval = parse_path_and_file(
+        "/share/mikro2/nikon/cleo-test/P013730-live-cell-run3/K16_s2__Channel_446-er.ome.tiff")
+    print("retval = " + str(retval))
+
+
+
