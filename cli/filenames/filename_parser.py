@@ -7,6 +7,7 @@ from filenames import pharmbio_squid_filename_BF_and_other_and_z
 from filenames import pharmbio_IMX_filename_standard
 from filenames import pharmbio_IMX_filename_older
 from filenames import pharmbio_IMX_filename_relaxed
+from filenames import external_filename_nanoscale_rXcXfXpX_chX
 from filenames import external_filename_yukogawa_spheroid
 from filenames import external_filename_christa
 from filenames import external_filename_cpjump
@@ -47,6 +48,7 @@ parsers.append(pharmbio_nikon_filename_v9_single)
 parsers.append(pharmbio_IMX_filename_standard)
 parsers.append(pharmbio_IMX_filename_older)
 parsers.append(pharmbio_IMX_filename_relaxed)
+parsers.append(external_filename_nanoscale_rXcXfXpX_chX)
 parsers.append(external_filename_christa_zplane_IMX)
 parsers.append(external_filename_yukogawa_spheroid)
 parsers.append(external_filename_comp1)

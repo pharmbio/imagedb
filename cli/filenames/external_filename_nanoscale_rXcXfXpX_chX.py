@@ -1,7 +1,9 @@
 import re
 import os
+import sys
 import logging
 import datetime
+from typing import Optional, Dict, Any, List
 
 # Example path:
 # /share/data/external-datasets/nanoscale/Plate_5/hs/55195c81-c4c6-4327-b7fc-b0b50de675b2/images/r03c07/r03c07f01p01-ch01t01.tiff
@@ -20,23 +22,24 @@ PATH_RE = re.compile(
     re.IGNORECASE
 )
 
-def parse_path_and_file(path):
+def parse_path_and_file(path: str) -> Optional[Dict[str, Any]]:
     try:
-        logging.debug("inside parse_path_and_file")
-
         m = PATH_RE.search(path)
         if m is None:
             return None
-
-        # file creation timestamp
-        c_time = os.path.getctime(path)
-        date_create = datetime.datetime.fromtimestamp(c_time)
 
         # everything before /hs/
         match_folder = re.match(r"^(?P<folder>.*?)/hs/", path)
         if match_folder is None:
             return None
         folder = match_folder.group("folder")
+
+        # file creation timestamp -> date parts
+        try:
+            c_time = os.path.getctime(path)
+            date_create = datetime.datetime.fromtimestamp(c_time)
+        except Exception:
+            date_create = None
 
         # Pull named groups
         project   = m.group("project")
@@ -49,16 +52,18 @@ def parse_path_and_file(path):
         extension = m.group("extension").lower()
         timepoint = m.group("timepoint") or "1"
 
+        # well like A02 / E14
         row_as_chr = chr(64 + int(row))
-        well = f"{row_as_chr}{col}"
+        col_str = f"{int(col):02d}"
+        well = row_as_chr + col_str
 
-        metadata = {
+        return {
             "path": path,
             "folder": folder,
             "filename": os.path.basename(path),
-            "date_year": date_create.year,
-            "date_month": date_create.month,
-            "date_day_of_month": date_create.day,
+            "date_year": (date_create.year if date_create else "2025"),
+            "date_month": (date_create.month if date_create else "01"),
+            "date_day_of_month": (date_create.day if date_create else "01"),
             "project": project,
             "magnification": "?x",
             "plate": plate,
@@ -76,24 +81,62 @@ def parse_path_and_file(path):
             "parser": os.path.basename(__file__)
         }
 
-        return metadata
-
     except Exception:
         logging.exception("could not parse")
         return None
 
 
+def find_sample_files(root: str, max_files: int = 10) -> List[str]:
+    """Walk `root` and collect up to `max_files` that look like supported image files."""
+    supported_ext = (".tif", ".tiff", ".png", ".jpg", ".jpeg")
+    found: List[str] = []
+    for dirpath, _dirnames, filenames in os.walk(root):
+        for fn in filenames:
+            if fn.lower().endswith(supported_ext):
+                full = os.path.join(dirpath, fn)
+                found.append(full)
+                if len(found) >= max_files:
+                    return found
+    return found
+
+
+def test_multiple_files(root: str, max_files: int = 10) -> None:
+    """Find multiple files under root and run parse_path_and_file on them. Exit if any fails."""
+    print(f"\nBatch test: scanning for up to {max_files} files under: {root}")
+
+    files = find_sample_files(root, max_files=max_files)
+    if not files:
+        print("No files found under root path.")
+        sys.exit(1)
+
+    for i, p in enumerate(files, start=1):
+        res = parse_path_and_file(p)
+        if res is None:
+            print(f"\n[{i}] FAILED to parse {p}")
+            sys.exit(1)
+        print(f"\n[{i}] {p}")
+        print(str(res))
+
+
 if __name__ == '__main__':
-    #
-    # Configure logging
-    #
     logging.basicConfig(
         format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
         datefmt='%H:%M:%S',
         level=logging.DEBUG
     )
 
-    # Test parse
+    # --- Single-file test ---
     test_path = "/share/data/external-datasets/nanoscale/Plate_5/hs/55195c81-c4c6-4327-b7fc-b0b50de675b2/images/r03c07/r03c07f01p01-ch01t01.tiff"
     retval = parse_path_and_file(test_path)
     print(str(retval))
+
+    # --- Multi-file test (will exit if any fails) ---
+    root_path = "/share/data/external-datasets/nanoscale/"
+    test_multiple_files(root_path, max_files=10)
+
+    root_path = "/share/data/external-datasets/nanoscale/Plate_5/hs/55195c81-c4c6-4327-b7fc-b0b50de675b2/images/r08c04/"
+    test_multiple_files(root_path, max_files=10)
+
+    print("--------")
+    print("All test files seem to have passed")
+    print("--------")

@@ -163,23 +163,46 @@
           continue;
         }
 
-        // Handler returns single plate_data with .acquisitions…
-        const plateData   = await resp.json();
-        const acqus       = plateData.acquisitions || [];
-        const acqRecord   = acqus[0];
-        if (!acqRecord || !acqRecord.wells) continue;
+        // Handler returns single plate_data with .data.plates[barcode].acquisitions (object keyed by id)
+        const plateData = await resp.json();
+        console.log("plateData", plateData);
 
+        const plateObj = plateData?.data?.plates?.[barcode];
+        if (!plateObj) {
+          console.warn("No plate object for barcode", { barcode, plateData });
+          continue;
+        }
+ 
+        const acqMap = plateObj.acquisitions || {};              // { "1055": {...}, "1064": {...} }
+        const acqKeys = Object.keys(acqMap);
+        console.log("acquisition keys", acqKeys);
+
+        const acqKey = String(acqId);                             // ensure string key
+        const acqRecord = acqMap[acqKey] ?? acqMap[Number(acqId)];
+        console.log("picked acqRecord for", acqId, acqRecord);
+
+        if (!acqRecord) {
+          console.warn("Acquisition not found for acqId", { acqId, available: acqKeys });
+          continue;
+        }
+
+        const wellsObj = acqRecord.wells || {};                   // adjust if your schema differs
+        if (!wellsObj || !Object.keys(wellsObj).length) {
+          console.warn("No wells on acquisition", { acqId, acqRecord });
+          continue;
+        }
+
+        // (unchanged) render wells -> sites -> channels
         grid.innerHTML = '';
-        for (const [wellId, wellData] of Object.entries(acqRecord.wells)) {
-          for (const [siteKey, siteInfo] of Object.entries(wellData.sites||{})) {
-            const zInfo = Object.values(siteInfo.z_positions||{})[0]||{};
+        for (const [wellId, wellData] of Object.entries(wellsObj)) {
+          for (const [siteKey, siteInfo] of Object.entries(wellData.sites || {})) {
+            const zInfo = Object.values(siteInfo.z_positions || {})[0] || {};
             let ch = Array.isArray(zInfo.channels)
-                       ? zInfo.channels
-                       : Object.values(zInfo.channels||{});
-            while (ch.length < 3) ch.push(ch[ch.length-1]||{});
-            const paths = ch.slice(0,3).map(c=>encodeURIComponent(c.path||''));
-            const thumb = `/api/image-merge-thumb/` +
-                          `ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+              ? zInfo.channels
+              : Object.values(zInfo.channels || {});
+            while (ch.length < 3) ch.push(ch[ch.length - 1] || {});
+            const paths = ch.slice(0, 3).map(c => encodeURIComponent(c.path || ''));
+            const thumb = `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
 
             const card = document.createElement('div');
             card.className = 'thumb-card';
