@@ -22,6 +22,14 @@ PATH_RE = re.compile(
     re.IGNORECASE
 )
 
+def row_to_letter(row: int) -> Optional[str]:
+    """Convert row number to A–Z, then a–z. Return None if out of range."""
+    if 1 <= row <= 26:
+        return chr(64 + row)   # A-Z
+    elif 27 <= row <= 52:
+        return chr(96 + (row - 26))  # a-z
+    return None
+
 def parse_path_and_file(path: str) -> Optional[Dict[str, Any]]:
     try:
         m = PATH_RE.search(path)
@@ -52,8 +60,12 @@ def parse_path_and_file(path: str) -> Optional[Dict[str, Any]]:
         extension = m.group("extension").lower()
         timepoint = m.group("timepoint") or "1"
 
-        # well like A02 / E14
-        row_as_chr = chr(64 + int(row))
+        # well like A02 / E14 / b44 (for 1536 plate)
+        row_num = int(row)
+        row_as_chr = row_to_letter(row_num)
+        if row_as_chr is None:
+            return None   # stop parsing if invalid row
+
         col_str = f"{int(col):02d}"
         well = row_as_chr + col_str
 
