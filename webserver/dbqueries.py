@@ -7,6 +7,8 @@ import psycopg2.extras
 import settings as imgdb_settings
 import platemodel
 from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 __connection_pool = None
 
@@ -362,7 +364,7 @@ def move_plate_acq_to_trash(acqid):
             put_connection(conn)
 
 
-def search_compounds(term: str, limit: int = 100):
+def search_compounds_old(term: str, limit: int = 100):
     """
     Free‐text search across batchid, cbkid, libid, libtxt, smiles, inchi, inkey, name
     in the plate_v1 view, joined to plate_acquisition for context.
@@ -398,4 +400,147 @@ def search_compounds(term: str, limit: int = 100):
         return cursor.fetchall()
     finally:
         cursor.close()
+        put_connection(conn)
+
+@dataclass
+class SearchLimits:
+    raw_limit: int = 10000                 # hard cap on flat DB scan
+    plates: Optional[int] = None           # max plates per project
+    acqs_per_plate: Optional[int] = None   # max acquisitions per plate
+    wells_per_acq: Optional[int] = None    # max wells per acquisition
+
+def _take(it: Iterable[Any], n: Optional[int]) -> List[Any]:
+    if n is None:
+        return list(it)
+    out = []
+    for i, x in enumerate(it):
+        if i >= n: break
+        out.append(x)
+    return out
+
+def search_compounds_hierarchical(term: str, limits: Optional[SearchLimits] = None) -> Dict[str, Any]:
+    """
+    Hierarchical search:
+      project -> plates (barcode) -> acquisitions (id) -> wells [well_id]
+    Returns:
+      {
+        "data": {
+          "projects": {
+            "<project>": {
+              "id": "<project>",
+              "plates": {
+                "<barcode>": {
+                  "id": "<barcode>",
+                  "acquisitions": {
+                    "<acq_id>": { "id": <acq_id>, "wells": ["A01","B03",...] }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "meta": { ...counts/limits... }
+      }
+    """
+
+    logging.info(f"term:{term}")
+
+    if limits is None:
+        limits = SearchLimits()
+
+    conn = get_connection()
+    cursor = None
+    try:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        like = f"%{term}%"
+
+        # Include pa.project so we can group by project in the response.
+        # plate_v1 has compound-facing columns; pa is plate_acquisition (has id, name, project, plate_barcode).
+        query = (
+            "SELECT "
+            "  pa.project                  AS project, "
+            "  pa.plate_barcode            AS barcode, "
+            "  pa.id                       AS plate_acquisition_id, "
+            "  pa.name                     AS plate_acquisition_name, "
+            "  pv.well_id                  AS well_id "
+            "FROM plate_v1 pv "
+            "JOIN plate_acquisition pa ON pv.barcode = pa.plate_barcode "
+            "WHERE "
+            "  pv.batchid::text   ILIKE %(like)s OR "
+            "  pv.cbkid            ILIKE %(like)s OR "
+            "  pv.libid            ILIKE %(like)s OR "
+            "  pv.libtxt           ILIKE %(like)s OR "
+            "  pv.smiles           ILIKE %(like)s OR "
+            "  pv.inchi            ILIKE %(like)s OR "
+            "  pv.inkey            ILIKE %(like)s OR "
+            "  pv.compound_name    ILIKE %(like)s "
+            "ORDER BY pa.project, pa.plate_barcode, pa.id, pv.well_id "
+            "LIMIT %(limit)s"
+        )
+        cursor.execute(query, {"like": like, "limit": limits.raw_limit})
+        rows = cursor.fetchall()
+
+        logging.info(f"rows: {rows}")
+
+        # Build in-memory index: project -> { barcode -> { acq_id -> [well_ids...] } }
+        projects_idx: Dict[str, Dict[str, Dict[int, List[str]]]] = {}
+        uniq_projects = set()
+        uniq_plates: set[Tuple[str, str]] = set()
+        uniq_acqs: set[Tuple[str, str, int]] = set()
+        uniq_wells: set[Tuple[str, str, int, str]] = set()
+
+        for r in rows:
+            project = str(r["project"]) if r["project"] is not None else "Unknown project"
+            barcode = str(r["barcode"])
+            acq_id  = int(r["plate_acquisition_id"])
+            well_id = str(r["well_id"])
+
+            uniq_projects.add(project)
+            uniq_plates.add((project, barcode))
+            uniq_acqs.add((project, barcode, acq_id))
+            uniq_wells.add((project, barcode, acq_id, well_id))
+
+            by_plate = projects_idx.setdefault(project, {})
+            by_acq   = by_plate.setdefault(barcode, {})
+            well_list = by_acq.setdefault(acq_id, [])
+            if well_id not in well_list:
+                well_list.append(well_id)
+
+        # Serialize with limits
+        projects_json: Dict[str, Any] = {}
+        for project, plate_map in projects_idx.items():
+            plates_json: Dict[str, Any] = {}
+            for barcode in _take(plate_map.keys(), limits.plates):
+                acq_map = plate_map[barcode]
+                acqs_json: Dict[str, Any] = {}
+                for acq_id in _take(sorted(acq_map.keys()), limits.acqs_per_plate):
+                    wells_sorted = sorted(acq_map[acq_id])
+                    acqs_json[str(acq_id)] = {
+                        "id": acq_id,
+                        "wells": _take(wells_sorted, limits.wells_per_acq),
+                    }
+                plates_json[barcode] = {"id": barcode, "acquisitions": acqs_json}
+            projects_json[project] = {"id": project, "plates": plates_json}
+
+        return {
+            "data": {"projects": projects_json},
+            "meta": {
+                "query": term,
+                "limits": {
+                    "raw_limit": limits.raw_limit,
+                    "plates": limits.plates,
+                    "acqs_per_plate": limits.acqs_per_plate,
+                    "wells_per_acq": limits.wells_per_acq,
+                },
+                "counts": {
+                    "rows_scanned": len(rows),
+                    "projects": len(uniq_projects),
+                    "plates": len(uniq_plates),
+                    "acquisitions": len(uniq_acqs),
+                    "wells": len(uniq_wells),
+                },
+            },
+        }
+    finally:
+        if cursor: cursor.close()
         put_connection(conn)

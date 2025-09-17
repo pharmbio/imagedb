@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -8,224 +8,380 @@
 
   <!-- Bootstrap & your CSS -->
   <link href="/static/theme/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="/static/theme/css/simple-sidebar.css"          rel="stylesheet">
+  <link href="/static/theme/css/simple-sidebar.css" rel="stylesheet">
   <link rel="stylesheet" href="/static/main.css?version=1.x">
+
   <style>
-    .plate-group + .plate-group { margin-top:2rem }
-    .plate-header { font-weight:bold; margin-bottom:.5rem }
-    .image-grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(120px,120px));
-      gap:1rem;
+    /* Existing card/grid styling (used inside the tree leaves) */
+    .thumb-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 120px));
+      gap: .6rem;
+      margin: .5rem 0 .5rem 1.25rem;
     }
     .thumb-card {
-      position:relative; overflow:hidden;
-      border-radius:4px; background:#f8f8f8;
-      cursor:pointer;
+      position: relative;
+      overflow: hidden;
+      border-radius: 4px;
+      background: #f8f8f8;
+      cursor: pointer;
     }
     .thumb-card img {
-      width:100%; height:auto; transition:filter .2s;
+      width: 100%;
+      height: auto;
+      transition: filter .2s;
     }
     .thumb-meta {
-      position:absolute; bottom:0; left:0; right:0;
-      background:rgba(0,0,0,0.5); color:#fff;
-      font-size:.8rem; padding:.2rem; text-align:center;
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,.45);
+      color: #fff;
+      font-size: .75rem;
+      padding: .15rem;
+      text-align: center;
     }
+
+    /* Tree view */
+    .tree details { margin: .25rem 0 .25rem .75rem; }
+    .tree summary { cursor: pointer; user-select: none; outline: none; }
+    .tree .badge {
+      font-size: .75rem;
+      background: #eef;
+      border: 1px solid #cfe;
+      padding: .05rem .35rem;
+      border-radius: .4rem;
+      margin-left: .4rem;
+    }
+
+    /* Controls layout */
+    .control-label { margin-right: .5rem; }
+    .control-input { width: 90px; }
+    .control-input.w110 { width: 110px; }
+    .control-input.w120 { width: 120px; }
   </style>
 </head>
-<body>
 
+<body>
+  <!-- Top bar with search -->
   <nav class="navbar navbar-light bg-light border-bottom">
     <form id="search-form" class="form-inline mx-3" onsubmit="return false;">
-      <input type="text" id="q" class="form-control mr-2"
-             placeholder="batchid, name, inchi…" required>
-      <button class="btn btn-info">Search</button>
+      <input type="text" id="q" class="form-control mr-2" placeholder="batchid, name, inchi…" required>
+      <button class="btn btn-info" type="submit">Search</button>
     </form>
   </nav>
 
   <div class="container-fluid mt-3">
+    <!-- Controls: brightness, zoom, limits -->
     <div class="form-inline mb-3">
-      <label class="mr-3">
+      <label class="control-label mr-3">
         Brightness
-        <input type="range" id="brightness-range" min="50" max="3000"
-               value="100" class="form-control-range ml-2">
+        <input type="range" id="brightness-range" min="50" max="3000" value="100" class="form-control-range ml-2">
       </label>
-      <label>
+      <label class="control-label mr-4">
         Zoom
-        <input type="range" id="zoom-range" min="50" max="200"
-               value="100" class="form-control-range ml-2">
+        <input type="range" id="zoom-range" min="50" max="200" value="100" class="form-control-range ml-2">
+      </label>
+
+      <label class="control-label mr-2">Limit plates
+        <input type="number" id="limit-plates" class="form-control ml-2 control-input" min="1" placeholder="∞">
+      </label>
+      <label class="control-label mr-2">Limit acq/plate
+        <input type="number" id="limit-acqs" class="form-control ml-2 control-input w110" min="1" placeholder="∞">
+      </label>
+      <label class="control-label mr-2">Limit wells/plate
+        <input type="number" id="limit-wells" class="form-control ml-2 control-input w120" min="1" placeholder="∞">
+      </label>
+      <label class="control-label mr-2">Limit sites/well
+        <input type="number" id="limit-sites" class="form-control ml-2 control-input w110" min="1" placeholder="∞">
       </label>
     </div>
-    <div id="results-container"></div>
+
+    <!-- Tree root -->
+    <div id="tree-root" class="tree"></div>
   </div>
 
   <!-- Error Modal -->
-  <div id="error-modal" class="modal fade">
+  <div id="error-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg"><div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Error</h5>
-        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>×</span></button>
       </div>
       <div class="modal-body"><pre id="error-message" style="white-space:pre-wrap"></pre></div>
     </div></div>
   </div>
 
+  <!-- JS deps -->
   <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
   <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <!-- Keep your site-wide JS if needed -->
   <script src="/static/main.js?version=1.23"></script>
+
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const resultsContainer = document.getElementById('results-container');
-    const brightnessEl     = document.getElementById('brightness-range');
-    const zoomEl           = document.getElementById('zoom-range');
-    const errorModal       = $('#error-modal');
-    const errorMsgPre      = document.getElementById('error-message');
+    document.addEventListener('DOMContentLoaded', () => {
+      const treeRoot     = document.getElementById('tree-root');
+      const errorModal   = $('#error-modal');
+      const errorMsgPre  = document.getElementById('error-message');
+      const brightnessEl = document.getElementById('brightness-range');
+      const zoomEl       = document.getElementById('zoom-range');
 
-    function applyImageSettings() {
-      const b = (parseInt(brightnessEl.value,10)||100)/100;
-      const z = (parseInt(zoomEl.value,10)||100)/100;
-      document.querySelectorAll('.thumb-card img').forEach(img => {
-        img.style.filter = `brightness(${b})`;
+      function showError(text) {
+        errorMsgPre.textContent = text;
+        errorModal.modal('show');
+      }
+
+      function getLimit(id) {
+        const v = parseInt(document.getElementById(id).value, 10);
+        return Number.isFinite(v) && v > 0 ? v : Infinity;
+      }
+
+      function applyImageSettings(rootEl = document) {
+        const b = (parseInt(brightnessEl.value,10) || 100) / 100;
+        const z = (parseInt(zoomEl.value,10) || 100) / 100;
+        rootEl.querySelectorAll('.thumb-card img').forEach(img => {
+          img.style.filter = `brightness(${b})`;
+        });
+        const size = 120 * z;
+        rootEl.querySelectorAll('.thumb-grid').forEach(grid => {
+          grid.style.gridTemplateColumns = `repeat(auto-fit, minmax(${size}px, ${size}px))`;
+        });
+      }
+
+      brightnessEl.addEventListener('input', () => applyImageSettings(treeRoot));
+      zoomEl.addEventListener('input', () => applyImageSettings(treeRoot));
+
+      // Re-render on limit changes if a term is present
+      ['limit-plates','limit-acqs','limit-wells','limit-sites'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', () => {
+          const term = document.getElementById('q').value.trim();
+          if (term) renderSearchResults(term);
+        });
       });
-      const size = 120 * z;
-      document.querySelectorAll('.image-grid').forEach(grid => {
-        grid.style.gridTemplateColumns =
-          `repeat(auto-fit, minmax(${size}px,${size}px))`;
-      });
-    }
-    brightnessEl.addEventListener('input', applyImageSettings);
-    zoomEl.addEventListener('input',       applyImageSettings);
 
-    function showError(text) {
-      errorMsgPre.textContent = text;
-      errorModal.modal('show');
-    }
+      // Cache plate fetches by (barcode|acqId|wellsCsv)
+      const plateCache = new Map();
 
-    async function renderSearchResults(term) {
-      resultsContainer.innerHTML = '';
-      applyImageSettings();
-
-      // Phase 1: flat list of { barcode, plate_acquisition_id, well_id }
-      let resp = await fetch(
-        `/api/search-compound?q=${encodeURIComponent(term)}&limit=1000`
-      );
-      if (!resp.ok) {
-        const t = await resp.text().catch(()=>resp.statusText);
-        return showError(`Search failed: ${t}`);
-      }
-      const { results } = await resp.json();
-      if (!results.length) {
-        return resultsContainer.textContent = 'No results found.';
+      function thumbUrlFromChannels(chArr) {
+        const paths = chArr.slice(0,3).map(c => encodeURIComponent(c?.path || ''));
+        while (paths.length < 3) paths.push(paths[paths.length-1] || '');
+        return `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
       }
 
-      // Group by acquisition (barcode + acqId)
-      const byAcq = {};
-      for (const r of results) {
-        const key = `${r.barcode}|${r.plate_acquisition_id}`;
-        if (!byAcq[key]) {
-          byAcq[key] = {
-            barcode: r.barcode,
-            acqId:   r.plate_acquisition_id,
-            wells:   []
-          };
-        }
-        byAcq[key].wells.push(r.well_id);
+      function makeDetails(summaryText, extra = '') {
+        const d = document.createElement('details');
+        const s = document.createElement('summary');
+        s.innerHTML = summaryText + (extra ? ` <span class="badge">${extra}</span>` : '');
+        d.appendChild(s);
+        return [d, s];
       }
 
-      // Phase 1 skeleton blocks
-      for (const { barcode, acqId } of Object.values(byAcq)) {
-        const group = document.createElement('div');
-        group.className     = 'plate-group';
-        group.dataset.acqId = acqId;
-        group.innerHTML     = `
-          <div class="plate-header">
-            ${barcode} | Acquisition ${acqId}
-          </div>
-          <div class="image-grid"></div>
-        `;
-        resultsContainer.append(group);
-        await new Promise(r => requestAnimationFrame(r));
+      async function fetchPlateSubset(barcode, acqId, wellsCsv) {
+        const key = `${barcode}|${acqId}|${wellsCsv}`;
+        if (plateCache.has(key)) return plateCache.get(key);
+        const resp = await fetch(`/api/plate/${encodeURIComponent(barcode)}/${acqId}/${wellsCsv}`);
+        if (!resp.ok) throw new Error(`Fetch plate failed: ${barcode} acq ${acqId}`);
+        const json = await resp.json();
+        plateCache.set(key, json);
+        return json;
       }
 
-      // Phase 2: fetch + render each acquisition’s images
-      for (const { barcode, acqId, wells } of Object.values(byAcq)) {
-        const group = document.querySelector(`[data-acq-id="${acqId}"]`);
-        const grid  = group.querySelector('.image-grid');
+      // Put these once (top-level)
+      let renderToken = 0;
+      let currentAbort = null;
 
-        // Path-based fetch to include both acqId & wells
-        resp = await fetch(
-          `/api/plate/${encodeURIComponent(barcode)}/`
-          + `${acqId}/`
-          + `${wells.join(',')}`
-        );
-        if (!resp.ok) {
-          showError(`Failed to load plate ${barcode} acq ${acqId}`);
-          continue;
+      // --- render function (no cache) ---
+      async function renderSearchResults(term) {
+        const treeRoot = document.getElementById('tree-root');
+
+        // Abort any in-flight render
+        if (currentAbort) currentAbort.abort();
+        currentAbort = new AbortController();
+        const { signal } = currentAbort;
+
+        // Token to invalidate stale async work
+        const myToken = ++renderToken;
+
+        // Hard clear existing tree
+        treeRoot.replaceChildren();
+
+        // local helpers (no cache)
+        async function fetchJSON(url, signal) {
+          const resp = await fetch(url, { signal });
+          if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+          return resp.json();
+        }
+        async function fetchPlateSubset(barcode, acqId, wellsCsv, signal) {
+          return fetchJSON(`/api/plate/${encodeURIComponent(barcode)}/${acqId}/${wellsCsv}`, signal);
+        }
+        function makeDetails(summaryText, badgeText = '') {
+          const d = document.createElement('details');
+          const s = document.createElement('summary');
+          s.innerHTML = summaryText + (badgeText ? ` <span class="badge">${badgeText}</span>` : '');
+          d.appendChild(s);
+          return [d, s];
+        }
+        function thumbUrlFromChannels(chArr) {
+          const paths = chArr.slice(0, 3).map(c => encodeURIComponent(c?.path || ''));
+          while (paths.length < 3) paths.push(paths[paths.length - 1] || '');
+          return `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+        }
+        // expect these to exist in your page:
+        // - getLimit(id) → number|Infinity
+        // - applyImageSettings(rootEl)
+        // - showError(text)
+
+        const L_PLATES = getLimit('limit-plates');
+        const L_ACQS   = getLimit('limit-acqs');
+        const L_WELLS  = getLimit('limit-wells');
+        const L_SITES  = getLimit('limit-sites');
+
+        // Build query string (also pass limits to server)
+        const qs = new URLSearchParams({
+          q: term,
+          limit: '10000',
+          ...(Number.isFinite(L_PLATES) ? { limit_plates: String(L_PLATES) } : {}),
+          ...(Number.isFinite(L_ACQS)   ? { limit_acqs:   String(L_ACQS)   } : {}),
+          ...(Number.isFinite(L_WELLS)  ? { limit_wells:  String(L_WELLS)  } : {}),
+        }).toString();
+
+        // Fetch hierarchical search result
+        let json;
+        try {
+          json = await fetchJSON(`/api/search-compound?${qs}`, signal);
+        } catch (e) {
+          if (signal.aborted) return; // superseded by a newer render
+          showError(String(e));
+          return;
+        }
+        if (myToken !== renderToken) return;
+
+        const projectsRootObj = json?.data?.projects;
+        if (!projectsRootObj || !Object.keys(projectsRootObj).length) {
+          treeRoot.textContent = 'No results found.';
+          return;
         }
 
-        // Handler returns single plate_data with .data.plates[barcode].acquisitions (object keyed by id)
-        const plateData = await resp.json();
-        console.log("plateData", plateData);
+        // Root: "Projects"
+        const [projectsRoot] = makeDetails('Projects');
+        projectsRoot.open = true;
+        if (myToken !== renderToken) return;
+        treeRoot.appendChild(projectsRoot);
 
-        const plateObj = plateData?.data?.plates?.[barcode];
-        if (!plateObj) {
-          console.warn("No plate object for barcode", { barcode, plateData });
-          continue;
-        }
- 
-        const acqMap = plateObj.acquisitions || {};              // { "1055": {...}, "1064": {...} }
-        const acqKeys = Object.keys(acqMap);
-        console.log("acquisition keys", acqKeys);
+        // Iterate: project -> plates -> acquisitions -> wells
+        for (const [projectName, projectObj] of Object.entries(projectsRootObj)) {
+          if (myToken !== renderToken) return;
 
-        const acqKey = String(acqId);                             // ensure string key
-        const acqRecord = acqMap[acqKey] ?? acqMap[Number(acqId)];
-        console.log("picked acqRecord for", acqId, acqRecord);
+          const [projDet] = makeDetails(projectName);
+          projectsRoot.appendChild(projDet);
 
-        if (!acqRecord) {
-          console.warn("Acquisition not found for acqId", { acqId, available: acqKeys });
-          continue;
-        }
+          const plates = projectObj?.plates || {};
+          const plateEntries = Object.entries(plates).slice(
+            0, Number.isFinite(L_PLATES) ? L_PLATES : undefined
+          );
 
-        const wellsObj = acqRecord.wells || {};                   // adjust if your schema differs
-        if (!wellsObj || !Object.keys(wellsObj).length) {
-          console.warn("No wells on acquisition", { acqId, acqRecord });
-          continue;
-        }
+          for (const [barcode, plateObj] of plateEntries) {
+            if (myToken !== renderToken) return;
 
-        // (unchanged) render wells -> sites -> channels
-        grid.innerHTML = '';
-        for (const [wellId, wellData] of Object.entries(wellsObj)) {
-          for (const [siteKey, siteInfo] of Object.entries(wellData.sites || {})) {
-            const zInfo = Object.values(siteInfo.z_positions || {})[0] || {};
-            let ch = Array.isArray(zInfo.channels)
-              ? zInfo.channels
-              : Object.values(zInfo.channels || {});
-            while (ch.length < 3) ch.push(ch[ch.length - 1] || {});
-            const paths = ch.slice(0, 3).map(c => encodeURIComponent(c.path || ''));
-            const thumb = `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+            const acqs = plateObj?.acquisitions || {};
+            const acqEntries = Object.entries(acqs).slice(
+              0, Number.isFinite(L_ACQS) ? L_ACQS : undefined
+            );
 
-            const card = document.createElement('div');
-            card.className = 'thumb-card';
-            card.innerHTML = `
-              <img src="${thumb}" alt="Well ${wellId} • Site ${siteKey}">
-              <div class="thumb-meta">Well ${wellId} • Site ${siteKey}</div>
-            `;
-            card.onclick = () => openViewer(wellId, siteKey);
-            grid.append(card);
+            const [plateDet] = makeDetails(`Plate ${barcode}`, `${acqEntries.length} acq`);
+            plateDet.dataset.barcode = barcode;
+            projDet.appendChild(plateDet);
+
+            // Lazy build acquisitions when plate is expanded
+            plateDet.addEventListener('toggle', () => {
+              if (!plateDet.open || plateDet.dataset.loaded === '1') return;
+              if (myToken !== renderToken) return;
+
+              for (const [acqId, acqObj] of acqEntries) {
+                const wellsArr = Array.isArray(acqObj?.wells) ? acqObj.wells : [];
+                const wellsPlanned = wellsArr.slice(
+                  0, Number.isFinite(L_WELLS) ? L_WELLS : undefined
+                );
+
+                const [acqDet] = makeDetails(`Acq ${acqId}`, `${wellsPlanned.length} wells`);
+                acqDet.dataset.acqId = acqId;
+                plateDet.appendChild(acqDet);
+
+                // Lazy load thumbnails for the acquisition
+                acqDet.addEventListener('toggle', async () => {
+                  if (!acqDet.open || acqDet.dataset.loaded === '1') return;
+                  if (myToken !== renderToken) return;
+
+                  let plateJson;
+                  try {
+                    const wellsCsv = wellsPlanned.join(',');
+                    plateJson = await fetchPlateSubset(barcode, acqId, wellsCsv, signal);
+                  } catch (e) {
+                    if (signal.aborted || myToken !== renderToken) return;
+                    console.error(e);
+                    showError(String(e));
+                    return;
+                  }
+                  if (myToken !== renderToken) return;
+
+                  const plateNode = plateJson?.data?.plates?.[barcode];
+                  const acqMap    = plateNode?.acquisitions || {};
+                  const acqRec    = acqMap[String(acqId)] ?? acqMap[Number(acqId)];
+                  const wellsObj  = acqRec?.wells || {};
+
+                  const grid = document.createElement('div');
+                  grid.className = 'thumb-grid';
+                  acqDet.appendChild(grid);
+
+                  for (const wellId of wellsPlanned) {
+                    if (myToken !== renderToken) return;
+
+                    const wellData = wellsObj[wellId];
+                    if (!wellData) continue;
+
+                    let sitesRendered = 0;
+                    for (const [siteKey, siteInfo] of Object.entries(wellData.sites || {})) {
+                      if (sitesRendered >= (Number.isFinite(L_SITES) ? L_SITES : Infinity)) break;
+
+                      const zInfo = Object.values(siteInfo.z_positions || {})[0] || {};
+                      let ch = Array.isArray(zInfo.channels)
+                        ? zInfo.channels
+                        : Object.values(zInfo.channels || {});
+                      while (ch.length < 3) ch.push(ch[ch.length - 1] || {});
+                      const thumb = thumbUrlFromChannels(ch);
+
+                      const card = document.createElement('div');
+                      card.className = 'thumb-card';
+                      card.innerHTML = `
+                        <img src="${thumb}" alt="Well ${wellId} • Site ${siteKey}">
+                        <div class="thumb-meta">Well ${wellId} • Site ${siteKey}</div>
+                      `;
+                      card.onclick = () => window.openViewer?.(wellId, siteKey);
+                      grid.appendChild(card);
+
+                      sitesRendered++;
+                    }
+                  }
+
+                  applyImageSettings(acqDet);
+                  acqDet.dataset.loaded = '1';
+                });
+              }
+
+              plateDet.dataset.loaded = '1';
+            });
           }
         }
-
-        applyImageSettings();
-        await new Promise(r => requestAnimationFrame(r));
       }
-    }
 
-    document.getElementById('search-form')
-      .addEventListener('submit', e => {
+
+      // Hook search form
+      document.getElementById('search-form').addEventListener('submit', e => {
         e.preventDefault();
         renderSearchResults(document.getElementById('q').value.trim());
       });
-  });
+    });
+
   </script>
 </body>
 </html>
