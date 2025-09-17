@@ -364,44 +364,6 @@ def move_plate_acq_to_trash(acqid):
             put_connection(conn)
 
 
-def search_compounds_old(term: str, limit: int = 100):
-    """
-    Free‐text search across batchid, cbkid, libid, libtxt, smiles, inchi, inkey, name
-    in the plate_v1 view, joined to plate_acquisition for context.
-    Returns at most `limit` wells (rows) in total.
-    """
-    conn = get_connection()
-    try:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        like = f"%{term}%"
-        query = (
-            "SELECT "
-            "  pa.id AS plate_acquisition_id, "
-            "  pa.name AS plate_acquisition_name, "
-            "  pa.plate_barcode AS barcode, "
-            "  pv.well_id, "
-            "  pv.batchid, pv.cbkid, pv.libid, pv.libtxt, "
-            "  pv.smiles, pv.inchi, pv.inkey, pv.compound_name "
-            "FROM plate_v1 pv "
-            "JOIN plate_acquisition pa ON pv.barcode = pa.plate_barcode "
-            "WHERE "
-            "  pv.batchid::text   ILIKE %(like)s OR "
-            "  pv.cbkid            ILIKE %(like)s OR "
-            "  pv.libid            ILIKE %(like)s OR "
-            "  pv.libtxt           ILIKE %(like)s OR "
-            "  pv.smiles           ILIKE %(like)s OR "
-            "  pv.inchi            ILIKE %(like)s OR "
-            "  pv.inkey            ILIKE %(like)s OR "
-            "  pv.compound_name    ILIKE %(like)s "
-            "ORDER BY pa.id, pv.well_id "
-            "LIMIT %(limit)s"
-        )
-        cursor.execute(query, {"like": like, "limit": limit})
-        return cursor.fetchall()
-    finally:
-        cursor.close()
-        put_connection(conn)
-
 @dataclass
 class SearchLimits:
     raw_limit: int = 10000                 # hard cap on flat DB scan
@@ -418,7 +380,7 @@ def _take(it: Iterable[Any], n: Optional[int]) -> List[Any]:
         out.append(x)
     return out
 
-def search_compounds_hierarchical(term: str, limits: Optional[SearchLimits] = None) -> Dict[str, Any]:
+def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[str, Any]:
     """
     Hierarchical search:
       project -> plates (barcode) -> acquisitions (id) -> wells [well_id]

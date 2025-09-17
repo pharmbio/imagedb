@@ -126,44 +126,6 @@ class MoveAcqIDToTrashHandler(tornado.web.RequestHandler):
             self.write({"status": "error", "message": str(e)})
 
 
-# class SearchCompoundQueryHandler(tornado.web.RequestHandler):
-#     """
-#     GET /api/search-compound?q=…[&limit=1000]
-#       → returns JSON: { results: [ { barcode, plate_acquisition_id, well_id }, … ] }
-#       up to `limit` rows (default 1000).
-#     """
-#     def get(self):
-#         q     = self.get_argument("q", "").strip()
-#         limit = self.get_argument("limit", "1000")
-#         try:
-#             limit = int(limit)
-#         except ValueError:
-#             limit = 1000
-
-#         if not q:
-#             return self.write(json.dumps({"results": []}))
-
-#         try:
-#             # search_compounds(term, limit) should cap total rows
-#             hits = search_compounds(q, limit=limit)
-
-#             # build minimal flat result
-#             results = [
-#                 {
-#                   "barcode":                r["barcode"],
-#                   "plate_acquisition_id":   r["plate_acquisition_id"],
-#                   "well_id":                r["well_id"]
-#                 }
-#                 for r in hits
-#             ]
-
-#             self.write(json.dumps({"results": results}))
-
-#         except Exception as e:
-#             logging.exception("Error in SearchCompoundQueryHandler")
-#             self.set_status(500)
-#             self.write(json.dumps({"error": str(e)}))
-
 class SearchCompoundQueryHandler(RequestHandler):
 
     def get(self):
