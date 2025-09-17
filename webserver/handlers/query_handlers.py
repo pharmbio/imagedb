@@ -13,7 +13,7 @@ import datetime
 import decimal
 from tornado.web import RequestHandler
 
-from dbqueries import list_all_plates, get_plate, list_image_analyses, move_plate_acq_to_trash, search_compounds_hierarchical, SearchLimits
+from dbqueries import list_all_plates, get_plate, list_image_analyses, move_plate_acq_to_trash, search_compounds, SearchLimits
 
 def myserialize(obj):
     """JSON serializer for objects not serializable by default json code"""
@@ -145,7 +145,7 @@ class SearchCompoundQueryHandler(RequestHandler):
         logging.info(f"limits: {limits}")
 
         try:
-            payload = search_compounds_hierarchical(q, limits)
+            payload = search_compounds(q, limits)
             self.set_header("Content-Type", "application/json")
             self.write(payload)
         except Exception as e:
