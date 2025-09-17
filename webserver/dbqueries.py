@@ -366,7 +366,7 @@ def move_plate_acq_to_trash(acqid):
 
 @dataclass
 class SearchLimits:
-    raw_limit: int = 10000                 # hard cap on flat DB scan
+    raw_limit: int = 10000                  # hard cap on flat DB scan
     plates: Optional[int] = None           # max plates per project
     acqs_per_plate: Optional[int] = None   # max acquisitions per plate
     wells_per_acq: Optional[int] = None    # max wells per acquisition
@@ -382,8 +382,6 @@ def _take(it: Iterable[Any], n: Optional[int]) -> List[Any]:
 
 def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[str, Any]:
     """
-    Hierarchical search:
-      project -> plates (barcode) -> acquisitions (id) -> wells [well_id]
     Returns:
       {
         "data": {
@@ -484,7 +482,7 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
                 plates_json[barcode] = {"id": barcode, "acquisitions": acqs_json}
             projects_json[project] = {"id": project, "plates": plates_json}
 
-        return {
+        retval = {
             "data": {"projects": projects_json},
             "meta": {
                 "query": term,
@@ -503,6 +501,8 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
                 },
             },
         }
+        logging.info("retvat=%r", retval)
+        return retval
     finally:
         if cursor: cursor.close()
         put_connection(conn)

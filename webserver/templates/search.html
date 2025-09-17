@@ -239,7 +239,7 @@
         // Build query string (also pass limits to server)
         const qs = new URLSearchParams({
           q: term,
-          limit: '10000',
+          limit: '100000',
           ...(Number.isFinite(L_PLATES) ? { limit_plates: String(L_PLATES) } : {}),
           ...(Number.isFinite(L_ACQS)   ? { limit_acqs:   String(L_ACQS)   } : {}),
           ...(Number.isFinite(L_WELLS)  ? { limit_wells:  String(L_WELLS)  } : {}),

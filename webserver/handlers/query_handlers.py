@@ -136,7 +136,7 @@ class SearchCompoundQueryHandler(RequestHandler):
             return
 
         limits = SearchLimits(
-            raw_limit      = self._int(self.get_argument("limit", ""), 10000, 1, 100000),
+            raw_limit      = self._int(self.get_argument("limit", ""), 100000, 1, 1000000),
             plates         = self._opt_int(self.get_argument("limit_plates", "")),
             acqs_per_plate = self._opt_int(self.get_argument("limit_acqs", "")),
             wells_per_acq  = self._opt_int(self.get_argument("limit_wells", "")),
