@@ -174,7 +174,7 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
         if not os.path.exists(os.path.dirname(merged_file)):
             os.makedirs(os.path.dirname(merged_file))
 
-        cv2.imwrite(merged_file, merged_img)
+        cv2.imwrite(merged_file, merged_img) # type: ignore
 
     return merged_file
 

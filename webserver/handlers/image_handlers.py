@@ -55,7 +55,7 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
         self.write(open(img_path, 'rb').read())
 
 
-class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
+class ThumbImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=abstract-method
     """
     The image handler returns actual images, not just links
     """
@@ -89,8 +89,16 @@ class ThumbImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstr
 
         # logging.debug(img_path)
 
-        self.set_header("Content-type", "image/png")
-        self.write(open(img_path, 'rb').read())
+        #self.set_header("Content-type", "image/png")
+        #self.write(open(img_path, 'rb').read())
+        
+        #logging.info("redirect static handler")
+        #rel_path = os.path.relpath(img_path, imgdb_settings.IMAGES_CACHE_FOLDER)
+        #self.redirect(f"/merged/{rel_path}", permanent=True)
+
+        # Serve via StaticFileHandler without redirect
+        rel_path = os.path.relpath(img_path, imgdb_settings.IMAGES_CACHE_FOLDER)
+        await super().get(rel_path)
 
 
 class ImageMergeHandlerGetURL(tornado.web.RequestHandler): #pylint: disable=abstract-method
