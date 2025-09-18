@@ -161,14 +161,16 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
             merged_img[:, :, 1] = g
 
         # auto white balance and normalize between colors
-        merged_img = auto_white_balance(merged_img)
+        logging.info("before auto w")
+        #merged_img = auto_white_balance(merged_img)
+        logging.info("done auto w")
 
         # ext4 is limited to 256 byte filenames
         filename = os.path.basename(merged_file)
         if len(filename) > 255:
             filename = hash_filename(filename)  # Use the hash function to shorten the filename
             # Join the new filename with the original directory path
-            merged_file = os.path.join(os.path.dirname(merged_file), filename)      
+            merged_file = os.path.join(os.path.dirname(merged_file), filename)
 
         # Save the merged image
         if not os.path.exists(os.path.dirname(merged_file)):

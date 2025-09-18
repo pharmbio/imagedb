@@ -13,7 +13,7 @@ from imageutils import (merge_channels, tif2png)
 import settings as imgdb_settings
 
 
-class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
+class ImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=abstract-method
     """
     The image handler returns actual images, not just links
     """
@@ -28,7 +28,7 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
         logging.debug("ch3:" + ch3)
 
         normalization = False
-        overwrite_cache = False     
+        overwrite_cache = False
         if "nikon" in ch1:
             normalization = True
             overwrite_cache = True
@@ -49,10 +49,13 @@ class ImageMergeHandler(tornado.web.RequestHandler): #pylint: disable=abstract-m
         else:
             img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, overwrite_existing=overwrite_cache, normalization=normalization)
 
-        logging.debug(img_path)
+        #logging.debug(img_path)
 
-        self.set_header("Content-type", "image/png")
-        self.write(open(img_path, 'rb').read())
+        logging.info("done merge")
+
+        # Serve via StaticFileHandler
+        rel_path = os.path.relpath(img_path, imgdb_settings.IMAGES_CACHE_FOLDER)
+        await super().get(rel_path)
 
 
 class ThumbImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=abstract-method
@@ -62,7 +65,7 @@ class ThumbImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=ab
     async def get(self, ch1, ch2, ch3):
         """Handles GET requests.
         """
-        
+
         logging.debug("Inside ThumbImageMergeHandler")
 
         channels = {'1': ch1}
@@ -89,14 +92,7 @@ class ThumbImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=ab
 
         # logging.debug(img_path)
 
-        #self.set_header("Content-type", "image/png")
-        #self.write(open(img_path, 'rb').read())
-        
-        #logging.info("redirect static handler")
-        #rel_path = os.path.relpath(img_path, imgdb_settings.IMAGES_CACHE_FOLDER)
-        #self.redirect(f"/merged/{rel_path}", permanent=True)
-
-        # Serve via StaticFileHandler without redirect
+        # Serve via StaticFileHandler
         rel_path = os.path.relpath(img_path, imgdb_settings.IMAGES_CACHE_FOLDER)
         await super().get(rel_path)
 
