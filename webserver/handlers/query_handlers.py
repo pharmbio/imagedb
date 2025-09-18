@@ -11,8 +11,9 @@ import tornado.web
 import json
 import datetime
 import decimal
+from tornado.web import RequestHandler
 
-from dbqueries import list_all_plates, get_plate, list_image_analyses, move_plate_acq_to_trash, search_compounds
+from dbqueries import list_all_plates, get_plate, list_image_analyses, move_plate_acq_to_trash, search_compounds, SearchLimits
 
 def myserialize(obj):
     """JSON serializer for objects not serializable by default json code"""
@@ -124,44 +125,51 @@ class MoveAcqIDToTrashHandler(tornado.web.RequestHandler):
             self.set_status(500)
             self.write({"status": "error", "message": str(e)})
 
-class SearchCompoundQueryHandler(tornado.web.RequestHandler):
-    """
-    GET /api/search-compound?q=…[&limit=1000]
-      → returns JSON: { results: [ { barcode, plate_acquisition_id, well_id }, … ] }
-      up to `limit` rows (default 1000).
-    """
+
+class SearchCompoundQueryHandler(RequestHandler):
+
     def get(self):
-        q     = self.get_argument("q", "").strip()
-        limit = self.get_argument("limit", "1000")
-        try:
-            limit = int(limit)
-        except ValueError:
-            limit = 1000
-
+        q = self.get_argument("q", "").strip()
         if not q:
-            return self.write(json.dumps({"results": []}))
+            self.set_status(400)
+            self.write({"error": "missing q"})
+            return
+
+        limits = SearchLimits(
+            raw_limit      = self._int(self.get_argument("limit", ""), 100000, 1, 1000000),
+            plates         = self._opt_int(self.get_argument("limit_plates", "")),
+            acqs_per_plate = self._opt_int(self.get_argument("limit_acqs", "")),
+            wells_per_acq  = self._opt_int(self.get_argument("limit_wells", "")),
+        )
+
+        logging.info(f"limits: {limits}")
 
         try:
-            # search_compounds(term, limit) should cap total rows
-            hits = search_compounds(q, limit=limit)
-
-            # build minimal flat result
-            results = [
-                {
-                  "barcode":                r["barcode"],
-                  "plate_acquisition_id":   r["plate_acquisition_id"],
-                  "well_id":                r["well_id"]
-                }
-                for r in hits
-            ]
-
-            self.write(json.dumps({"results": results}))
-
+            payload = search_compounds(q, limits)
+            self.set_header("Content-Type", "application/json")
+            self.write(payload)
         except Exception as e:
-            logging.exception("Error in SearchCompoundQueryHandler")
             self.set_status(500)
-            self.write(json.dumps({"error": str(e)}))
+            self.write({"error": str(e)})
 
+    @staticmethod
+    def _int(raw, default, mn, mx):
+        try:
+            v = int(raw)
+        except Exception:
+            return default
+        return max(mn, min(mx, v))
+
+    @staticmethod
+    def _opt_int(raw):
+        s = str(raw).strip()
+        if not s:
+            return None
+        try:
+            v = int(s)
+            return v if v > 0 else None
+        except Exception:
+            return None
 
 #####
 #####  From pipelinegui
