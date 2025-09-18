@@ -87,6 +87,10 @@ def load_config_channel_names(dir_path: str):
         return name.replace(" ", "_")
 
     config_path = os.path.join(dir_path, "config.json")
+
+    if not os.path.isfile(config_path):
+        return None  # gracefully handle missing file
+
     with open(config_path, "r") as f:
         cfg = json.load(f)
 
@@ -187,7 +191,7 @@ if __name__ == '__main__':
 
 
     retval = parse_path_and_file(
-        "/share/mikro3/squid/anders/test-new-squid2_2025-08-26_13.06.11/O06_s9_x2_y2_z0_Fluorescence_514_nm_Ex.tiff")
+        "/share/mikro3/squid/CLEO_5fp_Clones/clone5_clone6_2025-09-17_14.08.11/C17_s7_x1_y1_z0_Fluorescence_514_nm_Ex.tiff")
     print("\nretval = " + str(retval))
 
     retval = parse_path_and_file(
