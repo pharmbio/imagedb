@@ -58,14 +58,36 @@
     .control-input { width: 90px; }
     .control-input.w110 { width: 110px; }
     .control-input.w120 { width: 120px; }
-  </style>
+  
+    /* Pill counters */
+    .pill {
+      display: inline-block;
+      padding: 0 .5rem;
+      background: #f0f0f0;
+      border-radius: 1rem;
+      font-size: .75rem;
+      margin-left: .35rem;
+      color: #333;
+    }
+    </style>
 </head>
 
 <body>
   <!-- Top bar with search -->
   <nav class="navbar navbar-light bg-light border-bottom">
     <form id="search-form" class="form-inline mx-3" onsubmit="return false;">
-      <input type="text" id="q" class="form-control mr-2" placeholder="batchid, name, inchi…" required>
+      <select id="field" class="form-control mr-2">
+        <option value="">Compound: Any Field</option>
+        <option value="inchi">Compound: inchi</option>
+        <option value="compound_name">Compound: compound_name</option>
+        <option value="batchid">Compound: batchid</option>
+        <option value="cbkid">Compound: cbkid</option>
+        <option value="libid">Compound: libid</option>
+        <option value="libtxt">Compound: libtxt</option>
+        <option value="smiles">Compound: smiles</option>
+        <option value="inkey">Compound: inkey</option>
+      </select>
+      <input type="text" id="q" class="form-control mr-2" placeholder="Search term...." required>
       <button class="btn btn-info" type="submit">Search</button>
     </form>
   </nav>
@@ -75,11 +97,11 @@
     <div class="form-inline mb-3">
       <label class="control-label mr-3">
         Brightness
-        <input type="range" id="brightness-range" min="50" max="3000" value="100" class="form-control-range ml-2">
+        <input type="range" id="brightness-range" min="0" max="3000" value="300" class="form-control-range ml-2">
       </label>
       <label class="control-label mr-4">
         Zoom
-        <input type="range" id="zoom-range" min="50" max="200" value="100" class="form-control-range ml-2">
+        <input type="range" id="zoom-range" min="50" max="200" value="150" class="form-control-range ml-2">
       </label>
 
       <label class="control-label mr-2">Limit plates
@@ -94,6 +116,20 @@
       <label class="control-label mr-2">Limit sites/well
         <input type="number" id="limit-sites" class="form-control ml-2 control-input w110" min="1" placeholder="∞">
       </label>
+    </div>
+
+
+    <!-- Results summary row -->
+    <div class="mb-2">
+      <span>Projects <span id="count-projects" class="pill">0</span></span>
+      <span class="ml-2">Plates <span id="count-plates" class="pill">0</span></span>
+      <span class="ml-2">Acquisitions <span id="count-acqs" class="pill">0</span></span>
+      <span class="ml-2">Wells <span id="count-wells" class="pill">0</span></span>
+    </div>
+
+    <!-- Expand all -->
+    <div class="mb-2">
+      <button id="expand-all-btn" class="btn btn-sm btn-secondary mr-3">Expand all</button>
     </div>
 
     <!-- Tree root -->
@@ -119,10 +155,82 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      function sleep(ms){return new Promise(r=>setTimeout(r, ms));}
+
+      // --- Concurrency limiter for fetches (limits parallel plate/well loads) ---
+      const SEM_MAX_CONCURRENT = 4; // tune if you want more/less parallelism
+      let semInFlight = 0;
+      async function withSemaphore(fn) {
+        while (semInFlight >= SEM_MAX_CONCURRENT) { await sleep(30); }
+        semInFlight++;
+        try { return await fn(); }
+        finally { semInFlight--; }
+      }
+
+      // Smoother "Expand all": expand level-by-level and then nudge images to eager
+      async function expandAllTree(){
+        const root = document.getElementById('tree-root');
+        if(!root) return;
+
+        // Expand progressively so lazy loaders can attach and populate
+        const pass = async (selector, delay=40) => {
+          const nodes = Array.from(root.querySelectorAll(selector));
+          for (const d of nodes) { d.open = true; await sleep(delay); }
+        };
+        await pass(':scope > details', 40);               // projects
+        await pass('details > details', 30);              // plates
+        await pass('details > details > details', 25);    // acquisitions
+        await pass('details details details details', 10);// wells
+
+        // Make images download promptly once nodes exist
+        root.querySelectorAll('img[loading="lazy"]').forEach(img => {
+          try {
+            img.loading = 'eager';
+            img.decoding = 'async';
+            img.setAttribute('fetchpriority','high');
+          } catch(e){}
+        });
+      }
+      const expandBtn = document.getElementById('expand-all-btn');
+      if (expandBtn) expandBtn.addEventListener('click', () => { expandAllTree(); });
+
       const treeRoot     = document.getElementById('tree-root');
       const errorModal   = $('#error-modal');
       const errorMsgPre  = document.getElementById('error-message');
       const brightnessEl = document.getElementById('brightness-range');
+      const C = {
+        projects: document.getElementById('count-projects'),
+        plates:   document.getElementById('count-plates'),
+        acqs:     document.getElementById('count-acqs'),
+        wells:    document.getElementById('count-wells'),
+      };
+      function setCounts(obj) {
+        if (!C.projects) return;
+        C.projects.textContent = obj.projects ?? 0;
+        C.plates.textContent   = obj.plates ?? 0;
+        C.acqs.textContent     = obj.acquisitions ?? 0;
+        C.wells.textContent    = obj.wells ?? 0;
+      }
+      function computeCounts(projectsRootObj) {
+        const result = { projects: 0, plates: 0, acquisitions: 0, wells: 0 };
+        if (!projectsRootObj) return result;
+        const projEntries = Object.entries(projectsRootObj);
+        result.projects = projEntries.length;
+        for (const [, proj] of projEntries) {
+          const plates = proj?.plates ? Object.entries(proj.plates) : [];
+          result.plates += plates.length;
+          for (const [, plate] of plates) {
+            const acqs = plate?.acquisitions ? Object.entries(plate.acquisitions) : [];
+            result.acquisitions += acqs.length;
+            for (const [, acq] of acqs) {
+              const wells = acq?.wells ? acq.wells.length : 0;
+              result.wells += wells;
+            }
+          }
+        }
+        return result;
+      }
+
       const zoomEl       = document.getElementById('zoom-range');
 
       function showError(text) {
@@ -179,7 +287,9 @@
       async function fetchPlateSubset(barcode, acqId, wellsCsv) {
         const key = `${barcode}|${acqId}|${wellsCsv}`;
         if (plateCache.has(key)) return plateCache.get(key);
-        const resp = await fetch(`/api/plate/${encodeURIComponent(barcode)}/${acqId}/${wellsCsv}`);
+        const resp = await withSemaphore(() =>
+          fetch(`/api/plate/${encodeURIComponent(barcode)}/${acqId}/${wellsCsv}`)
+        );
         if (!resp.ok) throw new Error(`Fetch plate failed: ${barcode} acq ${acqId}`);
         const json = await resp.json();
         plateCache.set(key, json);
@@ -211,25 +321,22 @@
           if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
           return resp.json();
         }
-        async function fetchPlateSubset(barcode, acqId, wellsCsv, signal) {
-          return fetchJSON(`/api/plate/${encodeURIComponent(barcode)}/${acqId}/${wellsCsv}`, signal);
+        async function fetchPlateSubsetInner(barcode, acqId, wellsCsv, signal) {
+          // use semaphore here too for inner fetch path
+          return withSemaphore(() => fetchJSON(`/api/plate/${encodeURIComponent(barcode)}/${acqId}/${wellsCsv}`, signal));
         }
-        function makeDetails(summaryText, badgeText = '') {
+        function makeDetailsInner(summaryText, badgeText = '') {
           const d = document.createElement('details');
           const s = document.createElement('summary');
           s.innerHTML = summaryText + (badgeText ? ` <span class="badge">${badgeText}</span>` : '');
           d.appendChild(s);
           return [d, s];
         }
-        function thumbUrlFromChannels(chArr) {
+        function thumbUrlFromChannelsInner(chArr) {
           const paths = chArr.slice(0, 3).map(c => encodeURIComponent(c?.path || ''));
           while (paths.length < 3) paths.push(paths[paths.length - 1] || '');
           return `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
         }
-        // expect these to exist in your page:
-        // - getLimit(id) → number|Infinity
-        // - applyImageSettings(rootEl)
-        // - showError(text)
 
         const L_PLATES = getLimit('limit-plates');
         const L_ACQS   = getLimit('limit-acqs');
@@ -257,13 +364,17 @@
         if (myToken !== renderToken) return;
 
         const projectsRootObj = json?.data?.projects;
+        // Update summary counts
+        const countsFromMeta = json && json.meta && json.meta.counts ? json.meta.counts : null;
+        setCounts(countsFromMeta || computeCounts(projectsRootObj));
         if (!projectsRootObj || !Object.keys(projectsRootObj).length) {
+          setCounts({projects:0, plates:0, acquisitions:0, wells:0});
           treeRoot.textContent = 'No results found.';
           return;
         }
 
         // Root: "Projects"
-        const [projectsRoot] = makeDetails('Projects');
+        const [projectsRoot] = makeDetailsInner('Projects');
         projectsRoot.open = true;
         if (myToken !== renderToken) return;
         treeRoot.appendChild(projectsRoot);
@@ -272,7 +383,7 @@
         for (const [projectName, projectObj] of Object.entries(projectsRootObj)) {
           if (myToken !== renderToken) return;
 
-          const [projDet] = makeDetails(projectName);
+          const [projDet] = makeDetailsInner(projectName);
           projectsRoot.appendChild(projDet);
 
           const plates = projectObj?.plates || {};
@@ -288,7 +399,7 @@
               0, Number.isFinite(L_ACQS) ? L_ACQS : undefined
             );
 
-            const [plateDet] = makeDetails(`Plate ${barcode}`, `${acqEntries.length} acq`);
+            const [plateDet] = makeDetailsInner(`Plate ${barcode}`, `${acqEntries.length} acq`);
             plateDet.dataset.barcode = barcode;
             projDet.appendChild(plateDet);
 
@@ -303,7 +414,7 @@
                   0, Number.isFinite(L_WELLS) ? L_WELLS : undefined
                 );
 
-                const [acqDet] = makeDetails(`Acq ${acqId}`, `${wellsPlanned.length} wells`);
+                const [acqDet] = makeDetailsInner(`Acq ${acqId}`, `${wellsPlanned.length} wells`);
                 acqDet.dataset.acqId = acqId;
                 plateDet.appendChild(acqDet);
 
@@ -315,7 +426,7 @@
                   let plateJson;
                   try {
                     const wellsCsv = wellsPlanned.join(',');
-                    plateJson = await fetchPlateSubset(barcode, acqId, wellsCsv, signal);
+                    plateJson = await fetchPlateSubsetInner(barcode, acqId, wellsCsv, signal);
                   } catch (e) {
                     if (signal.aborted || myToken !== renderToken) return;
                     console.error(e);
@@ -348,7 +459,7 @@
                         ? zInfo.channels
                         : Object.values(zInfo.channels || {});
                       while (ch.length < 3) ch.push(ch[ch.length - 1] || {});
-                      const thumb = thumbUrlFromChannels(ch);
+                      const thumb = thumbUrlFromChannelsInner(ch);
 
                       const card = document.createElement('div');
                       card.className = 'thumb-card';
