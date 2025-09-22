@@ -54,7 +54,7 @@ class ImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=abstrac
         logging.info("done merge")
 
         # Serve via StaticFileHandler
-        rel_path = os.path.relpath(img_path, imgdb_settings.IMAGES_CACHE_FOLDER)
+        rel_path = os.path.relpath(img_path, self.root)
         await super().get(rel_path)
 
 
