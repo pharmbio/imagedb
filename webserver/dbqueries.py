@@ -4,11 +4,13 @@ import json
 import psycopg2
 import psycopg2.pool
 import psycopg2.extras
+from datetime import datetime
 import settings as imgdb_settings
 import platemodel
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+
 
 __connection_pool = None
 
@@ -382,68 +384,89 @@ def _take(it: Iterable[Any], n: Optional[int]) -> List[Any]:
 
 def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[str, Any]:
     """
+    Build a project -> plate -> acquisition -> wells hie    except (Exception, psycopg2.DatabaseError) as err:
+        if conn is not None:
+            conn.rollback()
+        logging.exception("Failed to search compounds.")
+        return {"status": "error", "message": str(err)}rarchy from plate_layout_view_more,
+    including acquisition dates (from 'imaged') and a project-level latest date.
+
     Returns:
       {
         "data": {
           "projects": {
             "<project>": {
               "id": "<project>",
+              "date_iso": "YYYY-MM-DDTHH:MM:SS" | null,
               "plates": {
                 "<barcode>": {
                   "id": "<barcode>",
                   "acquisitions": {
-                    "<acq_id>": { "id": <acq_id>, "wells": ["A01","B03",...] }
+                    "<acq_id>": {
+                      "id": <acq_id>,
+                      "date_iso": "YYYY-MM-DDTHH:MM:SS" | null,
+                      "wells": ["A01","B03", ...]
+                    }
                   }
                 }
               }
             }
           }
         },
-        "meta": { ...counts/limits... }
+        "meta": { "query": term, "limits": {...}, "counts": {...} }
       }
     """
-
-    logging.info(f"term:{term}")
+    def iso(dt):
+        return dt.isoformat() if isinstance(dt, datetime) else (dt.isoformat() if dt else None)
 
     if limits is None:
         limits = SearchLimits()
 
     conn = get_connection()
     cursor = None
+
+    like = f"%{term}%"
+
+    # IMPORTANT:
+    # - We keep WHERE predicates ONLY on the compound-side columns so "preserve plate_layout rows"
+    #   semantics are honored by how you materialized the view. The view itself should be built with
+    #   LEFT JOINs so non-matching compounds still appear (compound columns NULL).
+    # - We OR both v.compound_name and v.name to be resilient to column naming in the view.
+    query = (
+        "SELECT "
+        "  v.project                         AS project, "
+        "  v.barcode                         AS barcode, "
+        "  v.plate_acquisition_id            AS plate_acquisition_id, "
+        "  v.plate_acquisition_name          AS plate_acquisition_name, "
+        "  GREATEST("
+        "     COALESCE(v.imaged,  '-infinity'::timestamp),"
+        "     COALESCE(v.painted, '-infinity'::timestamp)"
+        "        )                           AS acq_date, "
+        "  v.well_id                         AS well_id "
+        "FROM plate_layout_view_more v "
+        "WHERE "
+        "      v.batchid::text ILIKE %(like)s "
+        "   OR v.cbkid         ILIKE %(like)s "
+        "   OR v.libid         ILIKE %(like)s "
+        "   OR v.libtxt        ILIKE %(like)s "
+        "   OR v.smiles        ILIKE %(like)s "
+        "   OR v.inchi         ILIKE %(like)s "
+        "   OR v.inkey         ILIKE %(like)s "
+        "   OR v.name          ILIKE %(like)s "
+        "ORDER BY v.project, v.barcode, v.plate_acquisition_id, v.well_id "
+        "LIMIT %(limit)s"
+    )
+
     try:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        like = f"%{term}%"
-
-        # Include pa.project so we can group by project in the response.
-        # plate_v1 has compound-facing columns; pa is plate_acquisition (has id, name, project, plate_barcode).
-        query = (
-            "SELECT "
-            "  pa.project                  AS project, "
-            "  pa.plate_barcode            AS barcode, "
-            "  pa.id                       AS plate_acquisition_id, "
-            "  pa.name                     AS plate_acquisition_name, "
-            "  pv.well_id                  AS well_id "
-            "FROM plate_v1 pv "
-            "JOIN plate_acquisition pa ON pv.barcode = pa.plate_barcode "
-            "WHERE "
-            "  pv.batchid::text   ILIKE %(like)s OR "
-            "  pv.cbkid            ILIKE %(like)s OR "
-            "  pv.libid            ILIKE %(like)s OR "
-            "  pv.libtxt           ILIKE %(like)s OR "
-            "  pv.smiles           ILIKE %(like)s OR "
-            "  pv.inchi            ILIKE %(like)s OR "
-            "  pv.inkey            ILIKE %(like)s OR "
-            "  pv.compound_name    ILIKE %(like)s "
-            "ORDER BY pa.project, pa.plate_barcode, pa.id, pv.well_id "
-            "LIMIT %(limit)s"
-        )
         cursor.execute(query, {"like": like, "limit": limits.raw_limit})
         rows = cursor.fetchall()
 
-        logging.info(f"rows: {rows}")
+        # Build in-memory index:
+        # project -> plate barcode -> acq_id -> {"date": datetime|None, "wells": [well_ids]}
+        projects_idx: Dict[str, Dict[str, Dict[int, Dict[str, Any]]]] = {}
+        project_latest: Dict[str, Optional[datetime]] = {}
 
-        # Build in-memory index: project -> { barcode -> { acq_id -> [well_ids...] } }
-        projects_idx: Dict[str, Dict[str, Dict[int, List[str]]]] = {}
         uniq_projects = set()
         uniq_plates: set[Tuple[str, str]] = set()
         uniq_acqs: set[Tuple[str, str, int]] = set()
@@ -452,8 +475,9 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
         for r in rows:
             project = str(r["project"]) if r["project"] is not None else "Unknown project"
             barcode = str(r["barcode"])
-            acq_id  = int(r["plate_acquisition_id"])
+            acq_id  = int(r["plate_acquisition_id"]) if r["plate_acquisition_id"] is not None else -1
             well_id = str(r["well_id"])
+            acq_dt  = r.get("acq_date")  # datetime or None
 
             uniq_projects.add(project)
             uniq_plates.add((project, barcode))
@@ -461,26 +485,49 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
             uniq_wells.add((project, barcode, acq_id, well_id))
 
             by_plate = projects_idx.setdefault(project, {})
-            by_acq   = by_plate.setdefault(barcode, {})
-            well_list = by_acq.setdefault(acq_id, [])
-            if well_id not in well_list:
-                well_list.append(well_id)
+            by_acq_map = by_plate.setdefault(barcode, {})
+            acq_entry = by_acq_map.setdefault(acq_id, {"date": acq_dt, "wells": []})
+            # if later rows for same acq have date, prefer non-null / latest
+            if acq_dt and (acq_entry.get("date") is None or acq_dt > acq_entry["date"]):
+                acq_entry["date"] = acq_dt
+            if well_id not in acq_entry["wells"]:
+                acq_entry["wells"].append(well_id)
+
+            # track latest date at the project level
+            if acq_dt:
+                prev = project_latest.get(project)
+                if prev is None or acq_dt > prev:
+                    project_latest[project] = acq_dt
 
         # Serialize with limits
+        def _take(it: Iterable[Any], n: Optional[int]) -> List[Any]:
+            if n is None:
+                return list(it)
+            out = []
+            for i, x in enumerate(it):
+                if i >= n: break
+                out.append(x)
+            return out
+
         projects_json: Dict[str, Any] = {}
         for project, plate_map in projects_idx.items():
             plates_json: Dict[str, Any] = {}
-            for barcode in _take(plate_map.keys(), limits.plates):
+            for barcode in _take(sorted(plate_map.keys()), limits.plates):
                 acq_map = plate_map[barcode]
                 acqs_json: Dict[str, Any] = {}
                 for acq_id in _take(sorted(acq_map.keys()), limits.acqs_per_plate):
-                    wells_sorted = sorted(acq_map[acq_id])
+                    wells_sorted = sorted(acq_map[acq_id]["wells"])
                     acqs_json[str(acq_id)] = {
                         "id": acq_id,
+                        "date_iso": iso(acq_map[acq_id].get("date")),
                         "wells": _take(wells_sorted, limits.wells_per_acq),
                     }
                 plates_json[barcode] = {"id": barcode, "acquisitions": acqs_json}
-            projects_json[project] = {"id": project, "plates": plates_json}
+            projects_json[project] = {
+                "id": project,
+                "date_iso": iso(project_latest.get(project)),
+                "plates": plates_json,
+            }
 
         retval = {
             "data": {"projects": projects_json},
@@ -501,8 +548,12 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
                 },
             },
         }
-        logging.info("retvat=%r", retval)
         return retval
+    
+    except (Exception, psycopg2.DatabaseError) as err:
+        logging.exception("Failed to search compounds.")
+        return {"status": "error", "message": str(err)}
+
     finally:
         if cursor: cursor.close()
         put_connection(conn)

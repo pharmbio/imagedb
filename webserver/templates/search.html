@@ -53,12 +53,23 @@
       margin-left: .4rem;
     }
 
+    /* Date badge: soft yellow */
+    .badge-date{
+      background: #fff3cd;          /* light yellow */
+      border: 1px solid #ffe8a1;    /* pale border */
+      color: #7a5d00;               /* muted amber text */
+      border-radius: .4rem;
+      padding: .05rem .35rem;
+      margin-left: .4rem;
+      font-size: .75rem;
+    }
+
     /* Controls layout */
     .control-label { margin-right: .5rem; }
     .control-input { width: 90px; }
     .control-input.w110 { width: 110px; }
     .control-input.w120 { width: 120px; }
-  
+
     /* Pill counters */
     .pill {
       display: inline-block;
@@ -130,6 +141,7 @@
     <!-- Expand all -->
     <div class="mb-2">
       <button id="expand-all-btn" class="btn btn-sm btn-secondary mr-3">Expand all</button>
+      <button id="sort-mode-btn" class="btn btn-sm btn-outline-secondary">Sort: Date (latest)</button>
     </div>
 
     <!-- Tree root -->
@@ -194,6 +206,21 @@
       const expandBtn = document.getElementById('expand-all-btn');
       if (expandBtn) expandBtn.addEventListener('click', () => { expandAllTree(); });
 
+      // Sort mode (projects): 'date' (latest first) or 'name' (A–Ö)
+      let SORT_MODE = 'date';
+      const sortBtn = document.getElementById('sort-mode-btn');
+      if (sortBtn) {
+        sortBtn.addEventListener('click', () => {
+          SORT_MODE = (SORT_MODE === 'date') ? 'name' : 'date';
+          sortBtn.textContent = SORT_MODE === 'date' ? 'Sort: Date (latest)' : 'Sort: Name (A–Ö)';
+          const term = document.getElementById('q').value.trim();
+          if (term) {
+            // Re-render with the new sort mode (simple approach: re-run current search)
+            renderSearchResults(term);
+          }
+        });
+      }
+
       const treeRoot     = document.getElementById('tree-root');
       const errorModal   = $('#error-modal');
       const errorMsgPre  = document.getElementById('error-message');
@@ -237,6 +264,12 @@
         errorMsgPre.textContent = text;
         errorModal.modal('show');
       }
+
+      // Format ISO date string in Swedish locale
+      const fmtDate = (iso) => {
+        const d = new Date(iso);
+        return Number.isNaN(d) ? (iso?.slice?.(0,10) ?? "") : d.toLocaleDateString('sv-SE');
+      };
 
       function getLimit(id) {
         const v = parseInt(document.getElementById(id).value, 10);
@@ -379,12 +412,28 @@
         if (myToken !== renderToken) return;
         treeRoot.appendChild(projectsRoot);
 
+
         // Iterate: project -> plates -> acquisitions -> wells
-        for (const [projectName, projectObj] of Object.entries(projectsRootObj)) {
+        // Sort projects by date (latest first) or by name (A–Ö) based on SORT_MODE
+        const projectEntries = Object.entries(projectsRootObj);
+        projectEntries.sort((a, b) => {
+          if (SORT_MODE === 'name') {
+            return a[0].localeCompare(b[0], 'sv-SE', { sensitivity: 'base' });
+          } else {
+            const da = Date.parse(a[1]?.date_iso || '') || 0;
+            const db = Date.parse(b[1]?.date_iso || '') || 0;
+            return db - da; // latest first
+          }
+        });
+        for (const [projectName, projectObj] of projectEntries) {
           if (myToken !== renderToken) return;
 
-          const [projDet] = makeDetailsInner(projectName);
+          const projDateHTML = projectObj?.date_iso
+            ? ` <span class="badge-date">${fmtDate(projectObj.date_iso)}</span>`
+            : '';
+          const [projDet] = makeDetailsInner(`${projectName}${projDateHTML}`);
           projectsRoot.appendChild(projDet);
+
 
           const plates = projectObj?.plates || {};
           const plateEntries = Object.entries(plates).slice(
@@ -414,7 +463,11 @@
                   0, Number.isFinite(L_WELLS) ? L_WELLS : undefined
                 );
 
-                const [acqDet] = makeDetailsInner(`Acq ${acqId}`, `${wellsPlanned.length} wells`);
+                // ✨ Add the date from the API (ISO string) after the acquisition id
+                const acqDateHTML = acqObj?.date_iso
+                  ? ` <span class="badge-date">${fmtDate(acqObj.date_iso)}</span>`
+                  : '';
+                const [acqDet] = makeDetailsInner(`Acq ${acqId}${acqDateHTML}`, `${wellsPlanned.length} wells`);
                 acqDet.dataset.acqId = acqId;
                 plateDet.appendChild(acqDet);
 

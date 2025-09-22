@@ -90,10 +90,10 @@ class ThumbImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=ab
         else:
             img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, False)
 
-        # logging.debug(img_path)
+         # logging.debug(img_path)
 
         # Serve via StaticFileHandler
-        rel_path = os.path.relpath(img_path, imgdb_settings.IMAGES_CACHE_FOLDER)
+        rel_path = os.path.relpath(img_path, self.root)  # self.root == COMMON_ROOT
         await super().get(rel_path)
 
 
