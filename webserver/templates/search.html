@@ -141,7 +141,7 @@
     <!-- Expand all -->
     <div class="mb-2">
       <button id="expand-all-btn" class="btn btn-sm btn-secondary mr-3">Expand all</button>
-      <button id="sort-mode-btn" class="btn btn-sm btn-outline-secondary">Sort: Date (latest)</button>
+      <button id="sort-mode-btn" class="btn btn-sm btn-outline-secondary">Sort by Name/Date</button>
     </div>
 
     <!-- Tree root -->
@@ -206,17 +206,15 @@
       const expandBtn = document.getElementById('expand-all-btn');
       if (expandBtn) expandBtn.addEventListener('click', () => { expandAllTree(); });
 
-      // Sort mode (projects): 'date' (latest first) or 'name' (A–Ö)
+      // Sort mode (projects): 'date' (latest first, default) or 'name' (A–Ö)
       let SORT_MODE = 'date';
       const sortBtn = document.getElementById('sort-mode-btn');
       if (sortBtn) {
         sortBtn.addEventListener('click', () => {
           SORT_MODE = (SORT_MODE === 'date') ? 'name' : 'date';
-          sortBtn.textContent = SORT_MODE === 'date' ? 'Sort: Date (latest)' : 'Sort: Name (A–Ö)';
           const term = document.getElementById('q').value.trim();
           if (term) {
-            // Re-render with the new sort mode (simple approach: re-run current search)
-            renderSearchResults(term);
+            renderSearchResults(term); // re-render with new sort mode
           }
         });
       }
