@@ -640,6 +640,77 @@
       let acquisitionID = '{{acqid}}'
       initMainWindow(plateBarcode, acquisitionID);
     });
+
+
+
+
+    // Hook Ctrl/Cmd + wheel to your zoom control when over #plate-div
+(function wirePlateWheelZoom() {
+  const plateDiv   = document.getElementById('plate-div');
+  const zoomWidget = document.getElementById('zoom-select'); // your spinner/select
+
+  if (!plateDiv || !zoomWidget) return;
+
+  // Helper: set zoom value on either a <select> or <input type="number">
+  function setZoomValue(next) {
+    if (zoomWidget.tagName === 'SELECT') {
+      // choose closest option
+      let best = zoomWidget.options[0].value;
+      let bestDiff = Infinity;
+      for (const opt of zoomWidget.options) {
+        const v = Number(opt.value);
+        const d = Math.abs(v - next);
+        if (d < bestDiff) { best = v; bestDiff = d; }
+      }
+      zoomWidget.value = String(best);
+    } else {
+      // number input spinner
+      const min  = zoomWidget.min ? Number(zoomWidget.min) : 10;
+      const max  = zoomWidget.max ? Number(zoomWidget.max) : 400;
+      const step = zoomWidget.step ? Number(zoomWidget.step) : 10;
+      const clamped = Math.min(max, Math.max(min, Math.round(next / step) * step));
+      zoomWidget.value = String(clamped);
+    }
+    // fire change so your redraw runs
+    zoomWidget.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  // Get current numeric zoom (%)
+  function getZoomValue() {
+    const v = Number(zoomWidget.value);
+    return Number.isFinite(v) ? v : 100;
+  }
+
+  // Wheel handler: Ctrl/Cmd + wheel only
+  plateDiv.addEventListener('wheel', (e) => {
+    if (!(e.ctrlKey || e.metaKey)) return;   // only with Ctrl/⌘
+    e.preventDefault();                      // stop browser zoom
+
+    if (zoomWidget.tagName !== 'SELECT') return;
+
+    // Collect allowed zoom values from the <select>
+    const opts = Array.from(zoomWidget.options).map(o => Number(o.value)).sort((a,b)=>a-b);
+    const current = Number(zoomWidget.value);
+    const idx = opts.indexOf(current);
+    if (idx === -1) return; // current not found, nothing to do
+
+    const dir = Math.sign(e.deltaY) || 1;
+    let nextIdx = idx;
+
+    if (dir > 0) { // scroll down => zoom out
+      if (idx > 1) nextIdx = idx - 1;
+      else return; // already at min, stop
+    } else {       // scroll up => zoom in
+      if (idx < opts.length - 1) nextIdx = idx + 1;
+      else return; // already at max, stop
+    }
+
+    const next = opts[nextIdx];
+    setZoomValue(next); // will update UI + trigger redraw
+  }, { passive: false });
+
+})();
+
   </script>
 
 </body>

@@ -9,16 +9,63 @@ ul li a {
     cursor: pointer;
 }
 
-.wellCell {
-    width: 100px;
-    height: 100px;
-    background: #ff0000;
+/* Scroll container (reuses your #plate-div) */
+#plate-div {
+  position: relative;
+  overflow: auto;         /* allow scroll at >100% */
+  touch-action: none;           /* block pinch-zoom gestures */
+  overscroll-behavior: contain; /* avoid scroll chaining */
 }
 
-.siteCell {
-    width: 100px;
-    height: 100px;
-    background: #ff0000;
+/* The absolute stage we draw onto */
+#plate-abs-stage {
+  position: relative;     /* positioned children (the sites) use this as origin */
+  transform-origin: 0 0;  /* if you later choose transform-based zoom */
+  will-change: transform;
+}
+
+.abs-well {
+  position: absolute;
+  border: 1px solid lightgray;
+  box-sizing: border-box;  /* width/height include the border */
+  z-index: 0;              /* sits behind sites */
+}
+
+.abs-site {
+    position: absolute;
+    z-index: 1;
+}
+
+/* The actual image */
+.abs-site > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;    /* keep AR; no cropping inside tile */
+  display: block;
+  cursor: pointer;
+}
+
+/* Header strips */
+.abs-row-header, .abs-col-header {
+  position: absolute;
+  font-size: 12px;
+  color: gray;
+  text-align: center;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none; /* clicks go through to sites */
+}
+
+.abs-row-header {
+  left: 0;
+  width: 20px;         /* margin strip for row labels */
+  text-align: right;
+}
+
+.abs-col-header {
+  top: 0;
+  height: 20px;        /* margin strip for column labels */
+  text-align: center;
 }
 
 
@@ -26,27 +73,6 @@ ul li a {
     color: lightgray;
     text-align: center;
     vertical-align: middle;
-}
-
-.plateTable {
-    background-color: #fafafa;
-    border-collapse: separate;
-}
-
-.plateTable td {
-    background-color: #fafafa;
-    /* This makes empty cells become a bit smaller*/
-    width: 50px;
-    height: 50px;
-    padding: 0px;
-}
-
-.siteTable td {
-    background-color: #fafafa;
-    /* This makes empty cells become a bit smaller*/
-    width: 50px;
-    height: 50px;
-    padding: 0;
 }
 
 .wellDiv{
@@ -57,8 +83,6 @@ ul li a {
     font-size: 1.1rem;
  }
 
-.siteDiv{
-}
 
 .layoutInfoDotDiv {
     position: absolute;

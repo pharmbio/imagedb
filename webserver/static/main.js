@@ -1453,7 +1453,154 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   }
 
+  /**
+   * Absolute-positioned plate renderer (full version)
+   * - Renders a bordered .abs-well per well (border included in size)
+   * - Renders each site as an absolutely positioned tile inside its well
+   * - Zoom: scales layout (positions + sizes) from getSelectedZoomValue()
+   * - Brightness: CSS filter applied to thumbnails
+   * - Never crops at >100%; container scrolls as needed
+   *
+   * Call instead of the table renderer:
+   *   drawPlateAbsolute(getLoadedPlate(), getSelectedAcquisition(), SITES_ARRAY, getSelectedZpos());
+   */
+  function drawPlateAbsolute(plateObj, acquisition, sites, zpos) {
+    const container = document.getElementById('plate-div');
+    if (!container || !plateObj) return;
+
+    // ----- stage bootstrap -----
+    let stage = document.getElementById('plate-abs-stage');
+    if (!stage) {
+      container.textContent = ''; // clear any old table-based content
+      stage = document.createElement('div');
+      stage.id = 'plate-abs-stage';
+      container.appendChild(stage);
+    } else {
+      stage.textContent = '';
+    }
+    container.style.position = 'relative';
+    container.style.overflow = 'auto';
+    // Remove old headers on redraw
+    container.querySelectorAll('.abs-row-header,.abs-col-header').forEach(n => n.remove());
+
+    // ----- config / inputs -----
+    const BASE_TILE = 100; // px per site at 100%
+    const BW = 1;          // well border width (px)
+    const GAP = 0;         // spacing between site tiles (px)
+
+    const zoomPct = (typeof getSelectedZoomValue === 'function') ? getSelectedZoomValue() : 100;
+    const scale   = Math.max(0.05, zoomPct / 100);
+    const TILE    = Math.round(BASE_TILE * scale);
+
+    const siteCount = Array.isArray(sites) ? sites.length : 0;
+    const GRID_COLS = Math.max(1, Math.ceil(Math.sqrt(siteCount || 1)));
+    const GRID_ROWS = Math.max(1, Math.ceil((siteCount || 1) / GRID_COLS));
+
+    // Inner (content) size of a well (no border)
+    const wellContentW = GRID_COLS * TILE + (GRID_COLS - 1) * GAP;
+    const wellContentH = GRID_ROWS * TILE + (GRID_ROWS - 1) * GAP;
+
+    // Outer (border-box) size of a well
+    const wellOuterW = wellContentW + 2 * BW;
+    const wellOuterH = wellContentH + 2 * BW;
+
+    // Stage size (so scrollbars reflect true layout at any zoom)
+    const plateSize = plateObj.getPlateSize(sites); // { rows, cols, sites }
+    stage.style.width  = (plateSize.cols * wellOuterW) + 'px';
+    stage.style.height = (plateSize.rows * wellOuterH) + 'px';
+    stage.style.position = 'relative';
+
+    // Use first z (same behavior as your table renderer)
+    const z = Array.isArray(zpos) ? zpos[0] : zpos;
+
+    // Brightness (100 = neutral)
+    const brightness = (typeof getSelectedBrightnessValue === 'function')
+      ? Math.max(0, (getSelectedBrightnessValue() / 100))
+      : 1.0;
+
+    // ----- helpers -----
+
+    // Map "A01" → { r, c } zero-based. If you already have a helper, swap it in.
+    function wellRowCol(name) {
+      const m = String(name).match(/^([A-Za-z]+)(\d+)$/);
+      if (!m) return { r: 0, c: 0 };
+      // Letters to row index (A=0, B=1, ... AA, AB, ...)
+      const letters = m[1].toUpperCase();
+      let r = 0;
+      for (let i = 0; i < letters.length; i++) r = r * 26 + (letters.charCodeAt(i) - 64);
+      r -= 1; // 0-based
+      const c = parseInt(m[2], 10) - 1; // 0-based
+      return { r, c };
+    }
+
+    // Site index (0..siteCount-1) → (row, col) in our compact grid
+    function siteIndexToRC(idx) {
+      return { sr: Math.floor(idx / GRID_COLS), sc: (idx % GRID_COLS) };
+    }
+
+    // ----- render wells + sites -----
+    const wells = plateObj.getWells(acquisition);
+    const frag = document.createDocumentFragment();
+
+    Object.keys(wells).forEach((wellName) => {
+      const well = wells[wellName];
+      const { r: wr, c: wc } = wellRowCol(wellName);
+
+      // Well frame (border included; sits behind sites)
+      const wellDiv = document.createElement('div');
+      wellDiv.className = 'abs-well';
+      wellDiv.style.left   = (wc * wellOuterW) + 'px';
+      wellDiv.style.top    = (wr * wellOuterH) + 'px';
+      wellDiv.style.width  = wellOuterW + 'px';
+      wellDiv.style.height = wellOuterH + 'px';
+      wellDiv.style.position = 'absolute';
+      wellDiv.style.border = `${BW}px solid lightgray`;
+      wellDiv.style.boxSizing = 'border-box';
+      wellDiv.style.zIndex = '0';
+      frag.appendChild(wellDiv);
+
+      // Sites inside well (offset by BW to sit within the border)
+      (sites || []).forEach((siteName, idx) => {
+        const sObj  = well?.sites?.[siteName];
+        const entry = sObj?.z_positions?.[z];
+        if (!entry || !entry.channels) return;
+
+        const { sr, sc } = siteIndexToRC(idx);
+
+        const left = wc * wellOuterW + BW + sc * (TILE + GAP);
+        const top  = wr * wellOuterH + BW + sr * (TILE + GAP);
+
+        const tile = document.createElement('div');
+        tile.className = 'abs-site';
+        tile.style.left = left + 'px';
+        tile.style.top  = top  + 'px';
+        tile.style.width  = TILE + 'px';
+        tile.style.height = TILE + 'px';
+        tile.style.position = 'absolute';
+        tile.style.zIndex = '1';
+        tile.style.lineHeight = '0';
+
+        const img = document.createElement('img');
+        img.className = 'cellThumbImg';
+        img.decoding = 'async';
+        img.loading  = 'lazy';
+        img.style.filter = `brightness(${brightness})`;
+        img.src = createMergeThumbImgURLFromChannels(entry.channels);
+        img.addEventListener('click', () => openViewer(wellName, siteName));
+
+        tile.appendChild(img);
+        frag.appendChild(tile);
+      });
+    });
+
+    stage.appendChild(frag);
+  }
+
   function drawPlate(plateObj, acquisition, sites, zpos, clearFirst) {
+    return drawPlateAbsolute(plateObj, acquisition, sites, zpos, clearFirst);
+  }
+
+  function drawPlateOld(plateObj, acquisition, sites, zpos, clearFirst) {
 
     console.log("plateObj", plateObj);
     console.log("clearFirst", clearFirst);
