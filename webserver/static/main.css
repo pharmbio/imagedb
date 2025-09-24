@@ -9,6 +9,7 @@ ul li a {
     cursor: pointer;
 }
 
+
 /* Scroll container (reuses your #plate-div) */
 #plate-div {
   position: relative;

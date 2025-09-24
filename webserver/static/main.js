@@ -1453,147 +1453,241 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   }
 
-  /**
-   * Absolute-positioned plate renderer (full version)
-   * - Renders a bordered .abs-well per well (border included in size)
-   * - Renders each site as an absolutely positioned tile inside its well
-   * - Zoom: scales layout (positions + sizes) from getSelectedZoomValue()
-   * - Brightness: CSS filter applied to thumbnails
-   * - Never crops at >100%; container scrolls as needed
-   *
-   * Call instead of the table renderer:
-   *   drawPlateAbsolute(getLoadedPlate(), getSelectedAcquisition(), SITES_ARRAY, getSelectedZpos());
-   */
   function drawPlateAbsolute(plateObj, acquisition, sites, zpos) {
     const container = document.getElementById('plate-div');
     if (!container || !plateObj) return;
 
-    // ----- stage bootstrap -----
-    let stage = document.getElementById('plate-abs-stage');
-    if (!stage) {
-      container.textContent = ''; // clear any old table-based content
-      stage = document.createElement('div');
-      stage.id = 'plate-abs-stage';
-      container.appendChild(stage);
-    } else {
-      stage.textContent = '';
-    }
+    // ---------- bootstrap wrapper + layers ----------
     container.style.position = 'relative';
     container.style.overflow = 'auto';
-    // Remove old headers on redraw
-    container.querySelectorAll('.abs-row-header,.abs-col-header').forEach(n => n.remove());
 
-    // ----- config / inputs -----
-    const BASE_TILE = 100; // px per site at 100%
-    const BW = 1;          // well border width (px)
-    const GAP = 0;         // spacing between site tiles (px)
+    let wrap = document.getElementById('plate-abs-wrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'plate-abs-wrap';
+      container.innerHTML = '';
+      container.appendChild(wrap);
+    } else {
+      wrap.innerHTML = '';
+    }
 
-    const zoomPct = (typeof getSelectedZoomValue === 'function') ? getSelectedZoomValue() : 100;
-    const scale   = Math.max(0.05, zoomPct / 100);
-    const TILE    = Math.round(BASE_TILE * scale);
+    // Layers: headers (labels) and stage (zoomable content)
+    const headers = document.createElement('div');
+    headers.id = 'plate-abs-headers';
+    Object.assign(headers.style, {
+      position: 'absolute', left: '0px', top: '0px',
+      transformOrigin: '0 0'
+    });
+    wrap.appendChild(headers);
 
-    const siteCount = Array.isArray(sites) ? sites.length : 0;
-    const GRID_COLS = Math.max(1, Math.ceil(Math.sqrt(siteCount || 1)));
-    const GRID_ROWS = Math.max(1, Math.ceil((siteCount || 1) / GRID_COLS));
+    const stage = document.createElement('div');
+    stage.id = 'plate-abs-stage';
+    Object.assign(stage.style, {
+      position: 'absolute', left: '0px', top: '0px',
+      transformOrigin: '0 0'
+    });
+    wrap.appendChild(stage);
 
-    // Inner (content) size of a well (no border)
-    const wellContentW = GRID_COLS * TILE + (GRID_COLS - 1) * GAP;
-    const wellContentH = GRID_ROWS * TILE + (GRID_ROWS - 1) * GAP;
+    // ---------- build at BASE = 100% (no scaling here) ----------
+    const BASE_TILE = 100;
+    const BW = 1;
+    const GAP = 0;
 
-    // Outer (border-box) size of a well
-    const wellOuterW = wellContentW + 2 * BW;
-    const wellOuterH = wellContentH + 2 * BW;
+    if (!Array.isArray(sites) || !sites.length) {
+      sites = (plateObj.getSiteNames?.(acquisition)) || sites || [];
+    }
+    const siteCount = sites.length || 1;
+    const GRID_COLS = Math.max(1, Math.ceil(Math.sqrt(siteCount)));
+    const GRID_ROWS = Math.max(1, Math.ceil(siteCount / GRID_COLS));
 
-    // Stage size (so scrollbars reflect true layout at any zoom)
-    const plateSize = plateObj.getPlateSize(sites); // { rows, cols, sites }
-    stage.style.width  = (plateSize.cols * wellOuterW) + 'px';
-    stage.style.height = (plateSize.rows * wellOuterH) + 'px';
-    stage.style.position = 'relative';
+    const wellContentW = GRID_COLS * BASE_TILE + (GRID_COLS - 1) * GAP;
+    const wellContentH = GRID_ROWS * BASE_TILE + (GRID_ROWS - 1) * GAP;
+    const wellOuterW   = wellContentW + 2 * BW;
+    const wellOuterH   = wellContentH + 2 * BW;
 
-    // Use first z (same behavior as your table renderer)
-    const z = Array.isArray(zpos) ? zpos[0] : zpos;
+    const plateSize = plateObj.getPlateSize?.(sites) || { rows: 0, cols: 0 };
 
-    // Brightness (100 = neutral)
+    // gutters (base, unscaled)
+    const HEADER_W = 24, HEADER_H = 20;
+
+    // base content size
+    const baseContentW = (plateSize.cols * wellOuterW);
+    const baseContentH = (plateSize.rows * wellOuterH);
+
+    // total base size (gutters + content) — wrapper should be this
+    const baseTotalW = HEADER_W + baseContentW;
+    const baseTotalH = HEADER_H + baseContentH;
+
+    // position stage inside total space (offset by gutters in base coords)
+    stage.style.left = HEADER_W + 'px';
+    stage.style.top  = HEADER_H + 'px';
+    stage.style.width  = baseContentW + 'px';
+    stage.style.height = baseContentH + 'px';
+
+    // store base sizes for zoom helper
+    wrap.dataset.baseTotalW = String(baseTotalW);
+    wrap.dataset.baseTotalH = String(baseTotalH);
+    wrap.dataset.baseContentW = String(baseContentW);
+    wrap.dataset.baseContentH = String(baseContentH);
+
+    // size wrapper to BASE; zoom will resize it
+    wrap.style.position = 'relative';
+    wrap.style.width  = baseTotalW + 'px';
+    wrap.style.height = baseTotalH + 'px';
+
+    // z + brightness
+    let z = Array.isArray(zpos) ? zpos[0] : zpos;
+    if (z == null) {
+      const wellsProbe = plateObj.getWells?.(acquisition) || {};
+      outer: for (const wname of Object.keys(wellsProbe)) {
+        const sMap = wellsProbe[wname]?.sites || {};
+        for (const sName of Object.keys(sMap)) {
+          const zp = sMap[sName]?.z_positions;
+          if (zp) { z = Number(Object.keys(zp)[0]); break outer; }
+        }
+      }
+      if (z == null) z = 0;
+    }
     const brightness = (typeof getSelectedBrightnessValue === 'function')
-      ? Math.max(0, (getSelectedBrightnessValue() / 100))
+      ? Math.max(0, getSelectedBrightnessValue() / 100)
       : 1.0;
 
-    // ----- helpers -----
-
-    // Map "A01" → { r, c } zero-based. If you already have a helper, swap it in.
+    // helpers
     function wellRowCol(name) {
       const m = String(name).match(/^([A-Za-z]+)(\d+)$/);
       if (!m) return { r: 0, c: 0 };
-      // Letters to row index (A=0, B=1, ... AA, AB, ...)
       const letters = m[1].toUpperCase();
-      let r = 0;
-      for (let i = 0; i < letters.length; i++) r = r * 26 + (letters.charCodeAt(i) - 64);
-      r -= 1; // 0-based
-      const c = parseInt(m[2], 10) - 1; // 0-based
+      let r = 0; for (let i = 0; i < letters.length; i++) r = r * 26 + (letters.charCodeAt(i) - 64);
+      r -= 1;
+      const c = parseInt(m[2], 10) - 1;
       return { r, c };
     }
-
-    // Site index (0..siteCount-1) → (row, col) in our compact grid
-    function siteIndexToRC(idx) {
-      return { sr: Math.floor(idx / GRID_COLS), sc: (idx % GRID_COLS) };
+    function rowLetters(idx) {
+      let s = '', n = idx;
+      while (n >= 0) { s = String.fromCharCode((n % 26) + 65) + s; n = Math.floor(n / 26) - 1; }
+      return s;
     }
 
-    // ----- render wells + sites -----
-    const wells = plateObj.getWells(acquisition);
-    const frag = document.createDocumentFragment();
+    // ---------- headers (now inside headers layer so they scale with zoom) ----------
+    for (let r = 0; r < plateSize.rows; r++) {
+      const lab = document.createElement('div');
+      Object.assign(lab.style, {
+        position: 'absolute',
+        left: 0 + 'px',
+        top:  (HEADER_H + r * wellOuterH + wellOuterH/2 - 6) + 'px',
+        width: HEADER_W + 'px',
+        height: '12px',
+        textAlign: 'right',
+        color: 'gray',
+        pointerEvents: 'none'
+      });
+      lab.textContent = rowLetters(r);
+      headers.appendChild(lab);
+    }
+    for (let c = 0; c < plateSize.cols; c++) {
+      const lab = document.createElement('div');
+      Object.assign(lab.style, {
+        position: 'absolute',
+        top: 0 + 'px',
+        left: (HEADER_W + c * wellOuterW + wellOuterW/2 - 10) + 'px',
+        width: '20px',
+        height: HEADER_H + 'px',
+        textAlign: 'center',
+        color: 'gray',
+        pointerEvents: 'none'
+      });
+      lab.textContent = String(c + 1);
+      headers.appendChild(lab);
+    }
 
-    Object.keys(wells).forEach((wellName) => {
+    // ---------- wells + sites (BASE coords; same as before, but note left/top include HEADER offsets) ----------
+    const wells = plateObj.getWells?.(acquisition) || {};
+    const frag  = document.createDocumentFragment();
+
+    for (const wellName of Object.keys(wells)) {
       const well = wells[wellName];
       const { r: wr, c: wc } = wellRowCol(wellName);
 
-      // Well frame (border included; sits behind sites)
       const wellDiv = document.createElement('div');
-      wellDiv.className = 'abs-well';
-      wellDiv.style.left   = (wc * wellOuterW) + 'px';
-      wellDiv.style.top    = (wr * wellOuterH) + 'px';
-      wellDiv.style.width  = wellOuterW + 'px';
-      wellDiv.style.height = wellOuterH + 'px';
-      wellDiv.style.position = 'absolute';
-      wellDiv.style.border = `${BW}px solid lightgray`;
-      wellDiv.style.boxSizing = 'border-box';
-      wellDiv.style.zIndex = '0';
+      Object.assign(wellDiv.style, {
+        position: 'absolute',
+        left:   (HEADER_W + wc * wellOuterW) + 'px',
+        top:    (HEADER_H + wr * wellOuterH) + 'px',
+        width:   wellOuterW + 'px',
+        height:  wellOuterH + 'px',
+        border: `${BW}px solid lightgray`,
+        boxSizing: 'border-box',
+        zIndex: '0'
+      });
       frag.appendChild(wellDiv);
 
-      // Sites inside well (offset by BW to sit within the border)
-      (sites || []).forEach((siteName, idx) => {
-        const sObj  = well?.sites?.[siteName];
-        const entry = sObj?.z_positions?.[z];
-        if (!entry || !entry.channels) return;
+      sites.forEach((siteName, idx) => {
+        const entry = well?.sites?.[siteName]?.z_positions?.[z]
+                   || Object.values(well?.sites?.[siteName]?.z_positions || {})[0];
+        if (!entry?.channels) return;
 
-        const { sr, sc } = siteIndexToRC(idx);
+        const sr = Math.floor(idx / GRID_COLS);
+        const sc = idx % GRID_COLS;
 
-        const left = wc * wellOuterW + BW + sc * (TILE + GAP);
-        const top  = wr * wellOuterH + BW + sr * (TILE + GAP);
+        const left = HEADER_W + wc * wellOuterW + BW + sc * (BASE_TILE + GAP);
+        const top  = HEADER_H + wr * wellOuterH + BW + sr * (BASE_TILE + GAP);
 
         const tile = document.createElement('div');
-        tile.className = 'abs-site';
-        tile.style.left = left + 'px';
-        tile.style.top  = top  + 'px';
-        tile.style.width  = TILE + 'px';
-        tile.style.height = TILE + 'px';
-        tile.style.position = 'absolute';
-        tile.style.zIndex = '1';
-        tile.style.lineHeight = '0';
+        Object.assign(tile.style, {
+          position: 'absolute',
+          left:   left + 'px',
+          top:    top  + 'px',
+          width:  BASE_TILE + 'px',
+          height: BASE_TILE + 'px',
+          zIndex: '1',
+          lineHeight: '0'
+        });
 
         const img = document.createElement('img');
-        img.className = 'cellThumbImg';
+        Object.assign(img.style, {
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          display: 'block',
+          filter: `brightness(${brightness})`
+        });
         img.decoding = 'async';
         img.loading  = 'lazy';
-        img.style.filter = `brightness(${brightness})`;
         img.src = createMergeThumbImgURLFromChannels(entry.channels);
         img.addEventListener('click', () => openViewer(wellName, siteName));
 
         tile.appendChild(img);
         frag.appendChild(tile);
       });
-    });
+    }
 
     stage.appendChild(frag);
+
+    // ---------- apply current zoom to BOTH stage and headers ----------
+    const zoomval = getSelectedZoomValue();
+    applyPlateZoom(zoomval); // defined below
+  }
+
+
+  function applyPlateZoom(zoomPercent) {
+    const wrap    = document.getElementById('plate-abs-wrap');
+    const stage   = document.getElementById('plate-abs-stage');
+    const headers = document.getElementById('plate-abs-headers');
+    if (!wrap || !stage || !headers) return;
+
+    const z = Math.max(5, Number(zoomPercent) || 100);
+    const s = z / 100;
+
+    const baseTotalW = Number(wrap.dataset.baseTotalW) || (wrap.offsetWidth || 0);
+    const baseTotalH = Number(wrap.dataset.baseTotalH) || (wrap.offsetHeight || 0);
+
+    // scale both layers
+    stage.style.transform   = `scale(${s})`;
+    headers.style.transform = `scale(${s})`;
+
+    // resize wrapper so scrollbars reflect the scaled total (gutters + content)
+    wrap.style.width  = (baseTotalW * s) + 'px';
+    wrap.style.height = (baseTotalH * s) + 'px';
   }
 
   function drawPlate(plateObj, acquisition, sites, zpos, clearFirst) {
