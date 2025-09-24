@@ -10,16 +10,20 @@ ul li a {
 }
 
 .wellCell {
-    width: 100px;
-    height: 100px;
+    width: auto;
+    height: auto;
     background: #ff0000;
 }
 
 .siteCell {
-    width: 100px;
-    height: 100px;
+    width: auto;
+    height: auto;
     background: #ff0000;
 }
+
+    /* collapse borders & padding so cells hug the content */
+    .plateTable { border-collapse: collapse; table-layout: fixed; }
+    td.siteCell { padding: 0; vertical-align: top; }
 
 
 .headerCell {
@@ -30,22 +34,23 @@ ul li a {
 
 .plateTable {
     background-color: #fafafa;
-    border-collapse: separate;
+    border-collapse: collapse;   /* remove inter-cell gaps */
+    border-spacing: 0;           /* ensure no spacing remains */
 }
 
 .plateTable td {
     background-color: #fafafa;
     /* This makes empty cells become a bit smaller*/
-    width: 50px;
-    height: 50px;
-    padding: 0px;
+    width: auto;
+    height: auto;
+    padding: 1px;
 }
 
 .siteTable td {
     background-color: #fafafa;
     /* This makes empty cells become a bit smaller*/
-    width: 50px;
-    height: 50px;
+    width: auto;
+    height: auto;
     padding: 0;
 }
 
@@ -56,9 +61,6 @@ ul li a {
 .tooltip{
     font-size: 1.1rem;
  }
-
-.siteDiv{
-}
 
 .layoutInfoDotDiv {
     position: absolute;

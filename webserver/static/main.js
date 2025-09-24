@@ -1533,6 +1533,8 @@ function drawPlatesListSidebar_old(origPlatesList){
             siteCanvas.width = 100 * scale;
             siteCanvas.height = 100 * scale;
 
+            // Make the table cell match the canvas size (prevents white bands at small zoom)
+
             let context = siteCanvas.getContext('2d');
 
 
@@ -1557,7 +1559,8 @@ function drawPlatesListSidebar_old(origPlatesList){
               //wellThumbImg
               img.onload = function () {
                 context.filter = 'brightness(' + brightness + ')'
-                context.drawImage(img, 0, 0);
+                //context.drawImage(img, 0, 0);
+                context.drawImage(img, 0, 0, siteCanvas.width, siteCanvas.height);
               };
 
               // Create open Viewer click handlers
