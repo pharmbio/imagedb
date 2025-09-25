@@ -80,11 +80,19 @@
   overflow-x: hidden; /* Hide horizontal scrollbar */
 }
 
-/* Adjustments for right pane to make it scrollable */
+
+/* Right pane becomes a flex column; child (#plate-div) handles all scrolling */
 #page-content-wrapper {
-  max-height: 100vh; /* Full viewport height */
-  overflow-y: auto; /* Enable vertical scroll */
-  overflow-x: hidden; /* Hide horizontal scrollbar */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;       /* Fill viewport */
+  overflow: hidden;    /* Prevent parent from scrolling; delegate to #plate-div */
+}
+
+/* Let the plate area own scrolling within the flex column */
+#plate-div {
+  flex: 1 1 auto;   /* take remaining height */
+  min-height: 0;    /* critical so it can actually scroll in a flex parent */
 }
 
 /* Custom scrollbar styles for Webkit browsers */
@@ -482,7 +490,7 @@
       <!-- end Toolbar -->
 
       <!-- Plate Table div -->
-      <div id="plate-div" class="container-fluid flex-fill" style="overflow-x: auto">
+      <div id="plate-div" class="container-fluid flex-fill" style="overflow: auto">
       </div>
 
       <!-- image_analyses table-->
@@ -641,76 +649,268 @@
       initMainWindow(plateBarcode, acquisitionID);
     });
 
+</script>
 
+<script>
+  /* ===============================
+     Plate UX helpers (drop-in)
+     =============================== */
+  (function () {
+    /* ---------- CSS override so #plate-div can scroll vertically ---------- */
+    (function injectPlateLayoutCSS() {
+      var css = `
+        /* Make right pane a flex column and delegate scroll to #plate-div */
+        #page-content-wrapper {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          overflow: hidden !important;
+        }
+        /* Let #plate-div own scrolling in the flex column */
+        #plate-div {
+          flex: 1 1 auto;
+          min-height: 0;       /* critical for vertical scrolling in flex children */
+          overflow: auto;      /* both axes */
+          touch-action: none;  /* nicer touch/pointer panning; we'll manage gestures */
+          overscroll-behavior: contain;
+        }
+      `;
+      var style = document.createElement('style');
+      style.setAttribute('data-plate-ux', 'true');
+      style.textContent = css;
+      document.head.appendChild(style);
+    })();
 
+    /* ---------- Utilities ---------- */
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function getZoomSelect() { return document.getElementById('zoom-select'); }
+    function getPlateDiv()    { return document.getElementById('plate-div'); }
+    function getWrap()        { return document.getElementById('plate-abs-wrap'); }
 
-    // Hook Ctrl/Cmd + wheel to your zoom control when over #plate-div
-(function wirePlateWheelZoom() {
-  const plateDiv   = document.getElementById('plate-div');
-  const zoomWidget = document.getElementById('zoom-select'); // your spinner/select
+    function getCurrentScale() {
+      var sel = getZoomSelect();
+      var z = sel ? Number(sel.value) || 100 : 100;
+      return Math.max(0.05, z / 100);
+    }
 
-  if (!plateDiv || !zoomWidget) return;
-
-  // Helper: set zoom value on either a <select> or <input type="number">
-  function setZoomValue(next) {
-    if (zoomWidget.tagName === 'SELECT') {
-      // choose closest option
-      let best = zoomWidget.options[0].value;
-      let bestDiff = Infinity;
-      for (const opt of zoomWidget.options) {
-        const v = Number(opt.value);
-        const d = Math.abs(v - next);
-        if (d < bestDiff) { best = v; bestDiff = d; }
+    function setZoomClosest(zPercent) {
+      var sel = getZoomSelect();
+      if (!sel) return;
+      var bestIdx = 0, bestDiff = Infinity;
+      for (var i = 0; i < sel.options.length; i++) {
+        var v = Number(sel.options[i].value);
+        var d = Math.abs(v - zPercent);
+        if (d < bestDiff) { bestDiff = d; bestIdx = i; }
       }
-      zoomWidget.value = String(best);
+      sel.selectedIndex = bestIdx;
+      if (typeof window.applyPlateZoom === 'function') {
+        window.applyPlateZoom(Number(sel.options[bestIdx].value));
+      } else {
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
+    /* ---------- Zoom at pointer ---------- */
+    function zoomAt(container, pointer, nextPercent) {
+      var wrap = getWrap();
+      if (!wrap) { setZoomClosest(nextPercent); return; }
+
+      var s  = getCurrentScale();
+      var ns = Math.max(0.05, (nextPercent || 100) / 100);
+
+      var L = container.scrollLeft;
+      var T = container.scrollTop;
+      var x = pointer.x;
+      var y = pointer.y;
+
+      // content coords under pointer (pre-zoom)
+      var cx = (L + x) / s;
+      var cy = (T + y) / s;
+
+      // apply zoom (updates wrap size via applyPlateZoom)
+      setZoomClosest(nextPercent);
+
+      // new ideal scrolls to keep same content under cursor
+      var Lp = cx * ns - x;
+      var Tp = cy * ns - y;
+
+      var maxL = Math.max(0, wrap.scrollWidth  - container.clientWidth);
+      var maxT = Math.max(0, wrap.scrollHeight - container.clientHeight);
+
+      container.scrollLeft = clamp(Lp, 0, maxL);
+      container.scrollTop  = clamp(Tp, 0, maxT);
+    }
+
+    /* ---------- Wire Ctrl/⌘ + wheel to zoom-at-pointer ---------- */
+    function initWheelZoom() {
+      var container = getPlateDiv();
+      var sel = getZoomSelect();
+      if (!container || !sel) return;
+
+      container.addEventListener('wheel', function (e) {
+        // Only when Ctrl/⌘ is pressed (so normal wheel still scrolls)
+        if (!(e.ctrlKey || e.metaKey)) return;
+        e.preventDefault();
+
+        var rect = container.getBoundingClientRect();
+        var pointer = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+        var opts = Array.prototype.slice.call(sel.options).map(function(o){return Number(o.value)}).sort(function(a,b){return a-b});
+        var current = Number(sel.value);
+        var idx = opts.indexOf(current); if (idx < 0) idx = 0;
+
+        var dir = (e.deltaY || 0) > 0 ? -1 : 1; // down=zoom out → lower index; up=zoom in → higher index
+        var nextIdx = clamp(idx + dir, 0, opts.length - 1);
+        if (nextIdx === idx) return;
+
+        zoomAt(container, pointer, opts[nextIdx]);
+      }, { passive: false });
+
+      // Manual dropdown change → zoom around viewport center
+      sel.addEventListener('change', function () {
+        var rect = container.getBoundingClientRect();
+        var pointer = { x: rect.width / 2, y: rect.height / 2 };
+        zoomAt(container, pointer, Number(sel.value) || 100);
+      });
+    }
+
+    /* ---------- Drag-to-pan with click-through (threshold; delayed capture) ---------- */
+    function initDragPan() {
+      var container = getPlateDiv();
+      if (!container) return;
+
+      // Avoid native drag-ghost on images if user drags
+      container.addEventListener('dragstart', function (e) { e.preventDefault(); });
+
+      var isPointerDown = false;
+      var isDragging = false;
+      var startX = 0, startY = 0;
+      var startL = 0, startT = 0;
+      var activePointerId = null;
+      var DRAG_THRESHOLD = 5; // px
+      var suppressNextClick = false;
+
+      function beginPointer(x, y, pointerId) {
+        isPointerDown = true;
+        isDragging = false;
+        startX = x; startY = y;
+        startL = container.scrollLeft; startT = container.scrollTop;
+        activePointerId = pointerId;
+        // IMPORTANT: do NOT setPointerCapture yet — wait until we exceed threshold
+        // Also do NOT preventDefault on down — allows click to bubble on images
+      }
+
+      function startDrag(e) {
+        if (isDragging) return;
+        isDragging = true;
+        suppressNextClick = true; // we'll stop the synthetic click after a drag
+        if (activePointerId != null && container.setPointerCapture) {
+          try { container.setPointerCapture(activePointerId); } catch (_) {}
+        }
+        container.style.cursor = 'grabbing';
+        container.classList.add('dragging');
+        if (e) e.preventDefault(); // from now on, prevent default while dragging
+      }
+
+      function endPointer() {
+        isPointerDown = false;
+        isDragging = false;
+        if (activePointerId != null && container.releasePointerCapture) {
+          try { container.releasePointerCapture(activePointerId); } catch (_) {}
+        }
+        activePointerId = null;
+        container.style.cursor = '';
+        container.classList.remove('dragging');
+      }
+
+      function maybeDrag(x, y, e) {
+        if (!isPointerDown) return;
+        var dx = x - startX;
+        var dy = y - startY;
+
+        if (!isDragging) {
+          if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+            startDrag(e);
+          } else {
+            return; // below threshold → keep as potential click
+          }
+        }
+        // Actively dragging: pan container
+        container.scrollLeft = startL - dx;
+        container.scrollTop  = startT - dy;
+        if (e) e.preventDefault();
+      }
+
+      // Prevent the "click after drag" from opening the viewer
+      container.addEventListener('click', function (e) {
+        if (suppressNextClick) {
+          suppressNextClick = false;
+          e.stopPropagation();
+          e.preventDefault();
+        }
+      }, true); // capture phase to intercept early
+
+      if (window.PointerEvent) {
+        container.addEventListener('pointerdown', function (e) {
+          if (e.button !== 0) return; // left button only
+          beginPointer(e.clientX, e.clientY, e.pointerId);
+        }, { passive: false });
+
+        container.addEventListener('pointermove', function (e) {
+          maybeDrag(e.clientX, e.clientY, e);
+        }, { passive: false });
+
+        container.addEventListener('pointerup', function () {
+          endPointer();  // if we never dragged past threshold, click will bubble to <img>
+        }, { passive: true });
+
+        container.addEventListener('pointercancel', function () {
+          endPointer();
+        }, { passive: true });
+      } else {
+        // Mouse fallback
+        container.addEventListener('mousedown', function (e) {
+          if (e.button !== 0) return;
+          beginPointer(e.clientX, e.clientY, null);
+        }, { passive: false });
+
+        window.addEventListener('mousemove', function (e) {
+          maybeDrag(e.clientX, e.clientY, e);
+        }, { passive: false });
+
+        window.addEventListener('mouseup', function () {
+          endPointer();
+        }, { passive: true });
+
+        // Touch fallback
+        container.addEventListener('touchstart', function (e) {
+          if (!e.touches || e.touches.length !== 1) return;
+          var t = e.touches[0];
+          beginPointer(t.clientX, t.clientY, null);
+        }, { passive: false });
+
+        container.addEventListener('touchmove', function (e) {
+          if (!e.touches || e.touches.length !== 1) return;
+          var t = e.touches[0];
+          maybeDrag(t.clientX, t.clientY, e);
+        }, { passive: false });
+
+        window.addEventListener('touchend', function () { endPointer(); }, { passive: true });
+        window.addEventListener('touchcancel', function () { endPointer(); }, { passive: true });
+      }
+    }
+
+    /* ---------- Init once DOM is ready ---------- */
+    function initAll() {
+      initWheelZoom();
+      initDragPan();
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAll);
     } else {
-      // number input spinner
-      const min  = zoomWidget.min ? Number(zoomWidget.min) : 10;
-      const max  = zoomWidget.max ? Number(zoomWidget.max) : 400;
-      const step = zoomWidget.step ? Number(zoomWidget.step) : 10;
-      const clamped = Math.min(max, Math.max(min, Math.round(next / step) * step));
-      zoomWidget.value = String(clamped);
+      initAll();
     }
-    // fire change so your redraw runs
-    zoomWidget.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-
-  // Get current numeric zoom (%)
-  function getZoomValue() {
-    const v = Number(zoomWidget.value);
-    return Number.isFinite(v) ? v : 100;
-  }
-
-  // Wheel handler: Ctrl/Cmd + wheel only
-  plateDiv.addEventListener('wheel', (e) => {
-    if (!(e.ctrlKey || e.metaKey)) return;   // only with Ctrl/⌘
-    e.preventDefault();                      // stop browser zoom
-
-    if (zoomWidget.tagName !== 'SELECT') return;
-
-    // Collect allowed zoom values from the <select>
-    const opts = Array.from(zoomWidget.options).map(o => Number(o.value)).sort((a,b)=>a-b);
-    const current = Number(zoomWidget.value);
-    const idx = opts.indexOf(current);
-    if (idx === -1) return; // current not found, nothing to do
-
-    const dir = Math.sign(e.deltaY) || 1;
-    let nextIdx = idx;
-
-    if (dir > 0) { // scroll down => zoom out
-      if (idx > 1) nextIdx = idx - 1;
-      else return; // already at min, stop
-    } else {       // scroll up => zoom in
-      if (idx < opts.length - 1) nextIdx = idx + 1;
-      else return; // already at max, stop
-    }
-
-    const next = opts[nextIdx];
-    setZoomValue(next); // will update UI + trigger redraw
-  }, { passive: false });
-
-})();
-
+  })();
   </script>
 
 </body>

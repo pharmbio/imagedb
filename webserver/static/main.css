@@ -11,12 +11,7 @@ ul li a {
 
 
 /* Scroll container (reuses your #plate-div) */
-#plate-div {
-  position: relative;
-  overflow: auto;         /* allow scroll at >100% */
-  touch-action: none;           /* block pinch-zoom gestures */
-  overscroll-behavior: contain; /* avoid scroll chaining */
-}
+
 
 /* The absolute stage we draw onto */
 #plate-abs-stage {
