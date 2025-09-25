@@ -70,7 +70,7 @@ def test_polling_loop():
     latest_file_change_margin = 7200
     sleep_time = 5
 
-    proj_root_dirs = ["/share/mikro2/nikon/"]
+    proj_root_dirs = ["/share/mikro3/squid/PHE004_U2OS/1116773734_PHE004_U2OS_PHE004C08_1_2025-09-25_05.25.50/"]
 
     #proj_root_dirs = ["/share/mikro3/squid/",
     #                  "/share/mikro2/squid/",
@@ -88,7 +88,7 @@ def test_polling_loop():
 
 def test_loop_img_dirs():
     # get all image dirs within root dirs (yields dirs sorted by date, most recent first)
-    proj_root_dirs = ["/share/mikro2/nikon/"]
+    proj_root_dirs = ["/share/mikro3/squid/PHE004_U2OS/1116773734_PHE004_U2OS_PHE004C08_1_2025-09-25_05.25.50/"]
 
     #                  "/share/mikro3/squid/",
     #                  "/share/mikro2/squid/",
@@ -97,15 +97,22 @@ def test_loop_img_dirs():
     for img_dir in file_utils.find_dirs_containing_img_files_recursive_from_list_of_paths(proj_root_dirs):
         logging.debug(f"imgdir: {img_dir}")
 
+def rebuild_thumbs():
+    img_dirs = ["/share/mikro3/squid/PHE004_U2OS/1116773734_PHE004_U2OS_PHE004C08_1_2025-09-25_05.25.50/"]
+    for dir in img_dirs:
+        image_monitor.rebuild_thumbs(dir)
+
 
 def main():
 
     #delete_and_upload_one_testimage()
-    
+
     #reset_test_data_in_db()
-    test_polling_loop()
+    #test_polling_loop()
 
     #test_loop_img_dirs()
+
+    rebuild_thumbs()
 
 
 if __name__ == "__main__":

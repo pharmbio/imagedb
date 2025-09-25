@@ -5,6 +5,7 @@ import argparse
 import os
 import time
 import traceback
+from pathlib import Path
 from typing import Dict, List
 
 import json
@@ -74,7 +75,7 @@ def process_image(img_path: str):
      # img meta should never be None
     if img_meta is None:
         raise Exception('img_meta is None')
-    
+
     img = Image.from_meta(img_meta)
 
     # Skip thumbnails but add images
@@ -312,6 +313,28 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
         if continuous_polling != True:
             break
+
+def rebuild_thumbs(plate_dir: str):
+    logging.info("start make_thumbs: " + str(plate_dir))
+    images = sorted(file_utils.get_all_image_files(plate_dir))
+    for idx, img_path in enumerate(images):
+
+        img_meta = filenames.filename_parser.parse_path_and_file(img_path)
+        img = Image.from_meta(img_meta)
+
+        # Skip thumbnails
+        if not img.is_thumbnail():
+            thumb_path = Path(img.make_thumb_path(imgdb_settings.IMAGES_THUMB_FOLDER))
+
+            # always use .png for the existence check
+            thumb_path = thumb_path.with_suffix(".png")
+
+            thumb_path.parent.mkdir(parents=True, exist_ok=True)
+
+            if not thumb_path.is_file():
+                logging.info(f"Make thumb: {thumb_path}")
+                image_tools.makeThumb(img.get_path(), str(thumb_path), False)
+
 
 def main():
 
