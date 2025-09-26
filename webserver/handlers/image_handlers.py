@@ -29,7 +29,6 @@ class ImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=abstrac
         logging.debug("ch2:" + ch2)
         logging.debug("ch3:" + ch3)
 
-        normalization = False
         overwrite_cache = False
         if "nikon" in ch1:
             normalization = True

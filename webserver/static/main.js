@@ -382,6 +382,8 @@
     selectBrightnessFromStoredValue();
     selectShowHiddenFromStoredValue();
     selectShowCompoundsFromStoredValue();
+    setNormalizeFromStoredValue();
+    setEqualizeFromStoredValue();
     apiListPlates();
 
     console.log("plateBarcode", plateBarcode);
@@ -398,7 +400,8 @@
 
   function initViewerWindow(plate, acquisition, well, site, zpos, channel){
     selectBrightnessFromStoredValue();
-
+    setNormalizeFromStoredValue();
+    setEqualizeFromStoredValue();
     loadPlateFromViewer(plate, acquisition, well, site, zpos, channel);
   }
 
@@ -1661,6 +1664,16 @@ function drawPlatesListSidebar_old(origPlatesList){
     document.getElementById('show-compounds-cb').checked = value;
   }
 
+  function setNormalizeFromStoredValue(){
+    let value = getNormalize();
+    document.getElementById('normalize-cb').checked = value;
+  }
+
+  function setEqualizeFromStoredValue(){
+    let value = getEqualize();
+    document.getElementById('equalize-cb').checked = value;
+  }
+
   function getSearchFilterText(){
     return document.getElementById('search-textfield').value;
   }
@@ -2304,6 +2317,24 @@ function drawPlatesListSidebar_old(origPlatesList){
     setVisibility('infoDotDiv', value);
   }
 
+  function equalizeCbChanged() {
+    let value = getEqualize();
+    setEqualize(value);
+    redrawPlate();
+  }
+
+  function normalizeCbChanged() {
+    let value = getNormalize();
+    setNormalize(value);
+    redrawPlate();
+  }
+
+  function siteSelectChanged() {
+    redrawPlate();
+  }
+
+
+
   function setVisibility(className, value){
 
     Array.from(document.getElementsByClassName(className)).forEach(
@@ -2332,14 +2363,6 @@ function drawPlatesListSidebar_old(origPlatesList){
     redrawPlate();
   }
 
-  function equalizeCbChanged() {
-    redrawPlate();
-  }
-
-  function siteSelectChanged() {
-    redrawPlate();
-  }
-
   function zSelectChanged() {
     redrawPlate();
   }
@@ -2357,6 +2380,14 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
   function viewerBrightnessSelectChanged() {
+    redrawImageViewer();
+  }
+
+  function viewerNormalizeCbChanged() {
+    redrawImageViewer();
+  }
+
+  function viewerEqualizeCbChanged() {
     redrawImageViewer();
   }
 
@@ -2675,7 +2706,9 @@ function drawPlatesListSidebar_old(origPlatesList){
         brightness: 100,
         showHidden: true,
         showCompounds: true,
-        sortSidebar: false
+        sortSidebar: false,
+        normalize: false,
+        equalize: true
       };
     }
 
@@ -2704,6 +2737,22 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   function getBrightness() {
     return storageStore.get("brightness");
+  }
+
+  function setNormalize(value) {
+    storageStore.set("normalize", value);
+  }
+
+  function getNormalize() {
+    return storageStore.get("normalize");
+  }
+
+  function setEqualize(value) {
+    storageStore.set("equalize", value);
+  }
+
+  function getEqualize() {
+    return storageStore.get("equalize");
   }
 
   function setShowHidden(value) {

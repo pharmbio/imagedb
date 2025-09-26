@@ -256,6 +256,23 @@
                 <button id="saveimgbutton" type="button" class="btn btn-secondary" on>Save image</button>
               </div>
 
+              <!-- Normalize / Equalize (between Show hidden and Show compounds) -->
+              <form id="filters-form">
+                <div class="form-group form-check" style="margin-bottom: 0px;">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="normalize-cb">
+                    <label class="form-check-label" style="margin-top:0.8rem;" for="normalize-cb">Normalize</label>
+                  </div>
+                </div>
+              </form>
+              <form id="filters-form">
+                <div class="form-group form-check" style="margin-bottom: 0px;">
+                  <div class="form-check">
+                    <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="equalize-cb">
+                    <label class="form-check-label" style="margin-top:0.8rem;" for="equalize-cb">Equalize</label>
+                  </div>
+                </div>
+              </form>
 
 
               <!-- Scalebar -->
@@ -353,6 +370,10 @@
       $("#animate-cbx").change(viewerAnimateCbxChanged);
       $("#scalebar-cbx").change(viewerScalebarCbxChanged);
       $("#saveimgbutton").click(saveViewerImage);
+      $("#normalize-cb").change(viewerBrightnessSelectChanged);
+      $("#normalize-cb").change(viewerNormalizeCbChanged);
+      $("#equalize-cb").change(viewerEqualizeCbChanged);
+
 
       // Create disabled slider to be updated later
       $("#acquisition-slider").ionRangeSlider({
