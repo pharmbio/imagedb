@@ -1629,6 +1629,14 @@ function drawPlatesListSidebar_old(origPlatesList){
     return document.getElementById('show-hidden-cb').checked;
   }
 
+  function getFilterQueryString() {
+    const normEl = document.getElementById('normalize-cb');
+    const eqEl   = document.getElementById('equalize-cb');
+    const norm = normEl && normEl.checked ? '1' : '0';
+    const eq   = eqEl && eqEl.checked ? '1' : '0';
+    return `normalize=${norm}&equalize=${eq}`;
+  }
+
   function getSelectedShowCompoundsValue() {
     console.log("compoundscb", document.getElementById('show-compounds-cb').checked);
     return document.getElementById('show-compounds-cb').checked;
@@ -2156,6 +2164,16 @@ function drawPlatesListSidebar_old(origPlatesList){
     }
   }
 
+  function appendFilterQueryString(url) {
+    const query = getFilterQueryString();
+    if (!query) {
+      return url; // nothing to append
+    }
+
+    const separator = url.includes('?') ? '&' : '?';
+    return url + separator + query;
+  }
+
   function createMergeThumbImgURLFromChannels(channels) {
 
     //console.log(channels, channels);
@@ -2183,6 +2201,7 @@ function drawPlatesListSidebar_old(origPlatesList){
         url = "/api/image-merge-thumb/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
       }
 
+      url = appendFilterQueryString(url);
       return url;
     }catch(err){
       console.error(err);
@@ -2217,6 +2236,7 @@ function drawPlatesListSidebar_old(origPlatesList){
         url = "/api/image-merge/ch1/" + channels[channel_grey].path + "/ch2/" + 'undefined' + "/ch3/" + 'undefined' + "/channels.png"
       }
 
+      url = appendFilterQueryString(url);
       return url;
     }catch(err){
       console.error(err);
@@ -2305,6 +2325,14 @@ function drawPlatesListSidebar_old(origPlatesList){
   function acquisitionSelectChanged() {
     updateWindowURL(getLoadedPlate().getName(), getSelectedAcquisitionId());
     updateToolbarWithNewAcquisition();
+    redrawPlate();
+  }
+
+  function normalizeCbChanged() {
+    redrawPlate();
+  }
+
+  function equalizeCbChanged() {
     redrawPlate();
   }
 

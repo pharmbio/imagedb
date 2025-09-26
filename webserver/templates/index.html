@@ -336,6 +336,24 @@
             </div>
         </form>
 
+        <!-- Normalize / Equalize (between Show hidden and Show compounds) -->
+        <form id="filters-form">
+          <div class="form-group form-check" style="margin-bottom: 0px;">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="normalize-cb">
+              <label class="form-check-label" style="margin-top:0.8rem;" for="normalize-cb">Normalize</label>
+            </div>
+          </div>
+        </form>
+        <form id="filters-form">
+          <div class="form-group form-check" style="margin-bottom: 0px;">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="equalize-cb">
+              <label class="form-check-label" style="margin-top:0.8rem;" for="equalize-cb">Equalize</label>
+            </div>
+          </div>
+        </form>
+
         <!-- ShowCompounds form -->
         <form id='show-compounds-form'>
             <div class="form-group form-check" style="margin-bottom: 0px;">
@@ -634,6 +652,9 @@
       $("#show-compounds-cb").change(showCompoundsSelectChanged);
       $("#sort-toggle").click(toggleSidebarSort);
       $("#move-trash-button").click(openTrashModal);
+      $("#normalize-cb").change(normalizeCbChanged);
+      $("#equalize-cb").change(equalizeCbChanged);
+
 
       // Call init window javascript function
       let plateBarcode = '{{barcode}}';

@@ -20,8 +20,10 @@ class ImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=abstrac
     async def get(self, ch1, ch2, ch3):
         """Handles GET requests.
         """
-
-        logging.info("Inside async")
+        normalize_arg = self.get_query_argument('normalize', None) or '0'
+        normalization = normalize_arg.lower() in ('1', 'true', 'yes')
+        equalize_arg = self.get_query_argument('equalize', None) or '0'
+        equalize = equalize_arg.lower() in ('1', 'true', 'yes')
 
         logging.debug("ch1:" + ch1)
         logging.debug("ch2:" + ch2)
@@ -45,9 +47,13 @@ class ImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=abstrac
 
         img_path = None
         if len(channels) == 1:
-            img_path = tif2png(channels, imgdb_settings.IMAGES_CACHE_FOLDER, overwrite_existing=overwrite_cache, normalize=normalization)
+            img_path = tif2png(channels, imgdb_settings.IMAGES_CACHE_FOLDER,overwrite_existing=overwrite_cache, normalize=normalization)
         else:
-            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, overwrite_existing=overwrite_cache, normalization=normalization)
+            img_path = await merge_channels(channels,
+                                            imgdb_settings.IMAGES_CACHE_FOLDER,
+                                            overwrite_existing=overwrite_cache,
+                                            normalization=normalization,
+                                            equalize=equalize)
 
         #logging.debug(img_path)
 
@@ -65,8 +71,12 @@ class ThumbImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=ab
     async def get(self, ch1, ch2, ch3):
         """Handles GET requests.
         """
-
         logging.debug("Inside ThumbImageMergeHandler")
+
+        normalize_arg = self.get_query_argument('normalize', None) or '0'
+        normalization = normalize_arg.lower() in ('1', 'true', 'yes')
+        equalize_arg = self.get_query_argument('equalize', None) or '0'
+        equalize = equalize_arg.lower() in ('1', 'true', 'yes')
 
         channels = {'1': ch1}
 
@@ -88,7 +98,7 @@ class ThumbImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=ab
         if len(channels) == 1:
             img_path = channels['1']
         else:
-            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, False)
+            img_path = await merge_channels(channels, imgdb_settings.IMAGES_CACHE_FOLDER, normalization=normalization, equalize=equalize)
 
          # logging.debug(img_path)
 

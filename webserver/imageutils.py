@@ -16,7 +16,7 @@ def tif2png_opencv(channels, outdir, overwrite_existing=False, normalize=False):
 
     tiff_path = channels.get('1')
 
-    png_path = create_pngconverted_filepath(outdir, tiff_path)
+    png_path = create_pngconverted_filepath(outdir, tiff_path, suffix=('_norm.png' if normalize else '.png'))
 
     # Check if file exists already
     if not os.path.isfile(png_path) or overwrite_existing:
@@ -90,7 +90,7 @@ def hash_filename(filename):
     # Return the hashed base name with the original extension
     return f"{hash_obj.hexdigest()}{ext}"
 
-async def merge_channels(channels, outdir, overwrite_existing=False, normalization=False):
+async def merge_channels(channels, outdir, overwrite_existing=False, normalization=False, equalize=True):
     ''' For now in image veiewer read image as 8 bit grayscale cv2.IMREAD_GRAYSCALE
         instead of 16 bit cv2.IMREAD_UNCHANGED (can't see difference in img viewer and saves 90% of size)
         and also dont create np array with np.uint16'''
@@ -119,7 +119,8 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
     if len(channels) > 2:
         paths.append(channels.get('3'))
 
-    merged_file = create_merged_filepath(outdir, paths)
+    merged_file = create_merged_filepath(outdir, paths, ".png", normalization, equalize)
+
 
     #logging.info('merged_file=' + str(merged_file))
 
@@ -161,7 +162,8 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
             merged_img[:, :, 1] = g
 
         # auto white balance and normalize between colors
-        merged_img = auto_white_balance(merged_img)
+        if equalize:
+            merged_img = auto_white_balance(merged_img)
 
         # ext4 is limited to 256 byte filenames
         filename = os.path.basename(merged_file)
@@ -175,6 +177,9 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
             os.makedirs(os.path.dirname(merged_file))
 
         cv2.imwrite(merged_file, merged_img) # type: ignore
+
+
+        logging.info(f"normalization{normalization} equalize{equalize}")
 
     return merged_file
 

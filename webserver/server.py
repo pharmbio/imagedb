@@ -72,6 +72,7 @@ class ImageViewerTemplateHandler(tornado.web.RequestHandler): #pylint: disable=a
                      zpos=zpos,
                      channel=channel)
 
+
 COMMON_ROOT = os.path.commonpath([
     imgdb_settings.IMAGES_THUMB_FOLDER,   # e.g. /share/imagedb/thumbs
     imgdb_settings.IMAGES_CACHE_FOLDER    # e.g. /share/imagedb/image-cache
