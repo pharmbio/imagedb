@@ -260,17 +260,44 @@
               <form id="filters-form">
                 <div class="form-group form-check" style="margin-bottom: 0px;">
                   <div class="form-check">
-                    <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="normalize-cb">
-                    <label class="form-check-label" style="margin-top:0.8rem;" for="normalize-cb">Normalize</label>
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        style="margin-top: 1.0rem;"
+                        id="normalize-cb"
+                        title="Rescale each channel independently to the full 0–255 range (contrast normalization). Enhances dim details, but alters absolute brightness scaling.
+                              OBS Nikon 12bit grayscale images are always normalized no matter this checkbox."
+                      >
+                      <label
+                        class="form-check-label"
+                        style="margin-top:0.8rem;"
+                        for="normalize-cb"
+                        title="Rescale each channel independently to the full 0–255 range (contrast normalization). Enhances dim details, but alters absolute brightness scaling.
+                              OBS Nikon 12bit grayscale images are always normalized no matter this checkbox."
+                        aria-label="Normalize: rescale each channel to full intensity range"
+                        data-toggle="tooltip" data-bs-toggle="tooltip"
+                      >Normalize</label>
                   </div>
                 </div>
               </form>
               <form id="filters-form">
                 <div class="form-group form-check" style="margin-bottom: 0px;">
                   <div class="form-check">
-                    <input type="checkbox" class="form-check-input" style="margin-top: 1.0rem;" id="equalize-cb">
-                    <label class="form-check-label" style="margin-top:0.8rem;" for="equalize-cb">Equalize</label>
-                  </div>
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      style="margin-top: 1.0rem;"
+                      id="equalize-cb"
+                      title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
+                    >
+                    <label
+                      class="form-check-label"
+                      style="margin-top:0.8rem;"
+                      for="equalize-cb"
+                      title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
+                      data-toggle="tooltip" data-bs-toggle="tooltip"
+                    >Equalize</label>
+                        </div>
                 </div>
               </form>
 
@@ -373,6 +400,8 @@
       $("#normalize-cb").change(viewerBrightnessSelectChanged);
       $("#normalize-cb").change(viewerNormalizeCbChanged);
       $("#equalize-cb").change(viewerEqualizeCbChanged);
+
+      initTooltips();
 
 
       // Create disabled slider to be updated later

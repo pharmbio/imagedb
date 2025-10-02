@@ -411,6 +411,18 @@
     return loaded_plates.getFirstPlate();
   }
 
+  /**
+ * Check whether plate data has finished loading.
+ * @returns {boolean} true if loaded_plates is initialized and usable
+ */
+function isPlatesLoaded() {
+  return (
+    typeof loaded_plates !== "undefined" &&
+    loaded_plates !== null &&
+    typeof loaded_plates.getFirstPlate === "function"
+  );
+}
+
   function apiListPlates() {
 
     document.getElementById("left-sidebar-spinner").style.visibility = "visible";
@@ -1183,6 +1195,12 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   // Redraws currently
   function redrawPlate(clearFirst = false) {
+
+    if (!isPlatesLoaded()) {
+      console.debug("redrawPlate: plates not loaded yet, skipping.");
+      return;
+    }
+
     // get plate to draw
     let plateObj = getLoadedPlate();
 
@@ -2775,42 +2793,29 @@ function drawPlatesListSidebar_old(origPlatesList){
     return storageStore.get("sortSidebar");
   }
 
-/*
-function getCookie(name) {
-    let cookie = {};
-    document.cookie.split(';').forEach(function (el) {
-        let [k, v] = el.split('=');
-        cookie[k.trim()] = v;
-    });
-    return cookie[name];
-  }
-
-  function setCookie(name, value, expires = "Tue, 19 Jan 2038 03:14:00 UTC") {
-    let cookie_string = name + "=" + value + ";expires=" + expires + ";path=/";
-    console.log("cookiestring", cookie_string);
-    document.cookie = cookie_string;
-  }
-
-  function deleteCookie(name) {
-    setCookie(name, '', "Thu, 01 Jan 1970 00:00:00 GMT");
-  }
-
-  function setCookieData(name, data) {
-    console.log("data:", data);
-    // Data is stored in base64 encoded and in json format
-    let value = window.btoa(JSON.stringify(data));
-    setCookie(name, value);
-  }
-
-  function getCookieData(name) {
-    let cookie = getCookie(name);
-    console.log("cookie", cookie);
-    if (cookie == null) {
-        return null;
-    } else {
-        // Data is base64 encoded and in json format
-        return JSON.parse(window.atob(cookie));
+// Initialize tooltips (Bootstrap 5 or 4; falls back to native title)
+function initTooltips() {
+  try {
+    if (window.bootstrap && bootstrap.Tooltip) {
+      // Bootstrap 5
+      document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+        const tip = new bootstrap.Tooltip(el, {
+          trigger: "hover focus",
+          container: "body",
+        });
+        // hide tooltip when element is clicked
+        el.addEventListener("click", () => tip.hide());
+      });
+      return;
     }
+    if (window.$ && $.fn && $.fn.tooltip) {
+      // Bootstrap 4 (jQuery)
+      $('[data-toggle="tooltip"]').tooltip({ trigger: "hover focus", container: "body" })
+        .on("click", function () {
+          $(this).tooltip("hide");
+        });
+    }
+  } catch (e) {
+    console.warn("Tooltip init failed:", e);
   }
-  */
-
+}
