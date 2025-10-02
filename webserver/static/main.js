@@ -1647,7 +1647,7 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
   function getSelectedShowHiddenValue() {
-    return document.getElementById('show-hidden-cb').checked;
+    return true; //document.getElementById('show-hidden-cb').checked;
   }
 
   function getFilterQueryString() {
@@ -1674,7 +1674,7 @@ function drawPlatesListSidebar_old(origPlatesList){
   function selectShowHiddenFromStoredValue(){
     let showHidden = getShowHidden();
     console.log("showHidden", showHidden);
-    document.getElementById('show-hidden-cb').checked = showHidden;
+    //document.getElementById('show-hidden-cb').checked = showHidden;
   }
 
   function selectShowCompoundsFromStoredValue(){

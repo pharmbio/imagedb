@@ -327,6 +327,7 @@
         </form>
 
         <!-- ShowHidden form -->
+        <!--
         <form id='show-hidden-form'>
             <div class="form-group form-check" style="margin-bottom: 0px;">
               <div class="col-md-12">
@@ -335,9 +336,32 @@
               </div>
             </div>
         </form>
+        -->
 
-        <!-- Normalize / Equalize (between Show hidden and Show compounds) -->
-        <form id="filters-form">
+         <!-- Equalize -->
+        <form id="equalize-filters-form">
+          <div class="form-group form-check" style="margin-bottom: 0px;">
+            <div class="form-check">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                style="margin-top: 1.0rem;"
+                id="equalize-cb"
+                title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
+              >
+              <label
+                class="form-check-label"
+                style="margin-top:0.8rem;"
+                for="equalize-cb"
+                title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
+                data-toggle="tooltip" data-bs-toggle="tooltip"
+              >Equalize</label>
+            </div>
+          </div>
+        </form>
+
+         <!-- Normalize -->
+        <form id="normalize-filters-form">
           <div class="form-group form-check" style="margin-bottom: 0px;">
             <div class="form-check">
               <input
@@ -356,26 +380,6 @@
                        OBS Nikon 12bit grayscale images are always normalized no matter this checkbox."
                 data-toggle="tooltip" data-bs-toggle="tooltip"
               >Normalize</label>
-            </div>
-          </div>
-        </form>
-        <form id="filters-form">
-          <div class="form-group form-check" style="margin-bottom: 0px;">
-            <div class="form-check">
-              <input
-                type="checkbox"
-                class="form-check-input"
-                style="margin-top: 1.0rem;"
-                id="equalize-cb"
-                title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
-              >
-              <label
-                class="form-check-label"
-                style="margin-top:0.8rem;"
-                for="equalize-cb"
-                title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
-                data-toggle="tooltip" data-bs-toggle="tooltip"
-              >Equalize</label>
             </div>
           </div>
         </form>
@@ -674,7 +678,7 @@
       $("#channel-select").change(channelSelectChanged);
       $("#animation-speed-select").change(animationSpeedSelectChanged);
       $("#animate-cbx").change(animateCbxChanged);
-      $("#show-hidden-cb").change(showHiddenSelectChanged);
+      //$("#show-hidden-cb").change(showHiddenSelectChanged);
       $("#show-compounds-cb").change(showCompoundsSelectChanged);
       $("#sort-toggle").click(toggleSidebarSort);
       $("#move-trash-button").click(openTrashModal);

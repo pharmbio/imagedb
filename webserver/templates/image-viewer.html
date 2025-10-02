@@ -256,8 +256,30 @@
                 <button id="saveimgbutton" type="button" class="btn btn-secondary" on>Save image</button>
               </div>
 
-              <!-- Normalize / Equalize (between Show hidden and Show compounds) -->
-              <form id="filters-form">
+              <!-- Equalize -->
+              <form id="equalize-filters-form">
+                <div class="form-group form-check" style="margin-bottom: 0px;">
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      style="margin-top: 1.0rem;"
+                      id="equalize-cb"
+                      title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
+                    >
+                    <label
+                      class="form-check-label"
+                      style="margin-top:0.8rem;"
+                      for="equalize-cb"
+                      title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
+                      data-toggle="tooltip" data-bs-toggle="tooltip"
+                    >Equalize</label>
+                        </div>
+                </div>
+              </form>
+
+              <!-- Normalize -->
+              <form id="normalize-filters-form">
                 <div class="form-group form-check" style="margin-bottom: 0px;">
                   <div class="form-check">
                     <input
@@ -278,26 +300,6 @@
                         data-toggle="tooltip" data-bs-toggle="tooltip"
                       >Normalize</label>
                   </div>
-                </div>
-              </form>
-              <form id="filters-form">
-                <div class="form-group form-check" style="margin-bottom: 0px;">
-                  <div class="form-check">
-                    <input
-                      type="checkbox"
-                      class="form-check-input"
-                      style="margin-top: 1.0rem;"
-                      id="equalize-cb"
-                      title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
-                    >
-                    <label
-                      class="form-check-label"
-                      style="margin-top:0.8rem;"
-                      for="equalize-cb"
-                      title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
-                      data-toggle="tooltip" data-bs-toggle="tooltip"
-                    >Equalize</label>
-                        </div>
                 </div>
               </form>
 
