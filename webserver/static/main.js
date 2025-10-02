@@ -2359,10 +2359,6 @@ function drawPlatesListSidebar_old(origPlatesList){
     redrawPlate();
   }
 
-  function normalizeCbChanged() {
-    redrawPlate();
-  }
-
   function zSelectChanged() {
     redrawPlate();
   }

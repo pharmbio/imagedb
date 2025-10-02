@@ -179,7 +179,7 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
         cv2.imwrite(merged_file, merged_img) # type: ignore
 
 
-        logging.info(f"normalization{normalization} equalize{equalize}")
+        logging.debug("normalization=%s equalize=%s", normalization, equalize)
 
     return merged_file
 

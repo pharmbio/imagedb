@@ -22,7 +22,7 @@ class ImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=abstrac
         """
         normalize_arg = self.get_query_argument('normalize', None) or '0'
         normalization = normalize_arg.lower() in ('1', 'true', 'yes')
-        equalize_arg = self.get_query_argument('equalize', None) or '0'
+        equalize_arg = self.get_query_argument('equalize', None) or '1'
         equalize = equalize_arg.lower() in ('1', 'true', 'yes')
 
         logging.debug("ch1:" + ch1)
@@ -74,7 +74,7 @@ class ThumbImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=ab
 
         normalize_arg = self.get_query_argument('normalize', None) or '0'
         normalization = normalize_arg.lower() in ('1', 'true', 'yes')
-        equalize_arg = self.get_query_argument('equalize', None) or '0'
+        equalize_arg = self.get_query_argument('equalize', None) or '1'
         equalize = equalize_arg.lower() in ('1', 'true', 'yes')
 
         channels = {'1': ch1}
