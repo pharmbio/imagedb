@@ -2077,6 +2077,18 @@ function drawPlatesListSidebar_old(origPlatesList){
 
     let channels = plateObj.getAvailableChannels(getSelectedAcquisitionId());
 
+    let targetChannel = selected_channel;
+    if (targetChannel === undefined || targetChannel === null || targetChannel === "") {
+      const storedChannel = getChannelSelect();
+      if (storedChannel) {
+        targetChannel = storedChannel;
+      }
+    }
+
+    if (targetChannel !== undefined && targetChannel !== null) {
+      targetChannel = String(targetChannel);
+    }
+
     let nCount = Object.keys(channels).length;
 
     // // First add default (Merge channels options)
@@ -2178,11 +2190,20 @@ function drawPlatesListSidebar_old(origPlatesList){
     }
 
     // set selected
+    let matchFound = false;
     Array.from(elemSelect.options).forEach(option => {
-      if (selected_channel === option.value) {
+      if (targetChannel === option.value) {
         option.selected = true;
+        matchFound = true;
       }
     });
+
+    if (!matchFound && elemSelect.options.length > 0) {
+      elemSelect.selectedIndex = 0;
+      setChannelSelect(elemSelect.options[0].value);
+    } else if (matchFound && targetChannel) {
+      setChannelSelect(targetChannel);
+    }
   }
 
 
@@ -2382,6 +2403,10 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
   function channelSelectChanged() {
+    const currentValue = getSelectedChannelValue();
+    if (currentValue) {
+      setChannelSelect(currentValue);
+    }
     redrawPlate();
   }
 
@@ -2418,6 +2443,10 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
   function viewerChannelSelectChanged() {
+    const currentValue = getSelectedChannelValue();
+    if (currentValue) {
+      setChannelSelect(currentValue);
+    }
     redrawImageViewer();
   }
 
@@ -2722,7 +2751,8 @@ function drawPlatesListSidebar_old(origPlatesList){
         showCompounds: true,
         sortSidebar: false,
         normalize: false,
-        equalize: true
+        equalize: true,
+        channelSelect: null
       };
     }
 
@@ -2791,6 +2821,14 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   function getSortSidebar() {
     return storageStore.get("sortSidebar");
+  }
+
+  function setChannelSelect(value) {
+    storageStore.set("channelSelect", value);
+  }
+
+  function getChannelSelect() {
+    return storageStore.get("channelSelect");
   }
 
 // Initialize tooltips (Bootstrap 5 or 4; falls back to native title)
