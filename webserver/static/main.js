@@ -375,6 +375,58 @@
   }
 
   var loaded_plates = null;
+  // Show a single warning per plate/viewer load when thumbnail images are missing
+  var missingThumbsWarningShown = false;
+
+  function showInfoToast(message, title) {
+    try {
+      var $toast = window.jQuery && window.jQuery('#info-toast');
+      if ($toast && $toast.length) {
+        // Position the toast container near the plate/viewer div (100px offset)
+        try {
+          var containerEl = document.getElementById('info-toast-container');
+          if (containerEl) {
+            var targetEl = document.getElementById('plate-div') || document.getElementById('viewer-div');
+            if (targetEl && targetEl.getBoundingClientRect) {
+              var rect = targetEl.getBoundingClientRect();
+              containerEl.style.position = 'fixed';
+              containerEl.style.top = Math.max(0, rect.top + 100) + 'px';
+              containerEl.style.left = Math.max(0, rect.left + 100) + 'px';
+              containerEl.style.transform = 'none';
+            }
+          }
+        } catch (posErr) {
+          console.warn('Unable to position info toast relative to target element', posErr);
+        }
+        if (title) {
+          window.jQuery('#info-toast-title').text(title);
+        }
+        window.jQuery('#info-toast-body').text(message || '');
+        // Initialize if needed and show
+        $toast.toast({ delay: 10000, autohide: true });
+        $toast.toast('show');
+        return true;
+      }
+    } catch (e) {
+      console.warn('showInfoToast failed', e);
+    }
+    return false;
+  }
+
+  function showMissingThumbsWarningOnce(message) {
+    if (missingThumbsWarningShown) return;
+    missingThumbsWarningShown = true;
+    const text = message || 'There are missing images for this combination of Z values, Channels and Sites. Missing image are replaced with white images.';
+    // Prefer non-blocking toast; fall back to modal
+    const shown = showInfoToast(text, 'Info');
+    if (!shown) {
+      try {
+        displayModalError(text);
+      } catch (e) {
+        console.warn('Missing thumbnails warning:', text, e);
+      }
+    }
+  }
   var listed_plates = null;
   var animation = null;
 
@@ -831,6 +883,9 @@ function drawPlatesListSidebar_old(origPlatesList){
 
   function apiLoadPlate(plate_name, select_acq_id=undefined, select_well=undefined) {
 
+    // reset once-only missing-thumbs notification for this load
+    missingThumbsWarningShown = false;
+
     // stop any current animation
     stopAnimation();
     document.getElementById("animate-cbx").checked = false;
@@ -871,6 +926,9 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
   function loadPlateFromViewer(plate_name, acquisition, well, site, zpos, channel) {
+
+    // reset once-only missing-thumbs notification for this viewer load
+    missingThumbsWarningShown = false;
 
     console.log('plate_name', plate_name);
     console.log('channel', channel);
@@ -2230,6 +2288,7 @@ function drawPlatesListSidebar_old(origPlatesList){
 
     //console.log(channels, channels);
     if(!channels){
+      showMissingThumbsWarningOnce('There are missing images for this combination of Z values, Channels and Sites. Missing image are replaced with white images.');
       return "/static/images/empty.png";
     }
 
@@ -2257,6 +2316,7 @@ function drawPlatesListSidebar_old(origPlatesList){
       return url;
     }catch(err){
       console.error(err);
+      showMissingThumbsWarningOnce('There are missing images for this combination of Z values, Channels and Sites. Missing image are replaced with white images.');
       return "/static/images/empty.png";
      }
   }
