@@ -34,9 +34,9 @@ def parse_path_and_file(path: str):
         # ── 1.  parse folder structure ───────────────────────────────────────
         m = re.match(
             r""".*/external-datasets/christa-patient-painting/   # ← project
-                (?P<plate_acq_name>[^/]+)/          # ← experiment / plate‑acq‑name
+                (?P<plate>.*)/                       # plate
                 (?P<date>\d{4}-\d{2}-\d{2})/        # YYYY‑MM‑DD
-                (?P<plate_id>\d+)/                  # numeric plate id
+                (?P<imx_id>.*)/                     # imx_acq_id
                 TimePoint_(?P<timepoint>\d+)        # TimePoint_n
                 (?:/ZStep_(?P<z>\d+))?              # optional ZStep_z
                 / .*                                # rest of path
@@ -49,9 +49,8 @@ def parse_path_and_file(path: str):
             return None
 
         project         = "christa-patient-painting"         # folder after /upload/
-        plate_acq_name  = m.group("plate_acq_name")
         date_str        = m.group("date")
-        plate_id        = m.group("plate_id")
+        plate           = m.group("plate")
         timepoint       = int(m.group("timepoint"))
         z               = int(m.group("z") or 0)
 
@@ -97,10 +96,9 @@ def parse_path_and_file(path: str):
             "date_year":         dt.year,
             "date_month":        dt.month,
             "date_day_of_month": dt.day,
-            "project":           project,           # from folder after /upload/
+            "project":           project,      # from folder after /upload/
             "magnification":     "?x",
-            "plate":             plate_id,          # numeric id
-            "plate_acq_name":    plate_acq_name,    # experiment folder
+            "plate":             plate,         
             "well":              well,
             "wellsample":        site,
             "z":                 z,
