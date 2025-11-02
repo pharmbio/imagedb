@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import hashlib
 import logging
+import time
 import cv2 as cv2
+import asyncio
+from functools import partial
 from PIL import Image
 import numpy as np
 import os
@@ -65,20 +68,44 @@ def count_unique_colors(image_path):
     img = Image.open(image_path)
     return len(np.unique(image))
 
-def auto_white_balance(im, p=.6):
-    '''https://stackoverflow.com/questions/48268068/how-do-i-do-the-equivalent-of-gimps-colors-auto-white-balance-in-python-fu'''
-    '''Stretch each channel histogram to same percentile as mean.'''
-
-    # get mean values
-    p0, p1 = np.percentile(im, p), np.percentile(im, 100-p)
+def auto_white_balance_old(im, p=.6):
+    '''Legacy auto white balance: stretch each channel to global percentile range.'''
+    # get mean values over all channels
+    p0, p1 = np.percentile(im, p), np.percentile(im, 100 - p)
 
     for i in range(3):
-        ch = im[:,:,i]
-        # get channel values
-        pc0, pc1 = np.percentile(ch, p), np.percentile(ch, 100-p)
+        ch = im[:, :, i]
+        # per-channel percentiles
+        pc0, pc1 = np.percentile(ch, p), np.percentile(ch, 100 - p)
         # stretch channel to same range as mean
         ch = (p1 - p0) * (ch - pc0) / (pc1 - pc0) + p0
-        im[:,:,i] = ch
+        im[:, :, i] = ch
+
+    return im
+
+def auto_white_balance(im, p=.6, sample_step=4):
+    """Auto white balance by stretching each channel to a common percentile range.
+
+    Optimizations:
+    - Compute percentiles on a downsampled view (sample_step) to reduce cost.
+    - Compute per-channel percentiles vectorized (single call per percentile).
+    """
+    sample = im[::sample_step, ::sample_step, :]
+
+    # Global range across all channels
+    p0, p1 = np.percentile(sample, [p, 100 - p])
+
+    # Per-channel low/high percentiles in a single vectorized call
+    pc0 = np.percentile(sample, p, axis=(0, 1))
+    pc1 = np.percentile(sample, 100 - p, axis=(0, 1))
+
+    # Avoid division by zero: if pc1==pc0, widen slightly
+    denom = (pc1 - pc0)
+    denom[denom == 0] = 1.0
+
+    # Vectorized stretch per channel
+    for i in range(3):
+        im[:, :, i] = (p1 - p0) * (im[:, :, i] - pc0[i]) / denom[i] + p0
 
     return im
 
@@ -95,6 +122,7 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
         instead of 16 bit cv2.IMREAD_UNCHANGED (can't see difference in img viewer and saves 90% of size)
         and also dont create np array with np.uint16'''
 
+    logging.debug("inside merge_channels")
     #overwrite_existing=True
     #normalization=False
 
@@ -129,8 +157,13 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
 
         logging.debug("list len =" + str(len(paths)))
 
-        # Read images, raise exceptions manually since opencv is silent if file doesn't exist
-        b = cv2.imread(paths[0],  READ_TYPE)
+        # Read images in parallel (I/O bound)
+        loop = asyncio.get_event_loop()
+        read_tasks = [loop.run_in_executor(None, partial(cv2.imread, p, READ_TYPE)) for p in paths]
+        imgs = await asyncio.gather(*read_tasks)
+
+        # Validate reads; OpenCV is silent on failure and returns None
+        b = imgs[0]
         if b is None:
             raise Exception('image read returned NONE, path: ' + str(paths[0]))
 
@@ -146,7 +179,7 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
         merged_img[:, :, 0] = b
 
         if len(paths) > 1:
-            r = cv2.imread(paths[1], READ_TYPE)
+            r = imgs[1]
             if r is None:
                 raise Exception('image read returned NONE, path: ' + str(paths[1]))
             if normalization:
@@ -154,16 +187,20 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
             merged_img[:, :, 2] = r
 
         if len(channels) > 2:
-            g = cv2.imread(paths[2], READ_TYPE)
+            g = imgs[2]
             if g is None:
                 raise Exception('image read returned NONE, path: ' + str(paths[2]))
             if normalization:
                 g = cv2.normalize(g, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U) # type: ignore
             merged_img[:, :, 1] = g
 
+        logging.debug("done read channels into merged image")
+
         # auto white balance and normalize between colors
         if equalize:
+            t_eq = time.time()
             merged_img = auto_white_balance(merged_img)
+            logging.debug("auto_white_balance took %.3fs", time.time() - t_eq)
 
         # ext4 is limited to 256 byte filenames
         filename = os.path.basename(merged_file)
@@ -176,7 +213,14 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
         if not os.path.exists(os.path.dirname(merged_file)):
             os.makedirs(os.path.dirname(merged_file))
 
-        cv2.imwrite(merged_file, merged_img) # type: ignore
+        # Ensure uint8 output for fast PNG encode
+        if merged_img.dtype != np.uint8:
+            merged_img = np.clip(merged_img, 0, 255).astype(np.uint8)
+
+        # Faster PNG by lowering compression (default is 3)
+        t_wr = time.time()
+        cv2.imwrite(merged_file, merged_img, [cv2.IMWRITE_PNG_COMPRESSION, 0]) # type: ignore
+        logging.debug("imwrite took %.3fs", time.time() - t_wr)
 
 
         logging.debug("normalization=%s equalize=%s", normalization, equalize)

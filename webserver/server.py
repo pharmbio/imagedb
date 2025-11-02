@@ -102,11 +102,17 @@ if __name__ == '__main__':
 
     logging.getLogger('tornado.access').disabled = True
 
-    logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-                        datefmt='%H:%M:%S',
-                        level=logging.INFO)
+    # Configure log level via environment variable LOG_LEVEL (default INFO)
+    level_name = os.getenv('LOG_LEVEL', 'INFO').upper()
+    level = getattr(logging, level_name, logging.INFO)
 
-    logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(
+        format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+        datefmt='%H:%M:%S',
+        level=level
+    )
+
+    logging.getLogger().setLevel(level)
 
     APP = tornado.web.Application(ROUTES, **SETTINGS)
     APP.listen(8080)

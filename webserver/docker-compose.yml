@@ -13,6 +13,7 @@ services:
     container_name: imageweb
     environment:
       CONF_FILE: ${CONF_FILE?You need to specify env CONF_FILE, e.g. settings_dev_local.json, settings_prod.json}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     cpus: 2
     mem_limit: 2g
     ports:
@@ -36,4 +37,3 @@ services:
       - ${SHARE_MIKRO3}:/share/mikro3
       - ${SHARE_IMAGEDB}:/share/imagedb
       - ${SHARE_EXTERNAL}:/share/data/external-datasets
-
