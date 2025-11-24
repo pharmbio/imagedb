@@ -131,9 +131,15 @@ def get_plate_old(plate_name):
             well_id = row['well_id']
             layout_dict[well_id].append(row)
 
-        # add layout to plate
-        plate = plates_dict[plate_name]
-        plate.add_layout(layout_dict)
+        # add layout to plate (if we have a plate entry)
+        if plate_name in plates_dict:
+            plate = plates_dict[plate_name]
+            plate.add_layout(layout_dict)
+        else:
+            # No image rows for this plate_barcode; optionally attach layout only,
+            # or return an empty dict so callers can handle "no such plate".
+            logging.info("No image rows found for plate %s; returning empty plates dict", plate_name)
+            return {"plates": {}}
 
         result_dict = {"plates": plates_dict}
         logging.info("done with get_plate, plate_name:" + plate_name)
@@ -444,7 +450,7 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
         "        )                           AS acq_date, "
         "  v.well_id                         AS well_id "
         "FROM plate_layout_view_more v "
-        "WHERE "
+        "WHERE ("
         "      v.batchid::text ILIKE %(like)s "
         "   OR v.cbkid         ILIKE %(like)s "
         "   OR v.libid         ILIKE %(like)s "
@@ -453,6 +459,8 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
         "   OR v.inchi         ILIKE %(like)s "
         "   OR v.inkey         ILIKE %(like)s "
         "   OR v.name          ILIKE %(like)s "
+        "      ) "
+        "  AND v.plate_acquisition_id IS NOT NULL "
         "ORDER BY v.project, v.barcode, v.plate_acquisition_id, v.well_id "
         "LIMIT %(limit)s"
     )
@@ -473,9 +481,14 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
         uniq_wells: set[Tuple[str, str, int, str]] = set()
 
         for r in rows:
+            # Skip rows that don't have a concrete plate or acquisition;
+            # they cannot be visualized and would cause /api/plate/None/... lookups.
+            if r["barcode"] is None or r["plate_acquisition_id"] is None or r["well_id"] is None:
+                continue
+
             project = str(r["project"]) if r["project"] is not None else "Unknown project"
             barcode = str(r["barcode"])
-            acq_id  = int(r["plate_acquisition_id"]) if r["plate_acquisition_id"] is not None else -1
+            acq_id  = int(r["plate_acquisition_id"])
             well_id = str(r["well_id"])
             acq_dt  = r.get("acq_date")  # datetime or None
 

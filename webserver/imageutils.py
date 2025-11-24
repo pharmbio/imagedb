@@ -122,7 +122,7 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
         instead of 16 bit cv2.IMREAD_UNCHANGED (can't see difference in img viewer and saves 90% of size)
         and also dont create np array with np.uint16'''
 
-    logging.debug("inside merge_channels")
+    #logging.debug("inside merge_channels")
     #overwrite_existing=True
     #normalization=False
 
@@ -155,7 +155,7 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
     # Check if file exists already
     if overwrite_existing or not os.path.isfile(merged_file):
 
-        logging.debug("list len =" + str(len(paths)))
+        #logging.debug("list len =" + str(len(paths)))
 
         # Read images in parallel (I/O bound)
         loop = asyncio.get_event_loop()
@@ -194,13 +194,13 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
                 g = cv2.normalize(g, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U) # type: ignore
             merged_img[:, :, 1] = g
 
-        logging.debug("done read channels into merged image")
+        #logging.debug("done read channels into merged image")
 
         # auto white balance and normalize between colors
         if equalize:
             t_eq = time.time()
             merged_img = auto_white_balance(merged_img)
-            logging.debug("auto_white_balance took %.3fs", time.time() - t_eq)
+            #logging.debug("auto_white_balance took %.3fs", time.time() - t_eq)
 
         # ext4 is limited to 256 byte filenames
         filename = os.path.basename(merged_file)
@@ -220,10 +220,10 @@ async def merge_channels(channels, outdir, overwrite_existing=False, normalizati
         # Faster PNG by lowering compression (default is 3)
         t_wr = time.time()
         cv2.imwrite(merged_file, merged_img, [cv2.IMWRITE_PNG_COMPRESSION, 0]) # type: ignore
-        logging.debug("imwrite took %.3fs", time.time() - t_wr)
+        #logging.debug("imwrite took %.3fs", time.time() - t_wr)
 
 
-        logging.debug("normalization=%s equalize=%s", normalization, equalize)
+        #logging.debug("normalization=%s equalize=%s", normalization, equalize)
 
     return merged_file
 

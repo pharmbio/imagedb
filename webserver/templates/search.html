@@ -40,6 +40,83 @@
       padding: .15rem;
       text-align: center;
     }
+    .thumb-card.thumb-selected {
+      outline: 3px solid #17a2b8;
+      box-shadow: 0 0 0 2px rgba(23,162,184,.3);
+    }
+    .thumb-card .thumb-select-check {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      z-index: 2;
+    }
+    .thumb-card .thumb-info-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      z-index: 2;
+      padding: 0 .4rem;
+      font-size: .7rem;
+      line-height: 1.4;
+    }
+    #image-info-panel {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      width: 260px;
+      max-height: 60vh;
+      overflow: auto;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: .25rem;
+      box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,.15);
+      z-index: 1050;
+      display: none;
+    }
+    #image-info-panel .info-header {
+      cursor: move;
+      padding: .25rem .5rem;
+      background: #f7f7f7;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #image-info-panel .info-body {
+      padding: .5rem .75rem .75rem;
+    }
+    #selected-panel {
+      position: fixed;
+      top: 80px;
+      right: 300px;
+      width: 260px;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: .25rem;
+      box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,.15);
+      z-index: 1050;
+      display: none;
+      resize: both;
+      overflow: hidden;
+      min-width: 220px;
+      min-height: 120px;
+      max-width: 90vw;
+      max-height: 80vh;
+    }
+    #selected-panel .selected-header {
+      cursor: move;
+      padding: .25rem .5rem;
+      background: #f7f7f7;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #selected-panel .selected-body {
+      padding: .5rem .75rem .75rem;
+      max-height: calc(80vh - 40px);
+      overflow-y: auto;
+    }
 
     /* Tree view */
     .tree details { margin: .25rem 0 .25rem .75rem; }
@@ -136,6 +213,13 @@
       <span class="ml-2">Plates <span id="count-plates" class="pill">0</span></span>
       <span class="ml-2">Acquisitions <span id="count-acqs" class="pill">0</span></span>
       <span class="ml-2">Wells <span id="count-wells" class="pill">0</span></span>
+      <span class="ml-2">Selected <span id="selected-count" class="pill">0</span></span>
+      <button id="selected-modal-btn" class="btn btn-sm btn-outline-info ml-2" type="button" disabled>
+        Show selected
+      </button>
+      <button id="save-selected-btn" class="btn btn-sm btn-outline-success ml-2" type="button" disabled>
+        Save selected…
+      </button>
     </div>
 
     <!-- Expand all -->
@@ -146,6 +230,84 @@
 
     <!-- Tree root -->
     <div id="tree-root" class="tree"></div>
+  </div>
+
+  <!-- Selected images panel -->
+  <div id="selected-panel">
+    <div class="selected-header" id="selected-header">
+      <span class="small font-weight-bold">Selected images</span>
+      <button type="button" id="selected-close" class="close" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="selected-body">
+      <p class="mb-2">
+        You have <span id="selected-count-modal">0</span> selected image(s).
+      </p>
+      <ul id="selected-list" class="list-group small mb-0"></ul>
+    </div>
+  </div>
+
+  <!-- Save selected images options -->
+  <div id="save-selected-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Save selected images</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="opt-merged-rgb" checked>
+            <label class="form-check-label" for="opt-merged-rgb">
+              Merged RGB image
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="opt-original-channels">
+            <label class="form-check-label" for="opt-original-channels">
+              Original channel images
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="save-selected-confirm">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image info Modal -->
+  <div id="image-info-panel">
+    <div class="info-header" id="image-info-header">
+      <span class="small font-weight-bold">Image details</span>
+      <button type="button" id="image-info-close" class="close" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="info-body">
+      <dl class="row mb-0 small">
+        <dt class="col-sm-4">Project</dt>
+        <dd class="col-sm-8" id="info-project"></dd>
+        <dt class="col-sm-4">Plate</dt>
+        <dd class="col-sm-8" id="info-plate"></dd>
+        <dt class="col-sm-4">Acq ID</dt>
+        <dd class="col-sm-8" id="info-acq-id"></dd>
+        <dt class="col-sm-4">Acq date</dt>
+        <dd class="col-sm-8" id="info-acq-date"></dd>
+        <dt class="col-sm-4">Well</dt>
+        <dd class="col-sm-8" id="info-well"></dd>
+        <dt class="col-sm-4">Site</dt>
+        <dd class="col-sm-8" id="info-site"></dd>
+        <dt class="col-sm-4">Z positions</dt>
+        <dd class="col-sm-8" id="info-zcount"></dd>
+        <dt class="col-sm-4">Channels (first Z)</dt>
+        <dd class="col-sm-8" id="info-channels"></dd>
+      </dl>
+    </div>
   </div>
 
   <!-- Error Modal -->
@@ -223,6 +385,251 @@
       const errorModal   = $('#error-modal');
       const errorMsgPre  = document.getElementById('error-message');
       const brightnessEl = document.getElementById('brightness-range');
+      const selectedCountEl = document.getElementById('selected-count');
+      const selectedCountModalEl = document.getElementById('selected-count-modal');
+      const selectedListEl = document.getElementById('selected-list');
+      const selectedModalBtn = document.getElementById('selected-modal-btn');
+      const selectedPanel = document.getElementById('selected-panel');
+      const selectedHeader = document.getElementById('selected-header');
+      const selectedCloseBtn = document.getElementById('selected-close');
+      const saveSelectedBtn = document.getElementById('save-selected-btn');
+      const saveSelectedModal = $('#save-selected-modal');
+      const saveSelectedConfirmBtn = document.getElementById('save-selected-confirm');
+      const optMerged = document.getElementById('opt-merged-rgb');
+      const optOriginal = document.getElementById('opt-original-channels');
+      const infoPanel = document.getElementById('image-info-panel');
+      const infoHeader = document.getElementById('image-info-header');
+      const infoCloseBtn = document.getElementById('image-info-close');
+      const infoProjectEl  = document.getElementById('info-project');
+      const infoPlateEl    = document.getElementById('info-plate');
+      const infoAcqIdEl    = document.getElementById('info-acq-id');
+      const infoAcqDateEl  = document.getElementById('info-acq-date');
+      const infoWellEl     = document.getElementById('info-well');
+      const infoSiteEl     = document.getElementById('info-site');
+      const infoZCountEl   = document.getElementById('info-zcount');
+      const infoChannelsEl = document.getElementById('info-channels');
+
+      const selectedImages = new Map();
+      const makeSelectionKey = (barcode, acqId, wellId, siteKey) =>
+        `${barcode}|${acqId}|${wellId}|${siteKey}`;
+
+      function updateSelectedCount() {
+        const n = selectedImages.size;
+        if (selectedCountEl) selectedCountEl.textContent = String(n);
+        if (selectedCountModalEl) selectedCountModalEl.textContent = String(n);
+        const disabled = n === 0;
+        if (selectedModalBtn) selectedModalBtn.disabled = disabled;
+        if (saveSelectedBtn) saveSelectedBtn.disabled = disabled;
+      }
+
+      function refreshSelectedList() {
+        if (!selectedListEl) return;
+        selectedListEl.innerHTML = '';
+        if (selectedImages.size === 0) {
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.textContent = 'No selected images.';
+          selectedListEl.appendChild(li);
+          return;
+        }
+        for (const { barcode, acqId, wellId, siteKey } of selectedImages.values()) {
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.textContent = `Plate ${barcode} – Acq ${acqId} – Well ${wellId} – Site ${siteKey}`;
+          selectedListEl.appendChild(li);
+        }
+      }
+
+      function toggleThumbSelection(card, forceSelected = null) {
+        const { barcode, acqId, wellId, siteKey } = card.dataset;
+        const key = makeSelectionKey(barcode, acqId, wellId, siteKey);
+        const currentlySelected = selectedImages.has(key);
+        const willSelect = (forceSelected === null) ? !currentlySelected : !!forceSelected;
+
+        if (willSelect) {
+          selectedImages.set(key, { barcode, acqId, wellId, siteKey });
+        } else {
+          selectedImages.delete(key);
+        }
+        card.classList.toggle('thumb-selected', willSelect);
+        updateSelectedCount();
+        if (selectedPanel && selectedPanel.style.display !== 'none') {
+          refreshSelectedList();
+        }
+      }
+
+      function openViewerFromThumb(card, siteInfo) {
+        const { barcode, acqId, wellId, siteKey } = card.dataset;
+        if (!barcode || !acqId || !wellId || !siteKey) return;
+
+        const zPositions = (siteInfo && siteInfo.z_positions) || {};
+        const zKeys = Object.keys(zPositions);
+        const zpos = zKeys.length ? zKeys[0] : '0';
+        const channel = '-';
+
+        const viewerUrl =
+          `/image-viewer/${encodeURIComponent(barcode)}` +
+          `/tp/${encodeURIComponent(acqId)}` +
+          `/well/${encodeURIComponent(wellId)}` +
+          `/site/${encodeURIComponent(siteKey)}` +
+          `/zpos/${encodeURIComponent(zpos)}` +
+          `/ch/${encodeURIComponent(channel)}` +
+          `/url/x`;
+
+        window.open(viewerUrl, '_blank');
+      }
+
+      function openInfoPanel(card, siteInfo) {
+        if (!infoPanel) return;
+        const { barcode, acqId, wellId, siteKey, projectName, acqDateIso } = card.dataset;
+        if (infoProjectEl)  infoProjectEl.textContent  = projectName || '';
+        if (infoPlateEl)    infoPlateEl.textContent    = barcode || '';
+        if (infoAcqIdEl)    infoAcqIdEl.textContent    = acqId || '';
+        if (infoAcqDateEl)  infoAcqDateEl.textContent  = acqDateIso ? fmtDate(acqDateIso) : '';
+        if (infoWellEl)     infoWellEl.textContent     = wellId || '';
+        if (infoSiteEl)     infoSiteEl.textContent     = siteKey || '';
+
+        const zPositions = (siteInfo && siteInfo.z_positions) || {};
+        const zKeys = Object.keys(zPositions);
+        if (infoZCountEl) infoZCountEl.textContent = String(zKeys.length);
+
+        let channelsSummary = '';
+        if (zKeys.length) {
+          const firstZ = zPositions[zKeys[0]] || {};
+          const chans = firstZ.channels || {};
+          const dyes = [];
+          for (const ch of Object.values(chans)) {
+            if (ch && ch.dye) dyes.push(ch.dye);
+          }
+          channelsSummary = dyes.length ? dyes.join(', ') : '';
+        }
+        if (infoChannelsEl) infoChannelsEl.textContent = channelsSummary;
+
+        infoPanel.style.display = 'block';
+      }
+
+      // Simple drag behavior for the info panel
+      if (infoPanel && infoHeader) {
+        let dragActive = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        const onMove = ev => {
+          if (!dragActive) return;
+          const x = ev.clientX - dragOffsetX;
+          const y = ev.clientY - dragOffsetY;
+          infoPanel.style.left = `${x}px`;
+          infoPanel.style.top = `${y}px`;
+          infoPanel.style.right = 'auto';
+        };
+        const onUp = () => {
+          dragActive = false;
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        };
+
+        infoHeader.addEventListener('mousedown', ev => {
+          ev.preventDefault();
+          const rect = infoPanel.getBoundingClientRect();
+          dragActive = true;
+          dragOffsetX = ev.clientX - rect.left;
+          dragOffsetY = ev.clientY - rect.top;
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      }
+
+      if (infoCloseBtn && infoPanel) {
+        infoCloseBtn.addEventListener('click', () => {
+          infoPanel.style.display = 'none';
+        });
+      }
+
+      if (selectedModalBtn && selectedPanel) {
+        selectedModalBtn.addEventListener('click', () => {
+          refreshSelectedList();
+          selectedPanel.style.display = 'block';
+        });
+      }
+
+      // Simple drag behavior for the selected panel
+      if (selectedPanel && selectedHeader) {
+        let dragActiveSel = false;
+        let dragSelOffsetX = 0;
+        let dragSelOffsetY = 0;
+
+        const onMoveSel = ev => {
+          if (!dragActiveSel) return;
+          const x = ev.clientX - dragSelOffsetX;
+          const y = ev.clientY - dragSelOffsetY;
+          selectedPanel.style.left = `${x}px`;
+          selectedPanel.style.top = `${y}px`;
+          selectedPanel.style.right = 'auto';
+        };
+        const onUpSel = () => {
+          dragActiveSel = false;
+          document.removeEventListener('mousemove', onMoveSel);
+          document.removeEventListener('mouseup', onUpSel);
+        };
+
+        selectedHeader.addEventListener('mousedown', ev => {
+          ev.preventDefault();
+          const rect = selectedPanel.getBoundingClientRect();
+          dragActiveSel = true;
+          dragSelOffsetX = ev.clientX - rect.left;
+          dragSelOffsetY = ev.clientY - rect.top;
+          document.addEventListener('mousemove', onMoveSel);
+          document.addEventListener('mouseup', onUpSel);
+        });
+      }
+
+      if (selectedCloseBtn && selectedPanel) {
+        selectedCloseBtn.addEventListener('click', () => {
+          selectedPanel.style.display = 'none';
+        });
+      }
+
+      if (saveSelectedBtn && saveSelectedModal) {
+        saveSelectedBtn.addEventListener('click', () => {
+          if (!selectedImages.size) return;
+          saveSelectedModal.modal('show');
+        });
+      }
+
+      if (saveSelectedConfirmBtn) {
+        saveSelectedConfirmBtn.addEventListener('click', async () => {
+          if (!selectedImages.size) {
+            saveSelectedModal.modal('hide');
+            return;
+          }
+          const imagesPayload = Array.from(selectedImages.values()).map(it => ({
+            plate_acq_id: it.acqId,
+            well: it.wellId,
+            site: it.siteKey,
+          }));
+          const payload = {
+            merged_rgb: !!(optMerged && optMerged.checked),
+            original_channels: !!(optOriginal && optOriginal.checked),
+            images: imagesPayload,
+          };
+          try {
+            const resp = await fetch('/api/save-selected-images', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+            if (!resp.ok) {
+              const txt = await resp.text();
+              throw new Error(`Save failed: ${resp.status} ${txt}`);
+            }
+          } catch (err) {
+            console.error(err);
+            showError(String(err));
+          } finally {
+            saveSelectedModal.modal('hide');
+          }
+        });
+      }
       const C = {
         projects: document.getElementById('count-projects'),
         plates:   document.getElementById('count-plates'),
@@ -343,13 +750,23 @@
         // Token to invalidate stale async work
         const myToken = ++renderToken;
 
-        // Hard clear existing tree
+        // Hard clear existing tree and selection
         treeRoot.replaceChildren();
+        selectedImages.clear();
+        updateSelectedCount();
+        refreshSelectedList();
 
         // local helpers (no cache)
         async function fetchJSON(url, signal) {
           const resp = await fetch(url, { signal });
-          if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
+          if (!resp.ok) {
+            let detail = '';
+            try {
+              detail = await resp.text();
+            } catch (_) {}
+            const msg = detail ? `${resp.status} ${resp.statusText}: ${detail}` : `${resp.status} ${resp.statusText}`;
+            throw new Error(msg);
+          }
           return resp.json();
         }
         async function fetchPlateSubsetInner(barcode, acqId, wellsCsv, signal) {
@@ -514,11 +931,52 @@
 
                       const card = document.createElement('div');
                       card.className = 'thumb-card';
+                      card.dataset.barcode = barcode;
+                      card.dataset.acqId = acqId;
+                      card.dataset.wellId = wellId;
+                      card.dataset.siteKey = siteKey;
+                      card.dataset.projectName = projectName;
+                      if (acqObj && acqObj.date_iso) {
+                        card.dataset.acqDateIso = acqObj.date_iso;
+                      }
+
+                      const key = makeSelectionKey(barcode, acqId, wellId, siteKey);
+                      const isSelected = selectedImages.has(key);
+
                       card.innerHTML = `
+                        <input type="checkbox" class="thumb-select-check" ${isSelected ? 'checked' : ''}>
+                        <button type="button" class="btn btn-sm btn-light thumb-info-btn">i</button>
                         <img src="${thumb}" alt="Well ${wellId} • Site ${siteKey}">
                         <div class="thumb-meta">Well ${wellId} • Site ${siteKey}</div>
                       `;
-                      card.onclick = () => window.openViewer?.(wellId, siteKey);
+
+                      if (isSelected) {
+                        card.classList.add('thumb-selected');
+                      }
+
+                      const check = card.querySelector('.thumb-select-check');
+                      if (check) {
+                        check.addEventListener('click', ev => {
+                          ev.stopPropagation();
+                        });
+                        check.addEventListener('change', () => {
+                          toggleThumbSelection(card, check.checked);
+                        });
+                      }
+
+                      const infoBtn = card.querySelector('.thumb-info-btn');
+                      if (infoBtn) {
+                        infoBtn.addEventListener('click', ev => {
+                          ev.preventDefault();
+                          ev.stopPropagation();
+                          openInfoPanel(card, siteInfo);
+                        });
+                      }
+
+                      card.addEventListener('click', ev => {
+                        ev.preventDefault();
+                        openViewerFromThumb(card, siteInfo);
+                      });
                       grid.appendChild(card);
 
                       sitesRendered++;
@@ -540,8 +998,36 @@
       // Hook search form
       document.getElementById('search-form').addEventListener('submit', e => {
         e.preventDefault();
-        renderSearchResults(document.getElementById('q').value.trim());
+        const term = document.getElementById('q').value.trim();
+
+        // Update URL ?q=... so refresh/back restores the search
+        try {
+          const url = new URL(window.location.href);
+          if (term) {
+            url.searchParams.set('q', term);
+          } else {
+            url.searchParams.delete('q');
+          }
+          window.history.replaceState(null, '', url.toString());
+        } catch (err) {
+          console.error('Failed to update URL with q param', err);
+        }
+
+        renderSearchResults(term);
       });
+
+      // On initial load, if ?q=... is present, restore and run the search
+      try {
+        const url = new URL(window.location.href);
+        const initialQ = (url.searchParams.get('q') || '').trim();
+        if (initialQ) {
+          const qInput = document.getElementById('q');
+          if (qInput) qInput.value = initialQ;
+          renderSearchResults(initialQ);
+        }
+      } catch (err) {
+        console.error('Failed to read q from URL', err);
+      }
     });
 
   </script>

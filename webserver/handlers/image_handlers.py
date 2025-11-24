@@ -70,7 +70,7 @@ class ThumbImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=ab
     async def get(self, ch1, ch2, ch3):
         """Handles GET requests.
         """
-        logging.debug("Inside ThumbImageMergeHandler")
+        #logging.debug("Inside ThumbImageMergeHandler")
 
         normalize_arg = self.get_query_argument('normalize', None) or '0'
         normalization = normalize_arg.lower() in ('1', 'true', 'yes')

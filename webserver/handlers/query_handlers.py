@@ -171,6 +171,23 @@ class SearchCompoundQueryHandler(RequestHandler):
         except Exception:
             return None
 
+class SaveSelectedImagesHandler(tornado.web.RequestHandler):  # pylint: disable=abstract-method
+    def prepare(self):
+        self.set_header("Content-Type", "application/json")
+
+    def post(self):
+        try:
+            body = self.request.body.decode("utf-8") or "{}"
+            payload = json.loads(body)
+        except Exception:
+            payload = {}
+
+        logging.info("SaveSelectedImagesHandler payload: %s", payload)
+
+        # Stub implementation: just acknowledge the request.
+        self.write({"status": "ok", "message": "Save selected images stub"})
+        self.finish()
+
 #####
 #####  From pipelinegui
 #####
@@ -191,4 +208,3 @@ class ListImageAnalysesHandler(tornado.web.RequestHandler): #pylint: disable=abs
 
         logging.debug(result)
         self.finish({'result':result})
-

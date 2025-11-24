@@ -8,7 +8,8 @@ from handlers.query_handlers import (ListAllPlatesQueryHandler,
                                      GetPlateQueryHandler,
                                      ListImageAnalysesHandler,
                                      MoveAcqIDToTrashHandler,
-                                     SearchCompoundQueryHandler)
+                                     SearchCompoundQueryHandler,
+                                     SaveSelectedImagesHandler)
 
 from handlers.image_handlers import (ImageMergeHandler,
                                      ThumbImageMergeHandler)
@@ -93,6 +94,7 @@ ROUTES = [
           (r'/index.html', IndexTemplateHandler),
           (r'/search.html', DefaultTemplateHandler),
           (r'/api/search-compound', SearchCompoundQueryHandler),
+          (r'/api/save-selected-images', SaveSelectedImagesHandler),
           (r'/', IndexTemplateHandler),
          ]
 
