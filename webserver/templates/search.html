@@ -192,7 +192,47 @@
         <input type="range" id="zoom-range" min="50" max="200" value="150" class="form-control-range ml-2">
       </label>
 
-      <label class="control-label mr-2">Limit plates
+      <!-- Equalize -->
+      <div class="form-group form-check ml-3 mb-0">
+        <div class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="equalize-cb"
+            style="margin-top: .3rem;"
+            title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
+          >
+          <label
+            class="form-check-label"
+            for="equalize-cb"
+            style="margin-top: .1rem;"
+            title="Apply auto white balance: adjust relative R/G/B gains so colors look neutral and no channel dominates."
+            data-toggle="tooltip" data-bs-toggle="tooltip"
+          >Equalize</label>
+        </div>
+      </div>
+
+      <!-- Normalize -->
+      <div class="form-group form-check ml-3 mb-0">
+        <div class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="normalize-cb"
+            style="margin-top: .3rem;"
+            title="Rescale each channel independently to the full 0–255 range (contrast normalization). Enhances dim details, but alters absolute brightness scaling."
+          >
+          <label
+            class="form-check-label"
+            for="normalize-cb"
+            style="margin-top: .1rem;"
+            title="Rescale each channel independently to the full 0–255 range (contrast normalization). Enhances dim details, but alters absolute brightness scaling."
+            data-toggle="tooltip" data-bs-toggle="tooltip"
+          >Normalize</label>
+        </div>
+      </div>
+
+      <label class="control-label mr-2 ml-3">Limit plates
         <input type="number" id="limit-plates" class="form-control ml-2 control-input" min="1" placeholder="∞">
       </label>
       <label class="control-label mr-2">Limit acq/plate
@@ -271,9 +311,10 @@
               Original channel images
             </label>
           </div>
+          <div id="save-selected-status" class="mt-2 small text-muted" style="display:none;"></div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" id="save-selected-cancel">Cancel</button>
           <button type="button" class="btn btn-primary" id="save-selected-confirm">Save</button>
         </div>
       </div>
@@ -395,6 +436,7 @@
       const saveSelectedBtn = document.getElementById('save-selected-btn');
       const saveSelectedModal = $('#save-selected-modal');
       const saveSelectedConfirmBtn = document.getElementById('save-selected-confirm');
+      const saveSelectedCancelBtn = document.getElementById('save-selected-cancel');
       const optMerged = document.getElementById('opt-merged-rgb');
       const optOriginal = document.getElementById('opt-original-channels');
       const infoPanel = document.getElementById('image-info-panel');
@@ -408,10 +450,32 @@
       const infoSiteEl     = document.getElementById('info-site');
       const infoZCountEl   = document.getElementById('info-zcount');
       const infoChannelsEl = document.getElementById('info-channels');
+      const normalizeCb    = document.getElementById('normalize-cb');
+      const equalizeCb     = document.getElementById('equalize-cb');
+      const saveSelectedStatusEl = document.getElementById('save-selected-status');
+      let saveAbortController = null;
 
       const selectedImages = new Map();
       const makeSelectionKey = (barcode, acqId, wellId, siteKey) =>
         `${barcode}|${acqId}|${wellId}|${siteKey}`;
+
+      function buildThumbFilterQuery() {
+        const parts = [];
+        if (normalizeCb) {
+          parts.push(`normalize=${normalizeCb.checked ? '1' : '0'}`);
+        }
+        if (equalizeCb) {
+          parts.push(`equalize=${equalizeCb.checked ? '1' : '0'}`);
+        }
+        return parts.join('&');
+      }
+
+      function addThumbFilterParams(url) {
+        const q = buildThumbFilterQuery();
+        if (!q) return url;
+        const sep = url.includes('?') ? '&' : '?';
+        return url + sep + q;
+      }
 
       function updateSelectedCount() {
         const n = selectedImages.size;
@@ -447,7 +511,19 @@
         const willSelect = (forceSelected === null) ? !currentlySelected : !!forceSelected;
 
         if (willSelect) {
-          selectedImages.set(key, { barcode, acqId, wellId, siteKey });
+          const { ch1, ch2, ch3, batchId, compoundName, projectName } = card.dataset;
+          selectedImages.set(key, {
+            barcode,
+            acqId,
+            wellId,
+            siteKey,
+            ch1,
+            ch2,
+            ch3,
+            batchId,
+            compoundName,
+            projectName,
+          });
         } else {
           selectedImages.delete(key);
         }
@@ -602,31 +678,83 @@
             saveSelectedModal.modal('hide');
             return;
           }
+          if (saveSelectedConfirmBtn) {
+            saveSelectedConfirmBtn.disabled = true;
+          }
+          const nImages = selectedImages.size;
+          const estSeconds = nImages * 3;
+          if (saveSelectedStatusEl) {
+            saveSelectedStatusEl.style.display = 'block';
+            saveSelectedStatusEl.innerHTML =
+              `<span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>` +
+              `Saving ${nImages} image(s)… approximately ${estSeconds} s`;
+          }
           const imagesPayload = Array.from(selectedImages.values()).map(it => ({
             plate_acq_id: it.acqId,
             well: it.wellId,
             site: it.siteKey,
+            ch1: it.ch1 || null,
+            ch2: it.ch2 || null,
+            ch3: it.ch3 || null,
+            batch_id: it.batchId || null,
+            compound_name: it.compoundName || null,
+            project: it.projectName || null,
+            barcode: it.barcode || null,
           }));
           const payload = {
             merged_rgb: !!(optMerged && optMerged.checked),
             original_channels: !!(optOriginal && optOriginal.checked),
+            normalize: !!(normalizeCb && normalizeCb.checked),
+            equalize: !!(equalizeCb && equalizeCb.checked),
             images: imagesPayload,
           };
           try {
+            saveAbortController = new AbortController();
             const resp = await fetch('/api/save-selected-images', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
+              signal: saveAbortController.signal,
             });
             if (!resp.ok) {
               const txt = await resp.text();
               throw new Error(`Save failed: ${resp.status} ${txt}`);
             }
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'selected-images.zip';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
           } catch (err) {
-            console.error(err);
-            showError(String(err));
+            if (err.name === 'AbortError') {
+              // User cancelled; no error dialog
+              console.log('Save selected images request aborted by user');
+            } else {
+              console.error(err);
+              showError(String(err));
+            }
           } finally {
             saveSelectedModal.modal('hide');
+            if (saveSelectedConfirmBtn) {
+              saveSelectedConfirmBtn.disabled = false;
+            }
+            if (saveSelectedStatusEl) {
+              saveSelectedStatusEl.style.display = 'none';
+              saveSelectedStatusEl.textContent = '';
+            }
+            saveAbortController = null;
+          }
+        });
+      }
+
+      if (saveSelectedCancelBtn) {
+        saveSelectedCancelBtn.addEventListener('click', () => {
+          if (saveAbortController) {
+            saveAbortController.abort();
           }
         });
       }
@@ -704,6 +832,16 @@
           if (term) renderSearchResults(term);
         });
       });
+      // For normalize/equalize, keep tree expanded and just retarget thumbs
+      [normalizeCb, equalizeCb].forEach(cb => {
+        if (cb) cb.addEventListener('change', () => {
+          const imgs = treeRoot.querySelectorAll('.thumb-card img');
+          imgs.forEach(img => {
+            const base = img.src.split('?', 1)[0];
+            img.src = addThumbFilterParams(base);
+          });
+        });
+      });
 
       // Cache plate fetches by (barcode|acqId|wellsCsv)
       const plateCache = new Map();
@@ -711,7 +849,8 @@
       function thumbUrlFromChannels(chArr) {
         const paths = chArr.slice(0,3).map(c => encodeURIComponent(c?.path || ''));
         while (paths.length < 3) paths.push(paths[paths.length-1] || '');
-        return `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+        const base = `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+        return addThumbFilterParams(base);
       }
 
       function makeDetails(summaryText, extra = '') {
@@ -783,7 +922,8 @@
         function thumbUrlFromChannelsInner(chArr) {
           const paths = chArr.slice(0, 3).map(c => encodeURIComponent(c?.path || ''));
           while (paths.length < 3) paths.push(paths[paths.length - 1] || '');
-          return `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+          const base = `/api/image-merge-thumb/ch1/${paths[0]}/ch2/${paths[1]}/ch3/${paths[2]}/channels.png`;
+          return addThumbFilterParams(base);
         }
 
         const L_PLATES = getLimit('limit-plates');
@@ -907,6 +1047,7 @@
                   const acqMap    = plateNode?.acquisitions || {};
                   const acqRec    = acqMap[String(acqId)] ?? acqMap[Number(acqId)];
                   const wellsObj  = acqRec?.wells || {};
+                  const layoutMap = plateNode?.layout || {};
 
                   const grid = document.createElement('div');
                   grid.className = 'thumb-grid';
@@ -917,6 +1058,9 @@
 
                     const wellData = wellsObj[wellId];
                     if (!wellData) continue;
+
+                    const wellLayoutList = Array.isArray(layoutMap[wellId]) ? layoutMap[wellId] : [];
+                    const wellMeta = wellLayoutList[0] || {};
 
                     let sitesRendered = 0;
                     for (const [siteKey, siteInfo] of Object.entries(wellData.sites || {})) {
@@ -939,6 +1083,17 @@
                       if (acqObj && acqObj.date_iso) {
                         card.dataset.acqDateIso = acqObj.date_iso;
                       }
+                      if (wellMeta) {
+                        if (wellMeta.batch_id !== undefined && wellMeta.batch_id !== null) {
+                          card.dataset.batchId = String(wellMeta.batch_id);
+                        }
+                        if (wellMeta.compound_name !== undefined && wellMeta.compound_name !== null) {
+                          card.dataset.compoundName = String(wellMeta.compound_name);
+                        }
+                      }
+                      card.dataset.ch1 = ch[0]?.path || '';
+                      card.dataset.ch2 = ch[1]?.path || '';
+                      card.dataset.ch3 = ch[2]?.path || '';
 
                       const key = makeSelectionKey(barcode, acqId, wellId, siteKey);
                       const isSelected = selectedImages.has(key);

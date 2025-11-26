@@ -11,29 +11,32 @@ import tornado.web
 import json
 import datetime
 import decimal
+import io
+import os
+import zipfile
 from tornado.web import RequestHandler
 
 from dbqueries import list_all_plates, get_plate, list_image_analyses, move_plate_acq_to_trash, search_compounds, SearchLimits
+from imageutils import merge_channels
+import settings as imgdb_settings
 
 def myserialize(obj):
-    """JSON serializer for objects not serializable by default json code"""
+    """JSON serializer for objects not serializable by default json code."""
 
-    if isinstance(obj, datetime.date):
-        serial = obj.isoformat()
-        return serial
+    # Dates and times → ISO 8601 strings
+    if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+        return obj.isoformat()
 
-    if isinstance(obj, datetime.datetime):
-        serial = obj.isoformat()
-        return serial
-
-    if isinstance(obj, datetime.time):
-        serial = obj.isoformat()
-        return serial
-
+    # Decimals → string to avoid float rounding issues
     if isinstance(obj, decimal.Decimal):
         return str(obj)
 
-    return obj.__dict__
+    # Fallback for simple dataclass/objects
+    if hasattr(obj, "__dict__"):
+        return obj.__dict__
+
+    # Last resort: let json deal with it (or fail clearly)
+    return obj
 
 class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
     """
@@ -175,7 +178,7 @@ class SaveSelectedImagesHandler(tornado.web.RequestHandler):  # pylint: disable=
     def prepare(self):
         self.set_header("Content-Type", "application/json")
 
-    def post(self):
+    async def post(self):
         try:
             body = self.request.body.decode("utf-8") or "{}"
             payload = json.loads(body)
@@ -184,9 +187,90 @@ class SaveSelectedImagesHandler(tornado.web.RequestHandler):  # pylint: disable=
 
         logging.info("SaveSelectedImagesHandler payload: %s", payload)
 
-        # Stub implementation: just acknowledge the request.
-        self.write({"status": "ok", "message": "Save selected images stub"})
-        self.finish()
+        images = payload.get("images") or []
+        merged_rgb = bool(payload.get("merged_rgb"))
+        original_channels = bool(payload.get("original_channels"))
+        normalize = bool(payload.get("normalize"))
+        equalize = bool(payload.get("equalize"))
+
+        if not images or not (merged_rgb or original_channels):
+            self.set_status(400)
+            self.write({"error": "no images to save or no output type selected"})
+            return
+
+        def _safe_part(value, fallback="NA"):
+            s = str(value).strip() if value is not None else ""
+            if not s:
+                s = fallback
+            # basic filename sanitization
+            s = s.replace("/", "_").replace("\\", "_")
+            return s
+
+        mem_zip = io.BytesIO()
+        with zipfile.ZipFile(mem_zip, mode="w", compression=zipfile.ZIP_STORED) as zf:
+            for img in images:
+                acq_id = _safe_part(img.get("plate_acq_id"), "acq")
+                well = _safe_part(img.get("well"), "well")
+                site = _safe_part(img.get("site"), "site")
+                batch_id = _safe_part(img.get("batch_id"))
+                compound_name = _safe_part(img.get("compound_name"))
+                project = _safe_part(img.get("project"))
+                barcode = _safe_part(img.get("barcode"))
+
+                base_prefix = f"{batch_id}_{compound_name}_{project}_{barcode}_acq{acq_id}_well{well}_site{site}"
+
+                # merged RGB image
+                if merged_rgb:
+                    ch1 = img.get("ch1") or None
+                    ch2 = img.get("ch2") or None
+                    ch3 = img.get("ch3") or None
+                    channels = {}
+                    if ch1:
+                        channels["1"] = ch1
+                    if ch2:
+                        channels["2"] = ch2
+                    if ch3:
+                        channels["3"] = ch3
+
+                    if channels:
+                        try:
+                            merged_path = await merge_channels(
+                                channels,
+                                imgdb_settings.IMAGES_CACHE_FOLDER,
+                                overwrite_existing=False,
+                                normalization=normalize,
+                                equalize=equalize,
+                            )
+                            if merged_path and os.path.isfile(merged_path):
+                                _, ext = os.path.splitext(merged_path)
+                                if not ext:
+                                    ext = ".png"
+                                arcname = f"{base_prefix}_merged{ext}"
+                                zf.write(merged_path, arcname)
+                        except Exception as e:
+                            logging.exception("Failed to merge channels for %s", base_prefix)
+                            # continue with other images
+
+                # original channel images
+                if original_channels:
+                    for label in ("ch1", "ch2", "ch3"):
+                        ch_path = img.get(label) or None
+                        if not ch_path:
+                            continue
+                        if not os.path.isfile(ch_path):
+                            continue
+                        _, ext = os.path.splitext(ch_path)
+                        arcname = f"{base_prefix}_{label}{ext}"
+                        try:
+                            zf.write(ch_path, arcname)
+                        except Exception:
+                            logging.exception("Failed to add channel %s for %s", label, base_prefix)
+
+        mem_zip.seek(0)
+        # Return zip file to client
+        self.set_header("Content-Type", "application/zip")
+        self.set_header("Content-Disposition", "attachment; filename=selected-images.zip")
+        self.finish(mem_zip.getvalue())
 
 #####
 #####  From pipelinegui
