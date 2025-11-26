@@ -209,15 +209,41 @@ class SaveSelectedImagesHandler(tornado.web.RequestHandler):  # pylint: disable=
         mem_zip = io.BytesIO()
         with zipfile.ZipFile(mem_zip, mode="w", compression=zipfile.ZIP_STORED) as zf:
             for img in images:
+                # Core identifiers
                 acq_id = _safe_part(img.get("plate_acq_id"), "acq")
-                well = _safe_part(img.get("well"), "well")
-                site = _safe_part(img.get("site"), "site")
-                batch_id = _safe_part(img.get("batch_id"))
-                compound_name = _safe_part(img.get("compound_name"))
-                project = _safe_part(img.get("project"))
-                barcode = _safe_part(img.get("barcode"))
+                well = _safe_part(img.get("well"), "")
+                site = _safe_part(img.get("site"), "")
+                zpos = _safe_part(img.get("z"), "")
 
-                base_prefix = f"{batch_id}_{compound_name}_{project}_{barcode}_acq{acq_id}_well{well}_site{site}"
+                # Descriptive metadata (compound_name should not fall back to 'NA')
+                batch_id = _safe_part(img.get("batch_id"), "")
+                compound_name = _safe_part(img.get("compound_name"), "")
+                project = _safe_part(img.get("project"), "")
+                barcode = _safe_part(img.get("barcode"), "")
+
+                # Build filename root: include only non-empty pieces
+                name_parts = []
+                if batch_id:
+                    name_parts.append(batch_id)
+                if compound_name:
+                    name_parts.append(compound_name)
+                if project:
+                    name_parts.append(project)
+                if barcode:
+                    name_parts.append(barcode)
+                base_name = "_".join(name_parts) if name_parts else "image"
+
+                # Append acquisition / well / site / z info
+                suffix_parts = [f"acq{acq_id}"]
+                if well:
+                    suffix_parts.append(well)
+                if site:
+                    suffix_parts.append(f"s{site}")
+                if zpos:
+                    suffix_parts.append(f"z{zpos}")
+                suffix = "_".join(suffix_parts)
+
+                base_prefix = f"{base_name}_{suffix}" if base_name else suffix
 
                 # merged RGB image
                 if merged_rgb:

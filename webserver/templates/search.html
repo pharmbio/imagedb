@@ -505,7 +505,7 @@
       }
 
       function toggleThumbSelection(card, forceSelected = null) {
-        const { barcode, acqId, wellId, siteKey } = card.dataset;
+        const { barcode, acqId, wellId, siteKey, zpos } = card.dataset;
         const key = makeSelectionKey(barcode, acqId, wellId, siteKey);
         const currentlySelected = selectedImages.has(key);
         const willSelect = (forceSelected === null) ? !currentlySelected : !!forceSelected;
@@ -523,6 +523,7 @@
             batchId,
             compoundName,
             projectName,
+            zpos,
           });
         } else {
           selectedImages.delete(key);
@@ -700,6 +701,7 @@
             compound_name: it.compoundName || null,
             project: it.projectName || null,
             barcode: it.barcode || null,
+            z: it.zpos || null,
           }));
           const payload = {
             merged_rgb: !!(optMerged && optMerged.checked),
@@ -1066,7 +1068,10 @@
                     for (const [siteKey, siteInfo] of Object.entries(wellData.sites || {})) {
                       if (sitesRendered >= (Number.isFinite(L_SITES) ? L_SITES : Infinity)) break;
 
-                      const zInfo = Object.values(siteInfo.z_positions || {})[0] || {};
+                      const allZ = siteInfo.z_positions || {};
+                      const zKeys = Object.keys(allZ);
+                      const firstZKey = zKeys.length ? zKeys[0] : null;
+                      const zInfo = (firstZKey !== null ? allZ[firstZKey] : null) || {};
                       let ch = Array.isArray(zInfo.channels)
                         ? zInfo.channels
                         : Object.values(zInfo.channels || {});
@@ -1080,6 +1085,9 @@
                       card.dataset.wellId = wellId;
                       card.dataset.siteKey = siteKey;
                       card.dataset.projectName = projectName;
+                      if (firstZKey !== null) {
+                        card.dataset.zpos = String(firstZKey);
+                      }
                       if (acqObj && acqObj.date_iso) {
                         card.dataset.acqDateIso = acqObj.date_iso;
                       }
