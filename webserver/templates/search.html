@@ -232,6 +232,24 @@
         </div>
       </div>
 
+      <div class="input-group input-group-sm ml-3">
+        <div class="input-group-prepend">
+          <label class="input-group-text" for="channel-combo-select">Channels</label>
+        </div>
+        <select id="channel-combo-select" class="custom-select" style="width: 110px;">
+          <option value="auto" selected>Auto</option>
+          <option value="HMP">H,M,P</option>
+          <option value="HPS">H,P,S</option>
+          <option value="HMD">H,M,D</option>
+          <option value="NMA">N,M,A</option>
+          <option value="NGA">N,G,A</option>
+          <option value="HMS">H,M,S</option>
+          <option value="HCP">H,C,P</option>
+          <option value="HP">H,P</option>
+          <option value="BFBFZ">BF,BFz1,BFz2</option>
+        </select>
+      </div>
+
       <label class="control-label mr-2 ml-3">Limit plates
         <input type="number" id="limit-plates" class="form-control ml-2 control-input" min="1" placeholder="∞">
       </label>
@@ -452,6 +470,7 @@
       const infoChannelsEl = document.getElementById('info-channels');
       const normalizeCb    = document.getElementById('normalize-cb');
       const equalizeCb     = document.getElementById('equalize-cb');
+      const channelComboSelect = document.getElementById('channel-combo-select');
       const saveSelectedStatusEl = document.getElementById('save-selected-status');
       let saveAbortController = null;
 
@@ -475,6 +494,88 @@
         if (!q) return url;
         const sep = url.includes('?') ? '&' : '?';
         return url + sep + q;
+      }
+
+      function pickPreferredChannels(chArr) {
+        if (!Array.isArray(chArr) || !chArr.length) return [];
+
+        const byDye = {};
+        for (const ch of chArr) {
+          const key = (ch && ch.dye ? String(ch.dye) : '').toUpperCase();
+          if (key && !byDye[key]) byDye[key] = ch;
+        }
+
+        const combos = [
+          ['HOECHST','MITO','PHAANDWGA'], // H,M,P
+          ['HOECHST','PHAANDWGA','SYTO'], // H,P,S
+          ['HOECHST','MITO','DIOC6'],     // H,M,D
+          ['NUCLEUS','MITO','ACTIN'],     // N,M,A
+          ['NUCLEUS','GOLGI','ACTIN'],    // N,G,A
+          ['HOECHST','MITO','PHA'],       // H,M,P (PHA)
+          ['HOECHST','MITO','SYTO'],      // H,M,S
+          ['HOECHST','CONC','PHAANDWGA'], // H,C,P
+        ];
+
+        // Map spinner values to one or more preferred dye triplets
+        const combosMap = {
+          HMP: [
+            ['HOECHST','MITO','PHAANDWGA'],
+            ['HOECHST','MITO','PHA'],
+          ],
+          HPS: [
+            ['HOECHST','PHAANDWGA','SYTO'],
+          ],
+          HMD: [
+            ['HOECHST','MITO','DIOC6'],
+          ],
+          NMA: [
+            ['NUCLEUS','MITO','ACTIN'],
+          ],
+          NGA: [
+            ['NUCLEUS','GOLGI','ACTIN'],
+          ],
+          HMS: [
+            ['HOECHST','MITO','SYTO'],
+          ],
+          HCP: [
+            ['HOECHST','CONC','PHAANDWGA'],
+          ],
+          HP: [
+            ['HOECHST','PHAANDWGA'],
+          ],
+          BFBFZ: [
+            ['BF','BFz1','BFz2'],
+          ],
+        };
+
+        const comboKey = channelComboSelect ? String(channelComboSelect.value || 'auto') : 'auto';
+        if (comboKey !== 'auto' && combosMap[comboKey]) {
+          for (const dyes of combosMap[comboKey]) {
+            if (dyes.every(d => byDye[d])) {
+              const picked = dyes.map(d => byDye[d]);
+              while (picked.length < 3) picked.push(picked[picked.length - 1]);
+              return picked;
+            }
+          }
+        }
+
+        for (const triple of combos) {
+          if (triple.every(d => byDye[d])) {
+            return [byDye[triple[0]], byDye[triple[1]], byDye[triple[2]]];
+          }
+        }
+
+        // Two-channel subset: HOECHST + PHAandWGA
+        if (byDye.HOECHST && byDye.PHAANDWGA) {
+          const out = [byDye.HOECHST, byDye.PHAANDWGA];
+          while (out.length < 3) out.push(out[out.length - 1]);
+          return out;
+        }
+
+        // Fallback: first channels as-is
+        const fallback = chArr.slice(0, 3);
+        while (fallback.length < 3) fallback.push(fallback[fallback.length - 1] || chArr[0] || {});
+        return fallback;
       }
 
       function updateSelectedCount() {
@@ -844,6 +945,13 @@
           });
         });
       });
+      // Channel combo changes require rebuilding cards (new channel set), so re-render
+      if (channelComboSelect) {
+        channelComboSelect.addEventListener('change', () => {
+          const term = document.getElementById('q').value.trim();
+          if (term) renderSearchResults(term);
+        });
+      }
 
       // Cache plate fetches by (barcode|acqId|wellsCsv)
       const plateCache = new Map();
@@ -1072,10 +1180,10 @@
                       const zKeys = Object.keys(allZ);
                       const firstZKey = zKeys.length ? zKeys[0] : null;
                       const zInfo = (firstZKey !== null ? allZ[firstZKey] : null) || {};
-                      let ch = Array.isArray(zInfo.channels)
+                      const rawChannels = Array.isArray(zInfo.channels)
                         ? zInfo.channels
                         : Object.values(zInfo.channels || {});
-                      while (ch.length < 3) ch.push(ch[ch.length - 1] || {});
+                      const ch = pickPreferredChannels(rawChannels);
                       const thumb = thumbUrlFromChannelsInner(ch);
 
                       const card = document.createElement('div');
