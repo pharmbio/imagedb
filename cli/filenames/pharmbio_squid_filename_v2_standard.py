@@ -13,7 +13,7 @@ import logging
 __pattern_path_and_file = re.compile(r'''
     ^.*/squid/                                  # Match start and any characters until "/squid/"
     (.*?)/                                      # Capture project name
-    (.*?)_                                      # Capture plate
+    (.+)_                                       # Capture plate (allow underscores)
     ([0-9]{4})-([0-9]{2})-([0-9]{2})_           # Capture date (yyyy-mm-dd)
     (.*?)/                                      # Capture time or additional info until the next slash
     (t[0-9]+/)?                                 # Optionally capture timepoint (e.g., "t1/")
@@ -175,7 +175,6 @@ if __name__ == '__main__':
     retval = parse_path_and_file(
         "/mnt/pool6/mikro3/squid/Erica-BONT/RPE-1_BoNT-A_-C_48h_2025-11-27_11.17.43/A02_s4_x0_y1_Fluorescence_488_nm_Ex.tiff")
     print("\nretval = " + str(retval))
-
 
 
 
