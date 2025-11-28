@@ -249,14 +249,16 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                 continue
 
             # remove old dirs
-            if is_initial_poll and exhaustive_initial_poll:
-                old_dir_cuttoff = 0  # 1970-01-01, scan all history
-            else:
-                old_dir_cuttoff = (3600 * 24 * poll_dirs_margin_days)
+            if poll_dirs_margin_days > 0:
+                margin_seconds = 3600 * 24 * poll_dirs_margin_days
+                if is_initial_poll and exhaustive_initial_poll:
+                    old_dir_cutoff_epoch = 0  # scan all history on first run
+                else:
+                    old_dir_cutoff_epoch = now - margin_seconds
 
-            if img_dir.stat().st_mtime < old_dir_cuttoff:
-                logging.debug(f"removed because old: {img_dir} ")
-                continue
+                if img_dir.stat().st_mtime < old_dir_cutoff_epoch:
+                    logging.debug(f"removed because old: {img_dir} ")
+                    continue
 
             # Initialize the flag for blacklisted items
             is_blacklisted = False
