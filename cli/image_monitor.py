@@ -264,8 +264,11 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
             # Initialize the flag for blacklisted items
             is_blacklisted = False
+            norm_img_dir = str(img_dir).rstrip('/') + '/'
             for blacklisted_item in blacklist:
-                if blacklisted_item == str(img_dir):
+                norm_blacklisted = blacklisted_item.rstrip('/') + '/'
+                # Treat any directory under a blacklisted root as blacklisted
+                if norm_img_dir.startswith(norm_blacklisted):
                     logging.debug(f"removed because blacklisted: {img_dir}")
                     is_blacklisted = True
                     break  # Exit the inner loop as we found a match
@@ -280,7 +283,9 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                 logging.exception("Exception in img_dir")
                 # add dir to blacklist if there are more than X wrong files in dir
                 logging.info(f"Add to blacklist img_dir: {img_dir} ")
-                blacklist.append(str(img_dir))
+                # Ensure trailing slash for consistency
+                if norm_img_dir not in [b.rstrip('/') + '/' for b in blacklist]:
+                    blacklist.append(norm_img_dir)
                 exception_file = os.path.join(imgdb_settings.ERROR_LOG_DIR, "exceptions-last-poll.log")
                 with open(exception_file, 'a') as exc_file:
                     exc_file.write(f"Exception, time: {datetime.today()}\n")

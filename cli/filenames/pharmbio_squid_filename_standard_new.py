@@ -14,10 +14,10 @@ from functools import lru_cache
 # Compile a regex pattern to match the structured file path and name, with case-insensitivity for Windows compatibility
 __pattern_path_and_file = re.compile(r'''
     ^.*/squid/                                  # Match start and any characters until "/squid/"
-    (.*?)/                                      # Capture project name
-    (.*?)_                                      # Capture plate
+    (.*?)_                                      # Capture plate(.*?)/                                      # Capture project name
+    (.+)_                                       # Capture plate (allow underscores)
     ([0-9]{4})-([0-9]{2})-([0-9]{2})_           # Capture date (yyyy-mm-dd)
-    (.*?)/                                      # Capture time or additional info until the next slash
+    (.*?)/                                      # Capture time or additional info until the next slash                                      # Capture time or additional info until the next slash
     (t[0-9]+/)?                                 # Optionally capture timepoint (e.g., "t1/")
     ([A-Z])([0-9]+)_                            # Capture well position (letter and numbers)
     s([0-9]+)_                                  # Capture site index
