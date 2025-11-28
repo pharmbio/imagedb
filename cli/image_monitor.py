@@ -192,7 +192,9 @@ def import_plate_images_and_meta(plate_dir: str):
 blacklist: List[str] = [
     '/share/mikro/IMX/MDC_pharmbio/trash/',
     '/share/mikro2/nikon/trash/',
-    '/share/mikro2/squid/trash/'
+    '/share/mikro2/squid/trash/',
+    '/share/mikro3/squid/trash/',
+    '/share/mikro4/squid/trash/'
 ]
 
 # processed filenames and timestamp when processed
