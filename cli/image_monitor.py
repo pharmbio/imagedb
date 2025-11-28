@@ -255,7 +255,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
             # Initialize the flag for blacklisted items
             is_blacklisted = False
             for blacklisted_item in blacklist:
-                if blacklisted_item in str(img_dir):
+                if blacklisted_item == str(img_dir):
                     logging.debug(f"removed because blacklisted: {img_dir}")
                     is_blacklisted = True
                     break  # Exit the inner loop as we found a match

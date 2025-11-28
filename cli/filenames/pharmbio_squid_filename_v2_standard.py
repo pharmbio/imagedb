@@ -169,8 +169,13 @@ if __name__ == '__main__':
     print("retval = " + str(retval))
 
     retval = parse_path_and_file(
-        "/share/mikro3/squid/anders/test-new-squid_2025-08-26_13.06.11/O06_s9_x2_y2_z0_Fluorescence_514_nm_Ex.tiff")
+        "/mnt/pool6/mikro3/squid/Erica-BONT/RPE1_BoNTA_C_48h_2025-11-27/A02_s5_x1_y1_Fluorescence_405_nm_Ex.tiff")
     print("\nretval = " + str(retval))
+
+    retval = parse_path_and_file(
+        "/mnt/pool6/mikro3/squid/Erica-BONT/RPE-1_BoNT-A_-C_48h_2025-11-27_11.17.43/A02_s4_x0_y1_Fluorescence_488_nm_Ex.tiff")
+    print("\nretval = " + str(retval))
+
 
 
 
