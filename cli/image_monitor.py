@@ -200,7 +200,6 @@ processed: Dict[str, float] = {}
 
 
 def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, proj_root_dirs, exhaustive_initial_poll, continuous_polling):
-
     Database.get_instance().initialize_connection_pool(
                 user=imgdb_settings.DB_USER,
                 password=imgdb_settings.DB_PASS,
@@ -226,8 +225,9 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
         start_loop = time.time()
 
-        # create new cutoff time
-        cutoff_time = time.time() - latest_file_change_margin
+        now = time.time()
+        # create new cutoff time for finished acquisitions / processed dict
+        cutoff_time = now - latest_file_change_margin
 
         # get finished ones from db
         finished_acq_folders = Database.get_instance().select_finished_plate_acq_folder()
@@ -243,8 +243,8 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                 continue
 
             # remove old dirs
-            if is_initial_poll:
-                old_dir_cuttoff = 0 # 1970-01-01
+            if is_initial_poll and exhaustive_initial_poll:
+                old_dir_cuttoff = 0  # 1970-01-01, scan all history
             else:
                 old_dir_cuttoff = (3600 * 24 * poll_dirs_margin_days)
 
@@ -372,12 +372,36 @@ def main():
 
     logging.debug(args)
 
-    polling_loop(args.poll_dirs_margin_days,
-                args.latest_file_change_margin,
-                args.poll_interval,
-                args.proj_root_dirs,
-                args.exhaustive_initial_poll,
-                args.continuous_polling)
+    # Normalize CLI / settings types here before passing into the loop
+    def _as_int(val, default):
+        try:
+            return int(val)
+        except Exception:
+            return default
+
+    def _as_bool(val):
+        if isinstance(val, bool):
+            return val
+        return str(val).lower() == 'true'
+
+    poll_dirs_margin_days    = _as_int(args.poll_dirs_margin_days, imgdb_settings.POLL_DIRS_MARGIN_DAYS)
+    latest_file_change_margin = _as_int(args.latest_file_change_margin, imgdb_settings.LATEST_FILE_CHANGE_MARGIN)
+    sleep_time               = _as_int(args.poll_interval, imgdb_settings.POLL_INTERVAL)
+    exhaustive_initial_poll  = _as_bool(args.exhaustive_initial_poll)
+    continuous_polling       = _as_bool(args.continuous_polling)
+
+    proj_root_dirs_arg = args.proj_root_dirs
+    if isinstance(proj_root_dirs_arg, str):
+        proj_root_dirs = [proj_root_dirs_arg]
+    else:
+        proj_root_dirs = list(proj_root_dirs_arg)
+
+    polling_loop(poll_dirs_margin_days,
+                 latest_file_change_margin,
+                 sleep_time,
+                 proj_root_dirs,
+                 exhaustive_initial_poll,
+                 continuous_polling)
 
 
 if __name__ == "__main__":
