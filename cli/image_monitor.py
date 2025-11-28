@@ -212,7 +212,13 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
     is_initial_poll = True
 
-    logging.info("proj_root_dirs: " + str(proj_root_dirs))
+    logging.info("Starting image_monitor polling loop with parameters:")
+    logging.info("  poll_dirs_margin_days=%s", poll_dirs_margin_days)
+    logging.info("  latest_file_change_margin=%s", latest_file_change_margin)
+    logging.info("  poll_interval=%s", sleep_time)
+    logging.info("  proj_root_dirs=%s", proj_root_dirs)
+    logging.info("  exhaustive_initial_poll=%s", exhaustive_initial_poll)
+    logging.info("  continuous_polling=%s", continuous_polling)
 
     while True:
 
