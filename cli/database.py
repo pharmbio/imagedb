@@ -137,9 +137,19 @@ class Database:
                         img.get_project()
                     )
                 )
-                new_upload_id = cursor.fetchone()[0]
+                row = cursor.fetchone()
             conn.commit()
-            return new_upload_id
+
+            # If row is None, ON CONFLICT DO NOTHING fired (upload row already exists).
+            # In that case just skip inserting into upload_to_s3 and do not fail the import.
+            if row is None:
+                logging.debug(
+                    "upload_to_s3 row already exists for path %s; skipping insert",
+                    img.get_path(),
+                )
+                return None
+
+            return row[0]
         except Exception as err:
             logging.exception("Error inserting upload record")
             conn.rollback()

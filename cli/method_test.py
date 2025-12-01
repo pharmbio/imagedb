@@ -198,7 +198,7 @@ def main():
 
     #test_loop_img_dirs()
 
-    test_parse_images_in_dir("/share/mikro4/squid/cp-duo-test13/cp-duo-test13_2025-11-19_09.42.13/t0/")
+    test_parse_images_in_dir("/share/mikro4/squid/cp-duo-test13/cp-duo-test13_2025-11-19_09.42.13/t35")
 
 
 if __name__ == "__main__":
