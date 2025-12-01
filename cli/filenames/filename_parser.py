@@ -1,8 +1,8 @@
 import os
 import logging
 from filenames import pharmbio_squid_filename_v1
-from filenames import pharmbio_squid_filename_v2_standard
 from filenames import pharmbio_squid_filename_standard_new
+from filenames import pharmbio_squid_filename_v2_standard
 from filenames import pharmbio_squid_filename_BF_and_other_and_z
 from filenames import pharmbio_IMX_filename_standard
 from filenames import pharmbio_IMX_filename_older
@@ -153,7 +153,6 @@ if __name__ == '__main__':
     print("\nretval = " + str(retval))
     retval = parse_path_and_file( "/share/data/external-datasets/christa-patient-painting/CRC-119-Growdex-10X-stained/2025-10-15/25490/TimePoint_1/ZStep_3/CRC-119-Growdex-10X-stained_I03_s4_w2F854777A-4769-4D27-85DD-C6F45EA1790F.tif")
     print("\nretval = " + str(retval))
-
 
 
 

@@ -13,19 +13,19 @@ from functools import lru_cache
 
 # Compile a regex pattern to match the structured file path and name, with case-insensitivity for Windows compatibility
 __pattern_path_and_file = re.compile(r'''
-    ^.*/squid/                                  # Match start and any characters until "/squid/"
-    (.*?)_                                      # Capture plate(.*?)/                                      # Capture project name
-    (.+)_                                       # Capture plate (allow underscores)
-    ([0-9]{4})-([0-9]{2})-([0-9]{2})_           # Capture date (yyyy-mm-dd)
-    (.*?)/                                      # Capture time or additional info until the next slash                                      # Capture time or additional info until the next slash
-    (t[0-9]+/)?                                 # Optionally capture timepoint (e.g., "t1/")
-    ([A-Z])([0-9]+)_                            # Capture well position (letter and numbers)
-    s([0-9]+)_                                  # Capture site index
-    x([0-9]+)_                                  # Capture site x coordinate
-    y([0-9]+)_                                  # Capture site y coordinate
-    (z[0-9]+_)?                                 # Optionally capture site z coordinate
-    (.*?)                                       # Capture channel_name (e.g., Fluorescence....., BF....)
-    (\..*)                                      # Capture file extension
+    ^.*/squid/                                      # Match start and any characters until "/squid/"
+    (?P<project>.*?)/                               # Project name
+    (?P<plate>.+)_                                  # Plate (allow underscores)
+    (?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})_  # Date (yyyy-mm-dd)
+    (?P<time_info>.*?)/                             # Time or additional info until the next slash
+    (?P<timepoint_dir>t[0-9]+/)?                    # Optional timepoint dir (e.g., "t1/")
+    (?P<row>[A-Z])(?P<col>[0-9]+)_                  # Well position (letter + numbers)
+    s(?P<site>[0-9]+)_                              # Site index
+    x(?P<x>[0-9]+)_                                 # Site x coordinate
+    y(?P<y>[0-9]+)_                                 # Site y coordinate
+    (?P<z_dir>z[0-9]+_)?                            # Optional z coordinate
+    (?P<channel_name>.*?)                           # Channel name (e.g., Fluorescence..., BF...)
+    (?P<extension>\..*)                             # File extension
 ''', re.IGNORECASE | re.VERBOSE)
 
 
@@ -78,6 +78,14 @@ CHANNEL_MAP = {
         "BF_LED_matrix_right_half",
     }): 40,
 
+        frozenset({
+        "Fluorescence_405_nm_Ex",
+        "Fluorescence_445x609",
+        "Fluorescence_445x700",
+        "Fluorescence_561_nm_Ex",
+        "BF_LED_matrix_full",
+    }): 43,
+
 }
 
 @lru_cache(maxsize=2048)
@@ -86,6 +94,7 @@ def load_config_channel_names(dir_path: str):
     def _norm(name: str) -> str:
         return name.replace(" ", "_")
 
+    # Look for config.json in the given directory only.
     config_path = os.path.join(dir_path, "config.json")
 
     if not os.path.isfile(config_path):
@@ -111,40 +120,48 @@ def parse_path_and_file(path):
         if match is None:
             return None
 
-        # check if channel_names are in config.json, then it is new squid software
         dir_path = os.path.dirname(path)
-        channel_names = load_config_channel_names(dir_path)
-        if channel_names is None:
-            logging.debug(f"No channels_names or config.json found in {dir_path}")
-            return None
 
-        logging.debug(f'match: {match.groups() }')
-
-        tp = match.group(7)
-        if tp:
-            timepoint = tp[1:-1] # remove t and /
+        tp_dir = match.group('timepoint_dir')
+        if tp_dir:
+            timepoint = tp_dir[1:-1] # remove t and /
+            # Images live in .../plate/.../tN/, config.json is in the plate dir one level up.
+            config_dir = os.path.dirname(dir_path)
         else:
             timepoint = 0
+            config_dir = dir_path
 
-        time_of_day = match.group(6).replace('.',':')
-        date_iso = f"{match.group(3)}-{match.group(4)}-{match.group(5)}T{time_of_day}"
+        # check if channel_names are in config.json, then it is new squid software
+        channel_names = load_config_channel_names(config_dir)
+        if channel_names is None:
+            logging.debug(f"No channels_names or config.json found in {config_dir}")
+            return None
 
-        row = match.group(8)
-        col = match.group(9)
+        logging.debug(f'match groups: {match.groupdict() }')
+
+        time_of_day = match.group('time_info').replace('.',':')
+        date_iso = (
+            f"{match.group('year')}-"
+            f"{match.group('month')}-"
+            f"{match.group('day')}T{time_of_day}"
+        )
+
+        row = match.group('row')
+        col = match.group('col')
         well = f'{row}{col}'
 
-        parsed_channel_name = match.group(14)
+        parsed_channel_name = match.group('channel_name')
         # get channel pos from config file channel_names
         channel_pos = channel_names.index(parsed_channel_name) + 1
 
         # find channel map from constant
         channel_map_id = CHANNEL_MAP.get(frozenset(channel_names), 10)  # fallback to 10 if unknown
 
-        site = int(match.group(10))
-        site_x = int(match.group(11))
-        site_y = int(match.group(12))
+        site = int(match.group('site'))
+        site_x = int(match.group('x'))
+        site_y = int(match.group('y'))
 
-        z_val = match.group(13)
+        z_val = match.group('z_dir')
         if z_val:
             z = int(z_val[1:-1]) # remove leading z and trailing _
         else:
@@ -154,9 +171,9 @@ def parse_path_and_file(path):
             'path': path,
             'filename': os.path.basename(path),
             'date_iso': date_iso,
-            'project': match.group(1),
+            'project': match.group('project'),
             'magnification': '20x',
-            'plate': match.group(2),
+            'plate': match.group('plate'),
             'plate_acq_name': path,
             'well': well,
             'wellsample': site,
@@ -167,7 +184,7 @@ def parse_path_and_file(path):
             'channel_name': parsed_channel_name,
             'is_thumbnail': False,
             'guid': None,
-            'extension': match.group(15),
+            'extension': match.group('extension'),
             'timepoint': timepoint,
             'channel_map_id': channel_map_id,
             'microscope': "squid",
@@ -198,8 +215,9 @@ if __name__ == '__main__':
         "/share/mikro3/squid/testsquidplus/testsiteindices_2025-08-25_12.16.04/G8_s1_x0_y0_z0_BF_LED_matrix_full.tiff")
     print("\nretval = " + str(retval))
 
-
-    
+    retval = parse_path_and_file(
+        "/share/mikro4/squid/cp-duo-test13/cp-duo-test13_2025-11-19_09.42.13/t1/O22_s4_x1_y1_z0_Fluorescence_445x700.tiff")
+    print("\nretval = " + str(retval))
 
 
 

@@ -1,5 +1,6 @@
 import logging
 import sys
+import argparse
 from filenames.filename_parser import parse_path_and_file
 from database import Database
 from image import Image
@@ -103,7 +104,92 @@ def rebuild_thumbs():
         image_monitor.rebuild_thumbs(dir)
 
 
+# Simple hard-coded test configuration.
+# Edit this dict to choose which helper to run and with which arguments.
+HARDCODED_TEST_CONFIG = {
+    # Name of a function defined in this module, e.g.
+    # "test_parse_images_in_dir", "rebuild_thumbs", "test_polling_loop", etc.
+    "method": "test_parse_images_in_dir",
+
+    # Keyword arguments passed to the method above.
+    # For "test_parse_images_in_dir" the argument name is "dir_path".
+    "args": {
+        "dir_path": "/share/mikro3/squid/PHE004_U2OS/1116773734_PHE004_U2OS_PHE004C08_1_2025-09-25_05.25.50/"
+    },
+}
+
+
+def run_hardcoded_test():
+    """
+    Run the function and args specified in HARDCODED_TEST_CONFIG.
+    """
+    method_name = HARDCODED_TEST_CONFIG.get("method")
+    args = HARDCODED_TEST_CONFIG.get("args", {}) or {}
+
+    logging.info(f"Running hard-coded test method: {method_name} with args: {args}")
+
+    # Map of allowed method names to callables
+    methods = {
+        "delete_and_upload_one_testimage": delete_and_upload_one_testimage,
+        "reset_test_data_in_db": reset_test_data_in_db,
+        "test_polling_loop": test_polling_loop,
+        "test_loop_img_dirs": test_loop_img_dirs,
+        "rebuild_thumbs": rebuild_thumbs,
+        "test_parse_images_in_dir": test_parse_images_in_dir,
+    }
+
+    func = methods.get(method_name)
+    if func is None:
+        logging.error(f"Unknown hard-coded test method: {method_name}")
+        return
+
+    func(**args)
+
+
+def test_parse_images_in_dir(dir_path: str):
+    """
+    Parse all image files in a single directory without touching the database.
+    """
+    logging.info(f"Testing parsing for directory: {dir_path}")
+
+    image_files = sorted(file_utils.get_all_image_files(dir_path))
+    logging.info(f"Found {len(image_files)} image files in {dir_path}")
+
+    ok_count = 0
+    fail_count = 0
+
+    for img_path in image_files:
+        try:
+            img_meta = parse_path_and_file(img_path)
+            if img_meta is None:
+                logging.error(f"Could not parse metadata for: {img_path}")
+                fail_count += 1
+            else:
+                # Construct Image object just to verify metadata is usable.
+                img = Image.from_meta(img_meta)
+                logging.info(f"Parsed OK: parser: {img.get_parser()} path: {img.get_path() }")
+                ok_count += 1
+        except Exception as e:
+            logging.exception(f"Exception while parsing {img_path}: {e}")
+            fail_count += 1
+
+    logging.info(
+        f"Done parsing directory {dir_path}. "
+        f"Success: {ok_count}, Failed: {fail_count}"
+    )
+
+
 def main():
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Helper script for testing various image-db operations.\n"
+            "By default this parses all image files in a specified directory "
+            "without writing anything to the database."
+        )
+    )
+
+    args = parser.parse_args()
 
     #delete_and_upload_one_testimage()
 
@@ -112,7 +198,7 @@ def main():
 
     #test_loop_img_dirs()
 
-    rebuild_thumbs()
+    test_parse_images_in_dir("/share/mikro4/squid/cp-duo-test13/cp-duo-test13_2025-11-19_09.42.13/t0/")
 
 
 if __name__ == "__main__":

@@ -58,6 +58,9 @@ class Image:
     def get_microscope(self):
         return self.get('microscope')
 
+    def get_parser(self):
+        return self.get('parser')
+
     def get_channel_map_id(self):
         ## get channel map for speciffic projects/plates
         #specific_ch_map = getChannelMapIDFromMapping(img_meta['project'], img_meta['plate'])
