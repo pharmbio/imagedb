@@ -2230,6 +2230,13 @@ function drawPlatesListSidebar_old(origPlatesList){
       elemSelect.add( new Option("H,P", "" + b + "," + g) );
     }
 
+    is_subset = ['HOECHST', 'MITO'].every(val => channel_names.includes(val))
+    if(is_subset){
+      b = getChannelIdFromDye('HOECHST', channels);
+      r = getChannelIdFromDye('MITO', channels);
+      elemSelect.add( new Option("H,M", "" + b + "," + r) );
+    }
+
     is_subset = ['BF', 'BFz1', 'BFz2'].every(val => channel_names.includes(val))
     if(is_subset){
       b = getChannelIdFromDye('BF', channels);

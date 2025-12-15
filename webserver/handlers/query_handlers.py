@@ -138,6 +138,8 @@ class SearchCompoundQueryHandler(RequestHandler):
             self.write({"error": "missing q"})
             return
 
+        field = self.get_argument("field", "").strip() or None
+
         limits = SearchLimits(
             raw_limit      = self._int(self.get_argument("limit", ""), 100000, 1, 1000000),
             plates         = self._opt_int(self.get_argument("limit_plates", "")),
@@ -148,7 +150,7 @@ class SearchCompoundQueryHandler(RequestHandler):
         logging.info(f"limits: {limits}")
 
         try:
-            payload = search_compounds(q, limits)
+            payload = search_compounds(q, limits, field)
             self.set_header("Content-Type", "application/json")
             self.write(payload)
         except Exception as e:

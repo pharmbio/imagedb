@@ -388,7 +388,7 @@ def _take(it: Iterable[Any], n: Optional[int]) -> List[Any]:
         out.append(x)
     return out
 
-def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[str, Any]:
+def search_compounds(term: str, limits: Optional[SearchLimits] = None, field: Optional[str] = None) -> Dict[str, Any]:
     """
     Build a project -> plate -> acquisition -> wells hie    except (Exception, psycopg2.DatabaseError) as err:
         if conn is not None:
@@ -438,6 +438,43 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
     #   semantics are honored by how you materialized the view. The view itself should be built with
     #   LEFT JOINs so non-matching compounds still appear (compound columns NULL).
     # - We OR both v.compound_name and v.name to be resilient to column naming in the view.
+    # Map allowed field keys to column expressions in the view
+    field_map = {
+        "batchid": "v.batchid::text",
+        "cbkid": "v.cbkid",
+        "libid": "v.libid",
+        "libtxt": "v.libtxt",
+        "smiles": "v.smiles",
+        "inchi": "v.inchi",
+        "inkey": "v.inkey",
+        "name": "v.name",
+        "plate_acquisition_name": "v.plate_acquisition_name",
+        "barcode": "v.barcode",
+        "project": "v.project",
+    }
+
+    where_clauses = []
+    params: Dict[str, Any] = {"like": like, "limit": limits.raw_limit}
+
+    if field and field in field_map:
+        # Restrict search to the selected field
+        where_clauses.append(f"{field_map[field]} ILIKE %(like)s")
+    else:
+        # Any field: search across all known columns
+        where_clauses.append(
+            "      v.batchid::text           ILIKE %(like)s "
+            "   OR v.cbkid                   ILIKE %(like)s "
+            "   OR v.libid                   ILIKE %(like)s "
+            "   OR v.libtxt                  ILIKE %(like)s "
+            "   OR v.smiles                  ILIKE %(like)s "
+            "   OR v.inchi                   ILIKE %(like)s "
+            "   OR v.inkey                   ILIKE %(like)s "
+            "   OR v.name                    ILIKE %(like)s "
+            "   OR v.plate_acquisition_name  ILIKE %(like)s "
+            "   OR v.barcode                 ILIKE %(like)s "
+            "   OR v.project::text           ILIKE %(like)s "
+        )
+
     query = (
         "SELECT "
         "  v.project                         AS project, "
@@ -451,15 +488,8 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
         "  v.well_id                         AS well_id "
         "FROM plate_layout_view_more v "
         "WHERE ("
-        "      v.batchid::text ILIKE %(like)s "
-        "   OR v.cbkid         ILIKE %(like)s "
-        "   OR v.libid         ILIKE %(like)s "
-        "   OR v.libtxt        ILIKE %(like)s "
-        "   OR v.smiles        ILIKE %(like)s "
-        "   OR v.inchi         ILIKE %(like)s "
-        "   OR v.inkey         ILIKE %(like)s "
-        "   OR v.name          ILIKE %(like)s "
-        "      ) "
+        + " ".join(where_clauses) +
+        ") "
         "  AND v.plate_acquisition_id IS NOT NULL "
         "ORDER BY v.project, v.barcode, v.plate_acquisition_id, v.well_id "
         "LIMIT %(limit)s"
@@ -467,7 +497,7 @@ def search_compounds(term: str, limits: Optional[SearchLimits] = None) -> Dict[s
 
     try:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute(query, {"like": like, "limit": limits.raw_limit})
+        cursor.execute(query, params)
         rows = cursor.fetchall()
 
         # Build in-memory index:

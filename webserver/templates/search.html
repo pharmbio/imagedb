@@ -165,15 +165,18 @@
   <nav class="navbar navbar-light bg-light border-bottom">
     <form id="search-form" class="form-inline mx-3" onsubmit="return false;">
       <select id="field" class="form-control mr-2">
-        <option value="">Compound: Any Field</option>
-        <option value="inchi">Compound: inchi</option>
-        <option value="compound_name">Compound: compound_name</option>
+        <option value="">Any field</option>
         <option value="batchid">Compound: batchid</option>
         <option value="cbkid">Compound: cbkid</option>
         <option value="libid">Compound: libid</option>
         <option value="libtxt">Compound: libtxt</option>
         <option value="smiles">Compound: smiles</option>
+        <option value="inchi">Compound: inchi</option>
         <option value="inkey">Compound: inkey</option>
+        <option value="name">Compound: name</option>
+        <option value="plate_acquisition_name">Plate acquisition name</option>
+        <option value="barcode">Plate barcode</option>
+        <option value="project">Project</option>
       </select>
       <input type="text" id="q" class="form-control mr-2" placeholder="Search term...." required>
       <button class="btn btn-info" type="submit">Search</button>
@@ -384,7 +387,7 @@
   <script src="/static/theme/vendor/jquery/jquery.min.js"></script>
   <script src="/static/theme/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   <!-- Keep your site-wide JS if needed -->
-  <script src="/static/main.js?version=1.23"></script>
+  <script src="/static/main.js?version=1.27"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -427,18 +430,19 @@
       const expandBtn = document.getElementById('expand-all-btn');
       if (expandBtn) expandBtn.addEventListener('click', () => { expandAllTree(); });
 
-      // Sort mode (projects): 'date' (latest first, default) or 'name' (A–Ö)
-      let SORT_MODE = 'date';
-      const sortBtn = document.getElementById('sort-mode-btn');
-      if (sortBtn) {
-        sortBtn.addEventListener('click', () => {
-          SORT_MODE = (SORT_MODE === 'date') ? 'name' : 'date';
-          const term = document.getElementById('q').value.trim();
-          if (term) {
-            renderSearchResults(term); // re-render with new sort mode
-          }
-        });
-      }
+	      // Sort mode (projects): 'date' (latest first, default) or 'name' (A–Ö)
+	      let SORT_MODE = 'date';
+	      const sortBtn = document.getElementById('sort-mode-btn');
+	      if (sortBtn) {
+	        sortBtn.addEventListener('click', () => {
+	          SORT_MODE = (SORT_MODE === 'date') ? 'name' : 'date';
+	          const term = document.getElementById('q').value.trim();
+	          const field = document.getElementById('field').value.trim();
+	          if (term) {
+	            renderSearchResults(term, field); // re-render with new sort mode
+	          }
+	        });
+	      }
 
       const treeRoot     = document.getElementById('tree-root');
       const errorModal   = $('#error-modal');
@@ -927,14 +931,15 @@
       brightnessEl.addEventListener('input', () => applyImageSettings(treeRoot));
       zoomEl.addEventListener('input', () => applyImageSettings(treeRoot));
 
-      // Re-render on limit changes if a term is present
-      ['limit-plates','limit-acqs','limit-wells','limit-sites'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('change', () => {
-          const term = document.getElementById('q').value.trim();
-          if (term) renderSearchResults(term);
-        });
-      });
+	      // Re-render on limit changes if a term is present
+	      ['limit-plates','limit-acqs','limit-wells','limit-sites'].forEach(id => {
+	        const el = document.getElementById(id);
+	        if (el) el.addEventListener('change', () => {
+	          const term = document.getElementById('q').value.trim();
+	          const field = document.getElementById('field').value.trim();
+	          if (term) renderSearchResults(term, field);
+	        });
+	      });
       // For normalize/equalize, keep tree expanded and just retarget thumbs
       [normalizeCb, equalizeCb].forEach(cb => {
         if (cb) cb.addEventListener('change', () => {
@@ -946,12 +951,13 @@
         });
       });
       // Channel combo changes require rebuilding cards (new channel set), so re-render
-      if (channelComboSelect) {
-        channelComboSelect.addEventListener('change', () => {
-          const term = document.getElementById('q').value.trim();
-          if (term) renderSearchResults(term);
-        });
-      }
+	      if (channelComboSelect) {
+	        channelComboSelect.addEventListener('change', () => {
+	          const term = document.getElementById('q').value.trim();
+	          const field = document.getElementById('field').value.trim();
+	          if (term) renderSearchResults(term, field);
+	        });
+	      }
 
       // Cache plate fetches by (barcode|acqId|wellsCsv)
       const plateCache = new Map();
@@ -1270,31 +1276,41 @@
       document.getElementById('search-form').addEventListener('submit', e => {
         e.preventDefault();
         const term = document.getElementById('q').value.trim();
+        const field = document.getElementById('field').value.trim();
 
         // Update URL ?q=... so refresh/back restores the search
         try {
           const url = new URL(window.location.href);
           if (term) {
             url.searchParams.set('q', term);
+            if (field) {
+              url.searchParams.set('field', field);
+            } else {
+              url.searchParams.delete('field');
+            }
           } else {
             url.searchParams.delete('q');
+            url.searchParams.delete('field');
           }
           window.history.replaceState(null, '', url.toString());
         } catch (err) {
           console.error('Failed to update URL with q param', err);
         }
 
-        renderSearchResults(term);
+        renderSearchResults(term, field);
       });
 
       // On initial load, if ?q=... is present, restore and run the search
       try {
         const url = new URL(window.location.href);
         const initialQ = (url.searchParams.get('q') || '').trim();
+        const initialField = (url.searchParams.get('field') || '').trim();
         if (initialQ) {
           const qInput = document.getElementById('q');
           if (qInput) qInput.value = initialQ;
-          renderSearchResults(initialQ);
+          const fieldSelect = document.getElementById('field');
+          if (fieldSelect && initialField) fieldSelect.value = initialField;
+          renderSearchResults(initialQ, initialField);
         }
       } catch (err) {
         console.error('Failed to read q from URL', err);
