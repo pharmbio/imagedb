@@ -18,9 +18,9 @@ __pattern_path_and_file = re.compile(
     r'(.*?)/'                           # plate (2)
     r'(.*?/)?'                          # Optional subdir (3), e.g. /single_images/
     r'([0-9]{4})([0-9]{2})([0-9]{2})'   # date (yyyy, mm, dd) (4,5,6)
-    Time goes here
-    r'__Well([A-Z])([0-9]+)'  # well (4,5)
-    r'\.ome'      
+    r'_.*Point([A-Z])([0-9]+)'          # well (7,8)
+    r'_.*ZStack([0-9]+)'                # z (9)
+    r'_Channel(.*)_Spheroid\.ome'       # channel (10)
     r'(.*(\..*))'                       # Extension [11]
     ,
     re.IGNORECASE
