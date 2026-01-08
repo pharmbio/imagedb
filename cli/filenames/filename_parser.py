@@ -27,6 +27,7 @@ from filenames import pharmbio_nikon_filename_v6_multi
 from filenames import pharmbio_nikon_filename_v7_single
 from filenames import pharmbio_nikon_filename_v8_single
 from filenames import pharmbio_nikon_filename_v9_single
+from filenames import pharmbio_nikon_filename_v10_single4x
 from filenames import pharmbio_squid_filename_slide
 from filenames import external_filename_christa_zplane_IMX
 
@@ -45,6 +46,7 @@ parsers.append(pharmbio_nikon_filename_v6_multi)
 parsers.append(pharmbio_nikon_filename_v8_single)
 parsers.append(pharmbio_nikon_filename_v7_single)
 parsers.append(pharmbio_nikon_filename_v9_single)
+parsers.append(pharmbio_nikon_filename_v10_single4x)
 parsers.append(pharmbio_IMX_filename_standard)
 parsers.append(pharmbio_IMX_filename_older)
 parsers.append(pharmbio_IMX_filename_relaxed)
@@ -154,6 +156,9 @@ if __name__ == '__main__':
     retval = parse_path_and_file( "/share/data/external-datasets/christa-patient-painting/CRC-119-Growdex-10X-stained/2025-10-15/25490/TimePoint_1/ZStep_3/CRC-119-Growdex-10X-stained_I03_s4_w2F854777A-4769-4D27-85DD-C6F45EA1790F.tif")
     print("\nretval = " + str(retval))
 
+    retval = parse_path_and_file( "/share/mikro2/nikon/organoids/pilot3_withoutWGA_01BSA/Well-K18-z1-HOECHST.ome.tiff")
+    print("\nretval = " + str(retval))
+    
 
 
 
