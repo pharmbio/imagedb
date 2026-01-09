@@ -35,5 +35,6 @@ services:
       - ${SHARE_MIKRO}:/share/mikro
       - ${SHARE_MIKRO2}:/share/mikro2
       - ${SHARE_MIKRO3}:/share/mikro3
+      - ${SHARE_MIKRO4}:/share/mikro4
       - ${SHARE_IMAGEDB}:/share/imagedb
       - ${SHARE_EXTERNAL}:/share/data/external-datasets
