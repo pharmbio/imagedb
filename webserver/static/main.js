@@ -1001,10 +1001,10 @@ function drawPlatesListSidebar_old(origPlatesList){
       });
   }
 
-  function updateToolbarWithNewAcquisition() {
+  function updateToolbarWithNewAcquisition(selected_site, selected_zpos) {
     updateWellSelect(getLoadedPlate());
-    updateSiteSelect(getLoadedPlate());
-    updateZSelect(getLoadedPlate());
+    updateSiteSelect(getLoadedPlate(), selected_site);
+    updateZSelect(getLoadedPlate(), selected_zpos);
     updateChannelSelect(getLoadedPlate());
     updatePlateAcqLabel(getLoadedPlate());
     updateProjectNameLabel(getLoadedPlate());
@@ -2053,6 +2053,17 @@ function drawPlatesListSidebar_old(origPlatesList){
     // add as many options as sites
     let siteNames = plateObj.getSiteNames(getSelectedAcquisitionId());
 
+    // Validate that the previously selected site (or "all") exists in this acquisition
+    let allOptionValue = JSON.stringify(siteNames);
+    const singleSiteValues = siteNames.map(name => `[${name}]`);
+    const selectedSiteIsValid =
+      selected_site &&
+      (singleSiteValues.includes(selected_site) || selected_site === allOptionValue);
+
+    if (!selectedSiteIsValid) {
+      selected_site = undefined;
+    }
+
     // Loop through the siteNames array
     for (let name of siteNames) {
       option_json = "[" + name + "]";
@@ -2075,6 +2086,20 @@ function drawPlatesListSidebar_old(origPlatesList){
     // add as many options as zpos
     let z_positions = plateObj.getAvailableZpos(getSelectedAcquisitionId());
 
+    // Check if the previously selected z value is still valid
+    let allOptionValue = null;
+    if (z_positions && z_positions.length > 1) {
+      allOptionValue = `[ ${z_positions.join(', ')} ]`;
+    }
+    const singleZValues = z_positions.map(z => `[${z}]`);
+    const selectedZIsValid =
+      selected_z &&
+      (singleZValues.includes(selected_z) || selected_z === allOptionValue);
+
+    if (!selectedZIsValid) {
+      selected_z = undefined;
+    }
+
     // if z_selection not specified, select one in middle
     if (!selected_z && z_positions && z_positions.length > 0) {
       let middleIndex = Math.floor(z_positions.length / 2);
@@ -2090,8 +2115,8 @@ function drawPlatesListSidebar_old(origPlatesList){
     }
 
     // finally add an "all" option
-    if(z_positions && z_positions.length > 1){
-      const allOption =  `[ ${z_positions.join(', ')} ]`;
+    if (z_positions && z_positions.length > 1) {
+      const allOption = `[ ${z_positions.join(', ')} ]`;
       elemSelect.add(new Option(allOption, allOption));
     }
   }
@@ -2460,8 +2485,22 @@ function drawPlatesListSidebar_old(origPlatesList){
 
 
   function acquisitionSelectChanged() {
+    // Preserve current site and z selection when changing acquisition
+    let selectedSiteValue = undefined;
+    let selectedZValue = undefined;
+
+    const siteElem = document.getElementById('site-select');
+    if (siteElem && siteElem.selectedIndex >= 0 && siteElem.selectedIndex < siteElem.options.length) {
+      selectedSiteValue = siteElem.options[siteElem.selectedIndex].value;
+    }
+
+    const zElem = document.getElementById('z-select');
+    if (zElem && zElem.selectedIndex >= 0 && zElem.selectedIndex < zElem.options.length) {
+      selectedZValue = zElem.options[zElem.selectedIndex].value;
+    }
+
     updateWindowURL(getLoadedPlate().getName(), getSelectedAcquisitionId());
-    updateToolbarWithNewAcquisition();
+    updateToolbarWithNewAcquisition(selectedSiteValue, selectedZValue);
     redrawPlate();
   }
 
