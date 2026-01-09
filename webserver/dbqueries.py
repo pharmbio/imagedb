@@ -206,9 +206,134 @@ def get_plate_json_via_python(plate_name, well_filter=None):
             put_connection(conn)
 
 
-def get_plate(plate_name, acqID=None, well_filter=None):
+def get_plate(plate_name, acqID: Optional[int] = None):
+    """
+    Return plate data.
 
-    return get_plate_old(plate_name)
+    Backwards-compatible behavior:
+    - If acqID is None, this behaves exactly like get_plate_old
+      and loads all acquisitions fully (current frontend behavior).
+    - If acqID is provided, only the specified acquisition's images
+      are fully populated; other acquisitions are included as empty
+      stubs with metadata only.
+    """
+
+    # Preserve existing behavior for current frontend callers.
+    if acqID is None:
+        return get_plate_old(plate_name)
+
+    logging.info(f"inside get_plate (filtered): plate_name={plate_name}, acqID={acqID}")
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 1) Get all acquisitions for this plate as lightweight metadata
+        acq_query = (
+            "SELECT DISTINCT "
+            "  plate_acquisition_id, "
+            "  plate_acquisition_name, "
+            "  project, "
+            "  folder "
+            "FROM images_minimal_view "
+            "WHERE plate_barcode = %s "
+            "ORDER BY timepoint, plate_acquisition_id"
+        )
+        cursor.execute(acq_query, (plate_name,))
+        acq_rows = cursor.fetchall()
+
+        plates_dict: Dict[str, platemodel.Plate] = {}
+        plate = plates_dict.setdefault(plate_name, platemodel.Plate(plate_name))
+
+        # Create stub acquisitions with only metadata
+        for row in acq_rows:
+            plate.get_or_create_acquisition(
+                row["plate_acquisition_id"],
+                row["project"],
+                row["plate_acquisition_name"],
+                row["folder"],
+            )
+
+        # 2) Load full image data only for selected acquisition (if provided)
+        if acqID is not None:
+            return_cols = [
+                "plate_barcode",
+                "project",
+                "plate_acquisition_id",
+                "plate_acquisition_name",
+                "folder",
+                "timepoint",
+                "path",
+                "well",
+                "site",
+                "z",
+                "channel",
+                "dye",
+                "cell_line",
+            ]
+
+            img_query = (
+                "SELECT " + ",".join(return_cols) +
+                " FROM images_minimal_view"
+                " WHERE plate_barcode = %s"
+                "   AND plate_acquisition_id = %s"
+            )
+            params: List[Any] = [plate_name, acqID]
+            img_query += " ORDER BY timepoint, plate_acquisition_id, well, site, z, channel"
+
+            logging.debug("img_query %s", img_query)
+            logging.info(cursor.mogrify(img_query, params))
+
+            cursor.execute(img_query, params)
+            img_rows = cursor.fetchall()
+
+            logging.info("loaded %d image rows for filtered acquisition", len(img_rows))
+
+            for image in img_rows:
+                pid = image["plate_barcode"]
+                p = plates_dict.setdefault(pid, platemodel.Plate(pid))
+                p.add_data(image)
+
+        # 3) Load plate layout (optionally filtered by wells)
+        layout_query = (
+            "SELECT * "
+            " FROM plate_v1"
+            " WHERE barcode = %s"
+            " ORDER BY well_id"
+        )
+        layout_params: List[Any] = [plate_name]
+
+        logging.debug("layout_query %s", layout_query)
+        cursor.execute(layout_query, layout_params)
+        layout_rows = cursor.fetchall()
+
+        layout_dict: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for row in layout_rows:
+            well_id = row["well_id"]
+            layout_dict[well_id].append(row)
+
+        if plate_name in plates_dict:
+            plates_dict[plate_name].add_layout(layout_dict)
+        else:
+            # No image rows for this plate, but we might still have layout only.
+            p = platemodel.Plate(plate_name)
+            p.add_layout(layout_dict)
+            plates_dict[plate_name] = p
+
+        result_dict = {"plates": plates_dict}
+        logging.info("done with get_plate (filtered), plate_name:%s", plate_name)
+        return result_dict
+
+    except (Exception, psycopg2.DatabaseError) as err:
+        logging.exception("get_plate (filtered) failed")
+        raise err
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            put_connection(conn)
 
 
 def list_all_plates():
