@@ -2537,6 +2537,21 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
   function viewerAcquisitionSelectChanged() {
+    // Preserve current site and z selection when changing acquisition in viewer
+    let selectedSiteValue = undefined;
+    let selectedZValue = undefined;
+
+    const siteElem = document.getElementById('site-select');
+    if (siteElem && siteElem.selectedIndex >= 0 && siteElem.selectedIndex < siteElem.options.length) {
+      selectedSiteValue = siteElem.options[siteElem.selectedIndex].value;
+    }
+
+    const zElem = document.getElementById('z-select');
+    if (zElem && zElem.selectedIndex >= 0 && zElem.selectedIndex < zElem.options.length) {
+      selectedZValue = zElem.options[zElem.selectedIndex].value;
+    }
+
+    updateToolbarWithNewAcquisition(selectedSiteValue, selectedZValue);
     redrawImageViewer(false);
   }
 
