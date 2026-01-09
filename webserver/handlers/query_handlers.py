@@ -76,9 +76,11 @@ class ListAllPlatesQueryHandler(tornado.web.RequestHandler): #pylint: disable=ab
 class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstract-method
 
     def prepare(self):
-        header = "Content-Type"
-        body = "application/json"
-        self.set_header(header, body)
+        self.set_header("Content-Type", "application/json")
+        # Allow short-lived caching of plate models so that index.html
+        # and image-viewer.html can reuse the same /api/plate responses.
+        # Different plate/acqID combinations map to different URLs.
+        self.set_header("Cache-Control", "public, max-age=60")
 
     def get(self, plate, acqID, wells):
         """Handles GET requests.

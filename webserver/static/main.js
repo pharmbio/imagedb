@@ -930,7 +930,7 @@ function drawPlatesListSidebar_old(origPlatesList){
       });
   }
 
-  function apiLoadAcquisitionImages(plate_name, acq_id, isViewer = false) {
+  function apiLoadAcquisitionImages(plate_name, acq_id, isViewer = false, selected_site = undefined, selected_zpos = undefined) {
 
     // reset once-only missing-thumbs notification for this load
     missingThumbsWarningShown = false;
@@ -960,7 +960,7 @@ function drawPlatesListSidebar_old(origPlatesList){
             }
 
             updateWindowURL(plate_name, acq_id);
-            updateToolbarWithNewAcquisition();
+            updateToolbarWithNewAcquisition(selected_site, selected_zpos);
             if (isViewer) {
               redrawImageViewer(false);
             } else {
@@ -1057,10 +1057,10 @@ function drawPlatesListSidebar_old(origPlatesList){
       });
   }
 
-  function updateToolbarWithNewAcquisition() {
+  function updateToolbarWithNewAcquisition(selected_site, selected_zpos) {
     updateWellSelect(getLoadedPlate());
-    updateSiteSelect(getLoadedPlate());
-    updateZSelect(getLoadedPlate());
+    updateSiteSelect(getLoadedPlate(), selected_site);
+    updateZSelect(getLoadedPlate(), selected_zpos);
     updateChannelSelect(getLoadedPlate());
     updatePlateAcqLabel(getLoadedPlate());
     updateProjectNameLabel(getLoadedPlate());
@@ -2545,14 +2545,28 @@ function drawPlatesListSidebar_old(origPlatesList){
     const plateName = plate.getName();
     const acqId = getSelectedAcquisitionId();
 
+    // Preserve current site and z selection when changing acquisition
+    let selectedSiteValue = undefined;
+    let selectedZValue = undefined;
+
+    const siteElem = document.getElementById('site-select');
+    if (siteElem && siteElem.selectedIndex >= 0 && siteElem.selectedIndex < siteElem.options.length) {
+      selectedSiteValue = siteElem.options[siteElem.selectedIndex].value;
+    }
+
+    const zElem = document.getElementById('z-select');
+    if (zElem && zElem.selectedIndex >= 0 && zElem.selectedIndex < zElem.options.length) {
+      selectedZValue = zElem.options[zElem.selectedIndex].value;
+    }
+
     // If this acquisition has no wells yet, lazy-load it from the server.
     if (!plate.isAcquisitionLoaded(acqId)) {
-      apiLoadAcquisitionImages(plateName, acqId);
+      apiLoadAcquisitionImages(plateName, acqId, false, selectedSiteValue, selectedZValue);
       return;
     }
 
     updateWindowURL(plateName, acqId);
-    updateToolbarWithNewAcquisition();
+    updateToolbarWithNewAcquisition(selectedSiteValue, selectedZValue);
     redrawPlate();
   }
 
@@ -2593,14 +2607,28 @@ function drawPlatesListSidebar_old(origPlatesList){
     const plateName = plate.getName();
     const acqId = getSelectedAcquisitionId();
 
+    // Preserve current site and z selection when changing acquisition in viewer
+    let selectedSiteValue = undefined;
+    let selectedZValue = undefined;
+
+    const siteElem = document.getElementById('site-select');
+    if (siteElem && siteElem.selectedIndex >= 0 && siteElem.selectedIndex < siteElem.options.length) {
+      selectedSiteValue = siteElem.options[siteElem.selectedIndex].value;
+    }
+
+    const zElem = document.getElementById('z-select');
+    if (zElem && zElem.selectedIndex >= 0 && zElem.selectedIndex < zElem.options.length) {
+      selectedZValue = zElem.options[zElem.selectedIndex].value;
+    }
+
     // Lazy-load acquisition data if needed (viewer context)
     if (!plate.isAcquisitionLoaded(acqId)) {
-      apiLoadAcquisitionImages(plateName, acqId, true);
+      apiLoadAcquisitionImages(plateName, acqId, true, selectedSiteValue, selectedZValue);
       return;
     }
 
     updateWindowURL(plateName, acqId);
-    updateToolbarWithNewAcquisition();
+    updateToolbarWithNewAcquisition(selectedSiteValue, selectedZValue);
     redrawImageViewer(false);
   }
 
