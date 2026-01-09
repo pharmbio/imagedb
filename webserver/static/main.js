@@ -50,6 +50,11 @@
       return this.getZPositions(acquisitionId, wellKey, siteKey)[zKey]?.channels || {};
     }
 
+    isAcquisitionLoaded(acquisitionId) {
+      const wells = this.getWells(acquisitionId);
+      return wells && Object.keys(wells).length > 0;
+    }
+
     getFirstWellKey(acquisitionId) {
       return Object.keys(this.getWells(acquisitionId))[0];
     }
@@ -919,6 +924,57 @@ function drawPlatesListSidebar_old(origPlatesList){
         }
       })
 
+      .catch(function (error) {
+        console.log(error);
+        displayModalError(error);
+      });
+  }
+
+  function apiLoadAcquisitionImages(plate_name, acq_id, isViewer = false) {
+
+    // reset once-only missing-thumbs notification for this load
+    missingThumbsWarningShown = false;
+
+    // stop any current animation
+    stopAnimation();
+    document.getElementById("animate-cbx").checked = false;
+
+    const url = '/api/plate/' + plate_name + '/' + acq_id + '/' + undefined;
+    fetch(url)
+      .then(function (response) {
+        if (response.status === 200) {
+
+          response.json().then(function (json) {
+
+            console.log('plate data (lazy acq load)', json);
+
+            const newPlates = new Plates(json['data'].plates);
+            const newPlate = newPlates.getFirstPlate();
+            const existingPlate = getLoadedPlate();
+
+            const acquisitionsNew = newPlate.getAcquisitions();
+            const acquisitionsExisting = existingPlate.getAcquisitions();
+
+            if (acquisitionsNew && acquisitionsNew[acq_id]) {
+              acquisitionsExisting[acq_id].wells = acquisitionsNew[acq_id].wells;
+            }
+
+            updateWindowURL(plate_name, acq_id);
+            updateToolbarWithNewAcquisition();
+            if (isViewer) {
+              redrawImageViewer(false);
+            } else {
+              redrawPlate(true);
+            }
+          });
+        }
+        else {
+          response.text().then(function (text) {
+            displayModalServerError(response.status, text);
+          });
+        }
+
+      })
       .catch(function (error) {
         console.log(error);
         displayModalError(error);
@@ -2485,7 +2541,17 @@ function drawPlatesListSidebar_old(origPlatesList){
 
 
   function acquisitionSelectChanged() {
-    updateWindowURL(getLoadedPlate().getName(), getSelectedAcquisitionId());
+    const plate = getLoadedPlate();
+    const plateName = plate.getName();
+    const acqId = getSelectedAcquisitionId();
+
+    // If this acquisition has no wells yet, lazy-load it from the server.
+    if (!plate.isAcquisitionLoaded(acqId)) {
+      apiLoadAcquisitionImages(plateName, acqId);
+      return;
+    }
+
+    updateWindowURL(plateName, acqId);
     updateToolbarWithNewAcquisition();
     redrawPlate();
   }
@@ -2523,6 +2589,18 @@ function drawPlatesListSidebar_old(origPlatesList){
   }
 
   function viewerAcquisitionSelectChanged() {
+    const plate = getLoadedPlate();
+    const plateName = plate.getName();
+    const acqId = getSelectedAcquisitionId();
+
+    // Lazy-load acquisition data if needed (viewer context)
+    if (!plate.isAcquisitionLoaded(acqId)) {
+      apiLoadAcquisitionImages(plateName, acqId, true);
+      return;
+    }
+
+    updateWindowURL(plateName, acqId);
+    updateToolbarWithNewAcquisition();
     redrawImageViewer(false);
   }
 

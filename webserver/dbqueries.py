@@ -239,7 +239,7 @@ def get_plate(plate_name, acqID: Optional[int] = None):
             "  folder "
             "FROM images_minimal_view "
             "WHERE plate_barcode = %s "
-            "ORDER BY timepoint, plate_acquisition_id"
+            "ORDER BY plate_acquisition_id"
         )
         cursor.execute(acq_query, (plate_name,))
         acq_rows = cursor.fetchall()

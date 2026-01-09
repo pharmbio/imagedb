@@ -85,7 +85,17 @@ class GetPlateQueryHandler(tornado.web.RequestHandler): #pylint: disable=abstrac
         """
         logging.info(f"plate_name: {plate}, acqID: {acqID}, wells: {wells}")
 
-        plates_dict = get_plate(plate)
+        # acqID is part of the URL; convert to int when meaningful,
+        # otherwise pass None to keep legacy "load all acquisitions" behavior.
+        acq = None
+        if acqID not in ("", "undefined", "null", "None"):
+            try:
+                acq = int(acqID)
+            except Exception:
+                logging.warning("Could not parse acqID '%s' as int; falling back to full plate load", acqID)
+                acq = None
+
+        plates_dict = get_plate(plate, acqID=acq)
 
         data = {"data": plates_dict}
 
