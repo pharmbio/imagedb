@@ -1,5 +1,5 @@
 numpy==1.22.2
-tornado==6.1
+tornado==6.4.2
 opencv-python==4.8.0.76
 Pillow==10
 psycopg2==2.9.3
