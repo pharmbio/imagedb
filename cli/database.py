@@ -3,6 +3,7 @@ import logging
 import threading
 from datetime import datetime
 from typing import Any, List, Optional
+import json
 
 import psycopg2
 from psycopg2 import pool
@@ -180,6 +181,9 @@ class Database:
         """
         Inserts a new plate acquisition record and returns its id.
         """
+        parser = img.get_parser()
+        meta_json = json.dumps({"parser": parser}) if parser else None
+
         query = """
             INSERT INTO plate_acquisition(
                 plate_barcode,
@@ -189,9 +193,10 @@ class Database:
                 microscope,
                 channel_map_id,
                 timepoint,
-                folder
+                folder,
+                meta
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """
         conn = self.get_connection()
@@ -207,7 +212,8 @@ class Database:
                         img.get_microscope(),
                         img.get_channel_map_id(),
                         img.get_timepoint(),
-                        img.get_folder()
+                        img.get_folder(),
+                        meta_json
                     )
                 )
                 plate_acq_id = cursor.fetchone()[0]
@@ -222,6 +228,9 @@ class Database:
 
     def select_or_insert_plate_acq(self, img: Image) -> int:
         folder = img.get_folder()
+        parser = img.get_parser()
+        meta_json = json.dumps({"parser": parser}) if parser else None
+
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
@@ -236,8 +245,8 @@ class Database:
                     INSERT INTO plate_acquisition (
                         plate_barcode, name, project,
                         imaged, microscope, channel_map_id,
-                        timepoint, folder
-                    ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                        timepoint, folder, meta
+                    ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     RETURNING id
                 """, (
                     img.get_plate_barcode(),
@@ -247,7 +256,8 @@ class Database:
                     img.get_microscope(),
                     img.get_channel_map_id(),
                     img.get_timepoint(),
-                    folder
+                    folder,
+                    meta_json
                 ))
                 new_id = cur.fetchone()[0]
             conn.commit()

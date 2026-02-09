@@ -124,6 +124,8 @@ def run_hardcoded_test():
     Run the function and args specified in HARDCODED_TEST_CONFIG.
     """
     method_name = HARDCODED_TEST_CONFIG.get("method")
+    assert method_name  
+
     args = HARDCODED_TEST_CONFIG.get("args", {}) or {}
 
     logging.info(f"Running hard-coded test method: {method_name} with args: {args}")

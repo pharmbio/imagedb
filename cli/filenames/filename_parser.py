@@ -18,6 +18,7 @@ from filenames import external_filename_IMX_v2
 from filenames import external_filename_opera_rXcXfXpX_chXskXfkXflX
 from filenames import external_filename_comp1
 from filenames import external_filename_spheroid_v1
+from filenames import pharmbio_nikon_filename_v11_single_default
 from filenames import pharmbio_nikon_filename_v1
 from filenames import pharmbio_nikon_filename_v2_exported
 from filenames import pharmbio_nikon_filename_v3_multi
@@ -37,6 +38,7 @@ parsers.append(pharmbio_squid_filename_v1)
 parsers.append(pharmbio_squid_filename_standard_new)
 parsers.append(pharmbio_squid_filename_v2_standard)
 parsers.append(pharmbio_squid_filename_slide)
+parsers.append(pharmbio_nikon_filename_v11_single_default)
 parsers.append(pharmbio_nikon_filename_v1)
 parsers.append(pharmbio_nikon_filename_v2_exported)
 parsers.append(pharmbio_nikon_filename_v3_multi)
@@ -158,7 +160,7 @@ if __name__ == '__main__':
 
     retval = parse_path_and_file( "/share/mikro2/nikon/organoids/pilot3_withoutWGA_01BSA/Well-K18-z1-HOECHST.ome.tiff")
     print("\nretval = " + str(retval))
-    
+
 
 
 

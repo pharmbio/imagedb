@@ -7,20 +7,21 @@ import datetime
 #
 # file example
 #
-# /share/mikro2/nikon/spheroid-test/pilot10-spheroid-P1-9/Well-J18-z1-CONC.ome.tiff
-#
+# /share/mikro2/nikon/organoids/pilot3_withoutWGA_01BSA_4x/20251219_120847_437__WellO04.ome.tiff
 #
 
 __pattern_path_and_file = re.compile(
     r'^'
-    r'.*/nikon/'             # any until /nikon/
-    r'(.*?)/'                # project (1)
-    r'(.*?)/'                # plate (2)
-    r'(.*?/)?'               # Optional subdir (3), e.g. /single_images/
-    r'Well-([A-Z])([0-9]+)'  # well (4,5)
-    r'-z([0-9]+)'            # z (6)
-    r'-(.*)\.ome'            # channel (7), escaped dot
-    r'(.*(\..*))'            # Extension (8)
+    r'.*/nikon/'                          # any until /nikon/
+    r'(.*?)/'                             # project (1)
+    r'(.*?)/'                             # plate (2)
+    r'(.*?/)?'                            # Optional subdir (3), e.g. /single_images/
+    r'([0-9]{4})([0-9]{2})([0-9]{2})'     # date (yyyy, mm, dd) (4,5,6)
+    r'_[0-9]{6}'                          # time, e.g. 120847 (ignored)
+    r'_[0-9]{3}'                          # milliseconds, e.g. 437 (ignored)
+    r'__Well([A-Z])([0-9]{2})'            # well, e.g. WellO04 (7,8)
+    r'\.ome'                              # fixed .ome part
+    r'(.*(\..*))'                         # extension (e.g. .tiff) (9,10)
     ,
     re.IGNORECASE
 )
@@ -38,29 +39,25 @@ def parse_path_and_file(path):
 
   logging.debug(f'match: {match.groups() }')
 
-  row = match.group(4)
-  col = int(match.group(5))
+  row = match.group(7)
+  col = int(match.group(8))
   well = f'{row}{col:02d}'
 
-  z = int(match.group(6))
+  # No explicit z or channel in this format:
+  # treat as single-plane, single-channel acquisition.
+  z = 0
   site = 0
+  channel_pos = 1
 
-  channel_name = match.group(7)
-  channels = ['MITO', 'PHAandWGA', 'HOECHST', 'SYTO', 'CONC']
-  channel_pos = channels.index(channel_name) + 1
-
-   # file creation timestamp
-  c_time = os.path.getctime(path)
-  date_create = datetime.datetime.fromtimestamp(c_time)
 
   metadata = {
       'path': path,
       'filename': os.path.basename(path),
-      'date_year': date_create.year,
-      'date_month': date_create.month,
-      'date_day_of_month': date_create.day,
+      'date_year': int(match.group(4)),
+      'date_month': int(match.group(5)),
+      'date_day_of_month': int(match.group(6)),
       'project': match.group(1),
-      'magnification': 'x',
+      'magnification': '4x',
       'plate': match.group(2),
       'plate_acq_name': path,
       'well': well,
@@ -69,9 +66,9 @@ def parse_path_and_file(path):
       'channel': channel_pos,
       'is_thumbnail': False,
       'guid': None,
-      'extension': match.group(8),
+      'extension': match.group(9),
       'timepoint': 1,
-      'channel_map_id': 25,
+      'channel_map_id': 44,
       'microscope': "nikon",
       'parser': os.path.basename(__file__)
   }
@@ -93,18 +90,6 @@ if __name__ == '__main__':
 
 
     retval = parse_path_and_file(
-        "/share/mikro2/nikon/spheroid-test/pilot10-spheroid-P1-9/Well-J18-z1-CONC.ome.tiff")
+        "/share/mikro2/nikon/organoids/pilot3_withoutWGA_01BSA_4x/20251219_120847_437__WellO04.ome.tiff")
     print("retval = " + str(retval))
-
-    retval = parse_path_and_file(
-        "/share/mikro2/nikon/Erica/Neuroblastoma/SiMaSpheres48hBoNT-A-C/Well-P01-z11-PHAandWGA.ome.tiff")
-    print("retval = " + str(retval))
-
-    retval = parse_path_and_file(
-        "/share/mikro2/nikon/organoids/test_storage/20260115_164715_750/20x/Well-J12-z4-SYTO.ome.tiff")
-    print("retval = " + str(retval))
-
-    
-
-
 

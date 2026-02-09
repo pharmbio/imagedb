@@ -293,7 +293,7 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
                     exc_file.write(traceback.format_exc())
 
 
-        # If time > 10 min (default cutpoff_time) since last uploaded from unfinished plate_acquisitions
+        # If time > 60 min (default cutoff_time) since last uploaded from unfinished plate_acquisitions
         # If so update plate_acq to finished
         update_finished_plate_acquisitions(cutoff_time)
 
