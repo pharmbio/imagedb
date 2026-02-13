@@ -34,8 +34,9 @@ def _touch_liveness():
     try:
         alive_path_obj = Path(alive_path)
         alive_path_obj.parent.mkdir(parents=True, exist_ok=True)
+        # Use integer seconds to make shell-based probes simpler
         with open(alive_path_obj, "w") as f:
-            f.write(str(time.time()))
+            f.write(str(int(time.time())))
     except Exception:
         # Liveness update should never break main processing
         logging.exception("Failed to update liveness file")
@@ -261,8 +262,11 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
         # get finished ones from db
         finished_acq_folders = Database.get_instance().select_finished_plate_acq_folder()
 
-        # get all image dirs within root dirs (yields dirs sorted by date, most recent first)
-        for img_dir in file_utils.find_dirs_containing_img_files_recursive_from_list_of_paths(proj_root_dirs):
+        # get all image dirs within root dirs (yields dirs sorted by date, most recent first),
+        # pruning finished acquisitions so we don't walk them at all
+        for img_dir in file_utils.find_dirs_containing_img_files_recursive_from_list_of_paths(
+            proj_root_dirs, skip_dirs=finished_acq_folders
+        ):
 
             logging.debug(f"img_dir: {img_dir}")
 

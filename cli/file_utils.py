@@ -2,7 +2,7 @@ import os
 import logging
 import time
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Set
 
 IMAGE_EXTENSIONS = (".tif", ".tiff", ".png", ".jpg", ".jpeg", ".bmp") # lower case in this tuple collection
 EXCLUDED_EXTENSIONS = (".ome.tiff.not.used.anymore") # lower case in this tuple collection
@@ -15,14 +15,21 @@ def has_marker(path):
             return True
     return False
 
-def find_dirs_containing_img_files_recursive_from_list_of_paths(path_list: List[str]):
+def find_dirs_containing_img_files_recursive_from_list_of_paths(path_list: List[str], skip_dirs=None):
+    # Normalize skip directories once for quick lookups
+    skip_norm: Set[str] = set()
+    if skip_dirs:
+        for p in skip_dirs:
+            if p:
+                skip_norm.add(os.path.normpath(str(p).rstrip("/")))
+
     for path in path_list:
         if not os.path.exists(path):
             logging.exception(f"Path does not exist: {path}")
         else:
-            yield from find_dirs_containing_img_files_recursive(path, True)
+            yield from find_dirs_containing_img_files_recursive(path, True, skip_norm)
 
-def find_dirs_containing_img_files_recursive(path: str, sort_dir_entries: bool = False):
+def find_dirs_containing_img_files_recursive(path: str, sort_dir_entries: bool = False, skip_dirs: Set[str] = None):
     """
     Yield directories that either:
       - Contain at least one image file (matching IMAGE_EXTENSIONS without excluded prefixes/extensions), OR
@@ -36,6 +43,13 @@ def find_dirs_containing_img_files_recursive(path: str, sort_dir_entries: bool =
          c. Otherwise, collect subdirectories, sort them if requested, and recurse into each.
       3. Log timing for each major step.
     """
+    # Skip directories that are marked as finished to avoid walking them at all
+    if skip_dirs:
+        norm = os.path.normpath(str(path).rstrip("/"))
+        if norm in skip_dirs:
+            logging.debug(f"[SKIP  ] Finished dir {path!r}")
+            return
+
     # ── 1) Marker check via os.path.exists() ───────────────────────────────────
     t0 = time.perf_counter()
     for marker in MARKER_FILES:
@@ -136,7 +150,7 @@ def find_dirs_containing_img_files_recursive(path: str, sort_dir_entries: bool =
     # ── 6) Recurse into subdirectories (possibly sorted) ────────────────────────
     for subdir in subdir_paths:
         logging.debug(f"[RECURSE] Entering subdir: {subdir!r} under parent {path!r}")
-        yield from find_dirs_containing_img_files_recursive(subdir, sort_dir_entries)
+        yield from find_dirs_containing_img_files_recursive(subdir, sort_dir_entries, skip_dirs)
         logging.debug(f"[RETURN ] Back from subdir: {subdir!r} to parent {path!r}")
 
 def find_dirs_containing_img_files_recursive_old(path: str, sort_dir_entries: bool = False):
