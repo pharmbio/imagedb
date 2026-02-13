@@ -24,3 +24,7 @@ with open(conf_file) as json_file:
   PROJ_ROOT_DIRS = os.getenv('PROJ_ROOT_DIRS', js_conf["PROJ_ROOT_DIRS"])
   CONTINUOUS_POLLING = os.getenv('CONTINUOUS_POLLING', js_conf["CONTINUOUS_POLLING"]).lower() == 'true'
   THREADPOOL_WORKERS = os.getenv('THREADPOOL_WORKERS', js_conf["THREADPOOL_WORKERS"])
+
+  # Liveness probe file for image_monitor; can be overridden via env
+  # If missing in JSON, default to /tmp/image_monitor_alive
+  LIVENESS_FILE = os.getenv('LIVENESS_FILE', js_conf.get('LIVENESS_FILE', '/tmp/image_monitor_alive'))

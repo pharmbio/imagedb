@@ -22,6 +22,25 @@ from database import Database
 from image import Image
 
 
+def _touch_liveness():
+    """
+    Update liveness probe file with current epoch timestamp.
+    Intended to be used by Kubernetes exec/file-based probes.
+    """
+    alive_path = getattr(imgdb_settings, "LIVENESS_FILE", None)
+    if not alive_path:
+        return
+
+    try:
+        alive_path_obj = Path(alive_path)
+        alive_path_obj.parent.mkdir(parents=True, exist_ok=True)
+        with open(alive_path_obj, "w") as f:
+            f.write(str(time.time()))
+    except Exception:
+        # Liveness update should never break main processing
+        logging.exception("Failed to update liveness file")
+
+
 def addImageToImagedb(img: Image):
 
     # check if image exists if so exit, exiting before creating plate_acq means that you can delete plate_acq from db and just keep files
@@ -186,6 +205,8 @@ def import_plate_images_and_meta(plate_dir: str):
         add_plate_to_db(new_images)
 
     logging.info("done import_plate_images_and_meta: " + str(plate_dir))
+    # mark liveness after finishing one plate directory
+    _touch_liveness()
 
 
 # directories that don't have images or are throwing errors when processed
@@ -317,6 +338,9 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
             logfile = os.path.join(imgdb_settings.ERROR_LOG_DIR, "blacklist.json")
             with open(logfile, 'w') as filehandle:
                 json.dump(blacklist, filehandle)
+
+        # Update liveness before sleeping so idle periods still look healthy
+        _touch_liveness()
 
         # Sleep until next polling action
         is_initial_poll = False
