@@ -16,6 +16,7 @@ from filenames import external_filename_IMX
 from filenames import external_filename_morphomac_wide_IMX
 from filenames import external_filename_IMX_v2
 from filenames import external_filename_opera_rXcXfXpX_chXskXfkXflX
+from filenames import external_filename_opera_rXcXfXpX_chXskXfkXflX_version2
 from filenames import external_filename_comp1
 from filenames import external_filename_spheroid_v1
 from filenames import pharmbio_nikon_filename_v11_single_default
@@ -62,6 +63,7 @@ parsers.append(external_filename_IMX)
 parsers.append(external_filename_IMX_v2)
 parsers.append(external_filename_cpjump)
 parsers.append(external_filename_david)
+parsers.append(external_filename_opera_rXcXfXpX_chXskXfkXflX_version2)
 parsers.append(external_filename_opera_rXcXfXpX_chXskXfkXflX)
 parsers.append(external_filename_spheroid_v1)
 

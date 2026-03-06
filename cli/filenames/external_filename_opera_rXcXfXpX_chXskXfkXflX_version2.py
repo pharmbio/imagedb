@@ -12,55 +12,57 @@ def parse_path_and_file(path):
   # If something errors (file not parsable with this parser, then exception and return None)
   try:
 
-    # /share/data/external-datasets/2020_11_04_CPJUMP1/images/BR00116992__2020-11-05T21_31_31-Measurement1/Images/r16c24f09p01-ch3sk1fk1fl1.tiff
-
-    # project, plate, date
-
-    logging.debug("inside parse_path_and_file")
-
-    #match = re.search('.*/external-datasets/(.+?)/(.+?)/(.+?)__([0-9]{4})-([0-9]{2})-([0-9]{2})T.*/Images/', path) # /project/plate/date (yyyy-mm-dd)
-    match = re.search('.*/external-datasets/(.+?)/(.+?)/(.+?)/Images/', path) # /project/plate/date (yyyy-mm-dd)
+    match = re.search(
+      r'.*/external-datasets/(.+?)/(.+?)/(.+?)/hs/(.+?)/images/',
+      path,
+      flags=re.IGNORECASE
+    )
     logging.debug(f'match {match}')
     if match is None:
       return None
     project = match.group(1)
     subdir_not_used = match.group(2)
     plate = match.group(3)
+    acquisition_gid = match.group(4)
+    short_gid = acquisition_gid.split('-')[0]
 
+    plate_acq_name = f"{plate}_{short_gid}"
     logging.debug("project" + project)
     logging.debug("plate" + plate)
+    logging.debug("plate_acq_name" + plate_acq_name)
 
     # well, site, channel, thumb, guid, extension
-    match = re.search('.*\/'           # any until last /
-      + 'r(.+?)' # row (1)
-      + 'c(.+?)'  # col (2)
-      + 'f(.+?)'  # wellsample (field) (3)
-      + 'p(.+?)'   # plane (z) (4)
-      + '-'
-      + 'ch([0-9]+)'  # Channel (color channel?) (5)
-      + 'sk([0-9]+)'  # dont know (6)
-      + 'fk([0-9]+)'  # dont know (7)
-      + 'fl([0-9]+)'  # dont know (8)
-      + '(\.tiff?)?', path)   # Extension (9)
+    match = re.search(
+      r'.*/'
+      r'r(?P<row>[0-9]+)'
+      r'c(?P<col>[0-9]+)'
+      r'f(?P<site>[0-9]+)'
+      r'p(?P<z>[0-9]+)'
+      r'-'
+      r'ch(?P<channel>[0-9]+)'
+      r'(?:sk[0-9]+fk[0-9]+fl[0-9]+|t[0-9]+)?'
+      r'\.(?P<extension>[A-Za-z0-9]+)$',
+      path
+    )
 
     if match is None:
       return None
 
-    row = match.group(1)
-    col = match.group(2)
+    row = match.group('row')
+    col = match.group('col')
     row_as_chr = chr(64 + int(row))
 
     well = row_as_chr + col
 
-    site = match.group(3)
-    z = match.group(4)
+    site = match.group('site')
+    z = match.group('z')
 
-    channel = match.group(5)
+    channel = match.group('channel')
 
-    extension = match.group(9)
+    extension = match.group('extension').lower()
     # Return if wrong extension
     valid_extensions = ("tif", "tiff", "png", "jpg", "jpeg") # Needs to be tuple, not list
-    if not extension.lower().endswith(valid_extensions):
+    if extension not in valid_extensions:
       return None
 
     # file creation timestamp
@@ -83,7 +85,7 @@ def parse_path_and_file(path):
       'project': project,
       'magnification': '?x',
       'plate': plate,
-      'plate_acq_name': path,
+      'plate_acq_name': plate_acq_name,
       'well': well,
       'wellsample': site,
       'z': z,
@@ -114,12 +116,10 @@ if __name__ == '__main__':
                         level=logging.DEBUG)
 
     # Testparse
-    retval = parse_path_and_file("share/data/external-datasets/compoundcenter/specs1K-v2/YML2_1_3__2022-11-02T10_35_46-Measurement 1/Images/r02c02f04p01-ch4sk1fk1fl1.tiff")
+    retval = parse_path_and_file("/share/data/external-datasets/mini3D/ki/250627_PHH_exp_6_livedrop_minispheroids_drug_exposure_CP_chronic/hs/7c57ee02-ad08-4aa0-88d6-47911861643a/images/r02c06/r02c06f01p06-ch04t01.tiff")
     print(str(retval))
 
-    retval = parse_path_and_file("/share/data/external-datasets/compoundcenter/CBCS-compound-collection/P101056-U2OS-CBCS-JUMP-v1-MoA90-L1-KI-Opera-20X/Images/r13c06f05p01-ch1sk1fk1fl1.tiff")
+    retval = parse_path_and_file("/share/data/external-datasets/mini3D/ki/250627_PHH_exp_6_livedrop_minispheroids_drug_exposure_CP_chronic/hs/7c57ee02-ad08-4aa0-88d6-47911861643a/images/r04c16/r04c16f02p06-ch06t01.tiff")
     print(str(retval))
 
-    retval = parse_path_and_file("/share/data/external-datasets/mini3D/ki/240925_HepG2C3A_CP_2024-10-16T11_03_13-Measurement_1b/Images/r16c23f05p19-ch4sk1fk1fl1.tiff")
-    print(str(retval))
     
