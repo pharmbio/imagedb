@@ -171,8 +171,7 @@ def update_finished_plate_acquisitions_from_cutoff_time(cutoff_time):
                 logging.info("proc_time=" + str(proc_time))
                 logging.info("cutoff_time=" + str(cutoff_time))
                 if proc_time < cutoff_time:
-                    folder = os.path.dirname(img_path)
-                    Database.get_instance().update_acquisition_finished(folder, cutoff_time)
+                    Database.get_instance().update_acquisition_finished(plate_acq_folder, cutoff_time)
 
                 # latest proc_time for this acquisition is found, time to break
                 break
