@@ -25,8 +25,11 @@ def parse_path_and_file(path):
     plate = match.group(3)
     acquisition_gid = match.group(4)
     short_gid = acquisition_gid.split('-')[0]
-
     plate_acq_name = f"{plate}_{short_gid}"
+
+    # Derive the folder by removing everything after /images/
+    folder = re.sub(r'(?i)(/images)/.*$', r'\1', path)
+
     logging.debug("project" + project)
     logging.debug("plate" + plate)
     logging.debug("plate_acq_name" + plate_acq_name)
@@ -79,6 +82,7 @@ def parse_path_and_file(path):
     metadata = {
       'path': path,
       'filename': os.path.basename(path),
+      'folder': folder, # root folder for acquisition, this is unique key for images belonging to same acquisition if images are split into subfolders
       'date_year': date_create.year,
       'date_month': date_create.month,
       'date_day_of_month': date_create.day,
