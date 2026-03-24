@@ -15,6 +15,7 @@ from image import Image  # Make sure this import does not create a circular depe
 class Database:
     _instance: Optional[Database] = None
     _lock = threading.Lock()
+    _pool_init_lock = threading.Lock()
 
     def __new__(cls, *args, **kwargs) -> Database:
         with cls._lock:
@@ -28,21 +29,27 @@ class Database:
         return cls()
 
     def initialize_connection_pool(self, **connection_info) -> None:
-        if self.connection_pool is None:
-            if connection_info:
-                try:
-                    self.connection_pool = pool.SimpleConnectionPool(
-                        minconn=1,
-                        maxconn=10,
-                        **connection_info
-                    )
-                    self.initialized = True
-                    logging.info("Database connection pool initialized.")
-                except Exception as e:
-                    logging.exception("Failed to initialize connection pool.")
-                    raise e
-            else:
-                raise ValueError("Connection information must be provided to initialize the connection pool.")
+        if self.connection_pool is not None:
+            return
+
+        if not connection_info:
+            raise ValueError("Connection information must be provided to initialize the connection pool.")
+
+        with self._pool_init_lock:
+            if self.connection_pool is not None:
+                return
+
+            try:
+                self.connection_pool = pool.ThreadedConnectionPool(
+                    minconn=1,
+                    maxconn=10,
+                    **connection_info
+                )
+                self.initialized = True
+                logging.info("Database connection pool initialized.")
+            except Exception as e:
+                logging.exception("Failed to initialize connection pool.")
+                raise e
 
     def get_connection(self):
         if self.connection_pool is None:
