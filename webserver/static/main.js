@@ -542,6 +542,15 @@ function toggleSidebarSort(){
 
 function drawPlatesListSidebar(origPlatesList) {
   console.log('origPlatesList', origPlatesList);
+  const projectNameCollator = new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: 'base'
+  });
+  const projectNameCaseTiebreaker = new Intl.Collator(undefined, {
+    caseFirst: 'upper',
+    numeric: true,
+    sensitivity: 'variant'
+  });
 
   // Make a deep copy of the original plates list to avoid modifying it
   let platesList = origPlatesList.map(plate => ({ ...plate }));
@@ -605,14 +614,56 @@ function drawPlatesListSidebar(origPlatesList) {
     projects[plate.project].push(plate);
   });
 
+  function groupProjectPlatesByName(projectPlates) {
+    const groupedPlates = new Map();
+
+    projectPlates.forEach(plate => {
+      if (!groupedPlates.has(plate.name)) {
+        groupedPlates.set(plate.name, []);
+      }
+      groupedPlates.get(plate.name).push(plate);
+    });
+
+    return Array.from(groupedPlates.values()).map(plates => ({
+      primaryPlate: plates[0],
+      plates
+    }));
+  }
+
   // Function to create a list item for a plate
-  function createPlateListItem(plate) {
+  function createPlateListItem(plateGroup) {
+    const { primaryPlate: plate, plates } = plateGroup;
+    const hasDuplicates = plates.length > 1;
     let plateItem = document.createElement('li');
     let link = document.createElement('a');
     link.className = "text-info";
     link.href = "#";
-    link.title = `${plate.name} acq-id: ${plate.id} project: ${plate.project} micro: ${plate.microscope}`;
-    link.textContent = plate.name;
+    const duplicateSummary = hasDuplicates
+      ? ` (${plates.length} acquisitions)`
+      : "";
+    link.title = `${plate.name}${duplicateSummary} acq-id: ${plate.id} project: ${plate.project} micro: ${plate.microscope}`;
+
+    const plateName = document.createElement('span');
+    plateName.textContent = plate.name;
+    link.appendChild(plateName);
+
+    if (hasDuplicates) {
+      const duplicateSpacer = document.createTextNode(' ');
+      link.appendChild(duplicateSpacer);
+
+      const duplicateIcon = document.createElement('span');
+      duplicateIcon.className = 'plate-duplicate-icon';
+      duplicateIcon.setAttribute('aria-hidden', 'true');
+      duplicateIcon.title = `${plates.length} acquisitions share this plate name`;
+      link.appendChild(duplicateIcon);
+
+      const duplicateCount = document.createElement('span');
+      duplicateCount.className = 'plate-duplicate-count';
+      duplicateCount.textContent = plates.length;
+      duplicateCount.title = `${plates.length} acquisitions share this plate name`;
+      link.appendChild(duplicateCount);
+    }
+
     link.onclick = e => {
       e.preventDefault();
       apiLoadPlate(plate.plate_barcode, plate.id);
@@ -627,7 +678,10 @@ function drawPlatesListSidebar(origPlatesList) {
     latestAcqItem = document.createElement('li');
     latestAcqItem.innerHTML = "<span style='cursor: pointer;'>Latest acquisitions</span>";
     let latestAcqList = document.createElement('ul');
-    latestAcquisitions.forEach(plate => latestAcqList.appendChild(createPlateListItem(plate)));
+    latestAcquisitions.forEach(plate => latestAcqList.appendChild(createPlateListItem({
+      primaryPlate: plate,
+      plates: [plate]
+    })));
     latestAcqItem.appendChild(latestAcqList);
     list.appendChild(latestAcqItem);
   }
@@ -637,7 +691,11 @@ function drawPlatesListSidebar(origPlatesList) {
 
   // Sort project names if sortSidebar is true
   if (getSortSidebar()) {
-    projectKeys.sort();
+    // Sort case-insensitively so mixed-case project names stay in natural order.
+    projectKeys.sort((a, b) => {
+      const result = projectNameCollator.compare(a, b);
+      return result !== 0 ? result : projectNameCaseTiebreaker.compare(a, b);
+    });
   }
 
   // No need to sort plates within each project since they are already sorted
@@ -648,7 +706,9 @@ function drawPlatesListSidebar(origPlatesList) {
     let projectItem = document.createElement('li');
     projectItem.innerHTML = `<span style='cursor: pointer;'>${projectName}</span>`;
     let projectPlateList = document.createElement('ul');
-    projects[projectName].forEach(plate => projectPlateList.appendChild(createPlateListItem(plate)));
+    groupProjectPlatesByName(projects[projectName]).forEach(plateGroup => {
+      projectPlateList.appendChild(createPlateListItem(plateGroup));
+    });
     projectItem.appendChild(projectPlateList);
     list.appendChild(projectItem);
   });
@@ -2279,6 +2339,7 @@ function drawPlatesListSidebar_old(origPlatesList){
       g = getChannelIdFromDye('ACTIN', channels);
       elemSelect.add (new Option("N,G,A", "" + b + "," + r + "," + g) );
     }
+
 
     is_subset = ['HOECHST','MITO', 'PHA'].every(val => channel_names.includes(val))
     if(is_subset){
