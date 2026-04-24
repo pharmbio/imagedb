@@ -236,10 +236,11 @@ def get_plate(plate_name, acqID: Optional[int] = None):
             "  plate_acquisition_id, "
             "  plate_acquisition_name, "
             "  project, "
-            "  folder "
+            "  folder, "
+            "  timepoint "
             "FROM images_minimal_view "
             "WHERE plate_barcode = %s "
-            "ORDER BY plate_acquisition_id"
+            "ORDER BY timepoint, plate_acquisition_id"
         )
         cursor.execute(acq_query, (plate_name,))
         acq_rows = cursor.fetchall()
@@ -254,6 +255,7 @@ def get_plate(plate_name, acqID: Optional[int] = None):
                 row["project"],
                 row["plate_acquisition_name"],
                 row["folder"],
+                row["timepoint"],
             )
 
         # 2) Load full image data only for selected acquisition (if provided)

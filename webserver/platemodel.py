@@ -58,6 +58,7 @@ class PlateAcquisition:
     project: str
     name: str
     folder: str
+    timepoint: int = None
     wells: Dict[int, Well] = field(default_factory=dict)
 
     def get_or_create_well(self, well_id):
@@ -75,13 +76,19 @@ class Plate:
     acquisitions: Dict[int, PlateAcquisition] = field(default_factory=dict)
     layout: Dict = field(default_factory=dict)
 
-    def get_or_create_acquisition(self, acquisition_id, project, name, folder):
+    def get_or_create_acquisition(self, acquisition_id, project, name, folder, timepoint=None):
         if acquisition_id not in self.acquisitions:
-            self.acquisitions[acquisition_id] = PlateAcquisition(acquisition_id, project, name, folder)
+            self.acquisitions[acquisition_id] = PlateAcquisition(acquisition_id, project, name, folder, timepoint)
         return self.acquisitions[acquisition_id]
 
     def add_data(self, image_meta):
-        acquisition = self.get_or_create_acquisition(image_meta['plate_acquisition_id'], image_meta['project'], image_meta['plate_acquisition_name'], image_meta['folder'])
+        acquisition = self.get_or_create_acquisition(
+            image_meta['plate_acquisition_id'],
+            image_meta['project'],
+            image_meta['plate_acquisition_name'],
+            image_meta['folder'],
+            image_meta.get('timepoint'),
+        )
         acquisition.add_data(image_meta)
 
     def add_layout(self, layout):

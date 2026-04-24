@@ -1985,12 +1985,16 @@ function drawPlatesListSidebar_old(origPlatesList){
 
     // Get acquisitions
     let acquisitions = Object.values(plateObj.getAcquisitions());
+    let showTimepoint = acquisitions.length > 1;
 
     for (let acquisition of acquisitions) {
 
         let selected = (selected_acq_id == acquisition.id);
 
         let title = "" + acquisition.id + "   -   " + acquisition.name;
+        if (showTimepoint && acquisition.timepoint !== null && acquisition.timepoint !== undefined) {
+            title += "   -   t" + acquisition.timepoint;
+        }
 
         // Create option element
         let option = new Option(title, acquisition.id, selected, selected);
