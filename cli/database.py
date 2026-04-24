@@ -62,6 +62,34 @@ class Database:
         else:
             raise Exception("Connection pool has not been initialized.")
 
+    def resolve_channel_map_id(self, conn, img: Image) -> Optional[int]:
+        """
+        Resolve the final channel_map_id for a plate acquisition.
+
+        Uses the parser-provided channel_map_id as the default, then applies
+        the most specific substring match from channel_map_mapping.filter
+        against the full image path.
+        """
+        default_channel_map_id = img.get_channel_map_id()
+        query = """
+            SELECT channel_map_id
+            FROM channel_map_mapping
+            WHERE filter IS NOT NULL
+              AND filter <> ''
+              AND POSITION(LOWER(filter) IN LOWER(%s)) > 0
+            ORDER BY LENGTH(filter) DESC
+            LIMIT 1
+        """
+
+        with conn.cursor() as cursor:
+            cursor.execute(query, (img.get_path(),))
+            row = cursor.fetchone()
+
+        if row is None:
+            return default_channel_map_id
+
+        return row[0]
+
     # --------------------------------------------------------------------------
     # Query methods
     # --------------------------------------------------------------------------
@@ -208,6 +236,7 @@ class Database:
         """
         conn = self.get_connection()
         try:
+            channel_map_id = self.resolve_channel_map_id(conn, img)
             with conn.cursor() as cursor:
                 cursor.execute(
                     query,
@@ -217,7 +246,7 @@ class Database:
                         img.get_project(),
                         img.get_imaged(),
                         img.get_microscope(),
-                        img.get_channel_map_id(),
+                        channel_map_id,
                         img.get_timepoint(),
                         img.get_folder(),
                         meta_json
@@ -248,6 +277,7 @@ class Database:
                     return row[0]
 
                 # 2) Not found → try to insert
+                channel_map_id = self.resolve_channel_map_id(conn, img)
                 cur.execute("""
                     INSERT INTO plate_acquisition (
                         plate_barcode, name, project,
@@ -261,7 +291,7 @@ class Database:
                     img.get_project(),
                     img.get_imaged(),
                     img.get_microscope(),
-                    img.get_channel_map_id(),
+                    channel_map_id,
                     img.get_timepoint(),
                     folder,
                     meta_json
