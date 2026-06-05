@@ -2065,8 +2065,20 @@ function drawPlatesListSidebar_old(origPlatesList){
     let pixPerMeter = 0;
     if (document.getElementById("scalebar-cbx").checked) {
 
-      // TODO get actual pix per meter for current image
-      pixPerMeter = 1000000;
+      let item = viewer.world.getItemAt(0);
+      let url = item ? item.source.url : "";
+      if (url.includes("/squid/")) {
+        // 0.311 µm/pixel → pixels per meter
+        pixPerMeter = 1 / (0.311e-6);
+      } else if (url.includes("/nikon/")) {
+        if (url.includes("4x")) {
+          // 0.6724 µm/pixel → pixels per meter
+          pixPerMeter = 1 / (0.6724e-6);
+        } else {
+          // 0.227 µm/pixel → pixels per meter
+          pixPerMeter = 1 / (0.227e-6);
+        }
+      }
     }
 
     let scalebarOptions = {};
