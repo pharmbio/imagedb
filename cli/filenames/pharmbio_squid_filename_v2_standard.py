@@ -60,7 +60,7 @@ def parse_path_and_file(path):
 
     channels_v1 = ['405', '488', '561', '638', '730']
     channels_v2 = ['385', '470', '510', '560', '640']
-    channels_v3 = ['405', '445', '514', '561', '640'] 
+    channels_v3 = ['405', '445', '514', '561', '640']
 
     if channel_name in channels_v1:
       channels = channels_v1
@@ -175,6 +175,7 @@ if __name__ == '__main__':
     retval = parse_path_and_file(
         "/mnt/pool6/mikro3/squid/Erica-BONT/RPE-1_BoNT-A_-C_48h_2025-11-27_11.17.43/A02_s4_x0_y1_Fluorescence_488_nm_Ex.tiff")
     print("\nretval = " + str(retval))
+
 
 
 

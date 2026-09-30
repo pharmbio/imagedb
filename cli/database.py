@@ -349,6 +349,32 @@ class Database:
         finally:
             self.release_connection(conn)
 
+    def select_channel_map_channel_names(self) -> List[tuple]:
+        """
+        Returns [(map_id, [channel_name, ...]), ...] ordered by channel.
+
+        Only maps whose every row has a channel_name are returned -- a map with a
+        NULL channel_name (e.g. the older non-squid maps) cannot be identified from
+        the channel names in a config.json.
+        """
+        query = """
+            SELECT map_id, array_agg(channel_name ORDER BY channel) AS channel_names
+            FROM channel_map
+            GROUP BY map_id
+            HAVING bool_and(channel_name IS NOT NULL)
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(query)
+                results = cursor.fetchall()
+                return [(row["map_id"], row["channel_names"]) for row in results]
+        except Exception as err:
+            logging.exception("Error selecting channel_map channel names")
+            raise err
+        finally:
+            self.release_connection(conn)
+
     def select_unfinished_plate_acq_folder(self) -> List[str]:
         """
         Returns a list of folders from plate_acquisition where finished is null.

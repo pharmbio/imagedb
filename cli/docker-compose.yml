@@ -3,7 +3,7 @@ version: "2.4"
 services:
   image-db-cli:
     image: ghcr.io/pharmbio/imagedb-cli
-    restart: always
+    restart: no
     container_name: imagedb-cli
     command: python3 /app/image-monitor.py
     cpus: 2

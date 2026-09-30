@@ -18,7 +18,7 @@ services:
     mem_limit: 2g
     ports:
       - 8092:8080
-    restart: always
+    restart: "no"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_web"

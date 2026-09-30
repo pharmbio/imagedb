@@ -4,6 +4,8 @@ import json
 import logging
 from functools import lru_cache
 
+from filenames import channel_map_db
+
 # Adopted from: https://github.com/HASTE-project/haste-image-analysis-container2/tree/master/haste/image_analysis_container2/filenames
 #
 # file example
@@ -29,6 +31,9 @@ __pattern_path_and_file = re.compile(r'''
 ''', re.IGNORECASE | re.VERBOSE)
 
 
+# Fallback only. channel_map in the database is the source of truth (matched on
+# channel_map.channel_name); these entries are used when the database is
+# unreachable or has no map for the channel names in config.json.
 CHANNEL_MAP = {
 
     frozenset({
@@ -86,7 +91,48 @@ CHANNEL_MAP = {
         "BF_LED_matrix_full",
     }): 43,
 
+    # CP-plus-chikv-v1 (2 cycles, no 730 in cycle 2)
+    frozenset({
+        "Fluorescence_405_nm_cyc01",
+        "Fluorescence_488_nm_cyc01",
+        "Fluorescence_561_nm_cyc01",
+        "Fluorescence_638_nm_cyc01",
+        "Fluorescence_730_nm_cyc01",
+        "Fluorescence_488_nm_cyc02",
+        "Fluorescence_561_nm_cyc02",
+        "Fluorescence_638_nm_cyc02",
+    }): 46,
+
+    # CP-plus-chikv-v2 (2 full cycles)
+    frozenset({
+        "Fluorescence_405_nm_cyc01",
+        "Fluorescence_488_nm_cyc01",
+        "Fluorescence_561_nm_cyc01",
+        "Fluorescence_638_nm_cyc01",
+        "Fluorescence_730_nm_cyc01",
+        "Fluorescence_488_nm_cyc02",
+        "Fluorescence_561_nm_cyc02",
+        "Fluorescence_638_nm_cyc02",
+        "Fluorescence_730_nm_cyc02",
+    }): 47,
+
+    # CP-plus-chikv-v3 (2 cycles, no 730 in cycle 1)
+    frozenset({
+        "Fluorescence_405_nm_cyc01",
+        "Fluorescence_488_nm_cyc01",
+        "Fluorescence_561_nm_cyc01",
+        "Fluorescence_638_nm_cyc01",
+        "Fluorescence_488_nm_cyc02",
+        "Fluorescence_561_nm_cyc02",
+        "Fluorescence_638_nm_cyc02",
+        "Fluorescence_730_nm_cyc02",
+    }): 48,
+
 }
+
+# Used when neither the database nor CHANNEL_MAP knows the channel names.
+DEFAULT_CHANNEL_MAP_ID = 10
+
 
 @lru_cache(maxsize=2048)
 def load_config_channel_names(dir_path: str):
@@ -136,6 +182,8 @@ def parse_path_and_file(path):
         if channel_names is None:
             logging.debug(f"No channels_names or config.json found in {config_dir}")
             return None
+        
+        logging.debug(f'channel_names: {channel_names}')
 
         logging.debug(f'match groups: {match.groupdict() }')
 
@@ -153,9 +201,20 @@ def parse_path_and_file(path):
         parsed_channel_name = match.group('channel_name')
         # get channel pos from config file channel_names
         channel_pos = channel_names.index(parsed_channel_name) + 1
+        logging.debug(f"channel_pos: {channel_pos}")
 
-        # find channel map from constant
-        channel_map_id = CHANNEL_MAP.get(frozenset(channel_names), 10)  # fallback to 10 if unknown
+        # find channel map, database first, then the hard-coded fallback above
+        channel_map_id = channel_map_db.get_channel_map_id(channel_names)
+        if channel_map_id is None:
+            channel_map_id = CHANNEL_MAP.get(frozenset(channel_names))
+        if channel_map_id is None:
+            # Keeps the historic behaviour, but says so -- an unknown channel set
+            # silently imported as map 10 is how a whole plate gets mislabelled.
+            channel_map_id = DEFAULT_CHANNEL_MAP_ID
+            logging.warning(
+                "no channel_map matches channel names %s in %s; "
+                "falling back to channel_map_id=%s",
+                list(channel_names), config_dir, channel_map_id)
 
         site = int(match.group('site'))
         site_x = int(match.group('x'))
@@ -193,6 +252,12 @@ def parse_path_and_file(path):
 
         return metadata
 
+    except channel_map_db.ChannelMapUnavailable:
+        # Must not be swallowed. Returning None here would hand the file to the
+        # next parser in filename_parser.parsers, which may well match it and
+        # import it under a different channel map.
+        raise
+
     except:
         logging.exception("exception")
         logging.debug("could not parse")
@@ -209,17 +274,17 @@ if __name__ == '__main__':
 
     retval = parse_path_and_file(
         "/share/mikro3/squid/CLEO_5fp_Clones/clone5_clone6_2025-09-17_14.08.11/C17_s7_x1_y1_z0_Fluorescence_514_nm_Ex.tiff")
-    print("\nretval = " + str(retval))
+    print(f"retval = {retval} \n")
 
     retval = parse_path_and_file(
         "/share/mikro3/squid/testsquidplus/testsiteindices_2025-08-25_12.16.04/G8_s1_x0_y0_z0_BF_LED_matrix_full.tiff")
-    print("\nretval = " + str(retval))
+    print(f"retval = {retval} \n")
 
     retval = parse_path_and_file(
         "/share/mikro4/squid/cp-duo-test13/cp-duo-test13_2025-11-19_09.42.13/t1/O22_s4_x1_y1_z0_Fluorescence_445x700.tiff")
-    print("\nretval = " + str(retval))
+    print(f"retval = {retval} \n")
 
-
-
-
+    retval = parse_path_and_file(
+        "/share/mikro3/squid/chikv-pilot-combined/chikv-pilot3-P4_2026-09-01_12.00.00/O13_s4_x1_y1_Fluorescence_730_nm_cyc02.tiff")
+    print(f"retval = {retval} \n")
 

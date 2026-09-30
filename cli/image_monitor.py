@@ -14,6 +14,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import filenames.filename_parser
+from filenames.channel_map_db import ChannelMapUnavailable
 import image_tools
 import settings as imgdb_settings
 import file_utils
@@ -302,6 +303,14 @@ def polling_loop(poll_dirs_margin_days, latest_file_change_margin, sleep_time, p
 
             try:
                 import_plate_images_and_meta(str(img_dir))
+
+            except ChannelMapUnavailable:
+                # Nothing can be imported without the database, so this is not a
+                # problem with img_dir -- blacklisting it would skip a healthy
+                # plate until the process is restarted. Let it out instead: the
+                # process exits and the plate is picked up on the next start.
+                logging.error("channel_map unreadable, aborting poll: %s", img_dir)
+                raise
 
             except Exception as e:
                 logging.exception("Exception in img_dir")

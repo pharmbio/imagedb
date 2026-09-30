@@ -107,13 +107,16 @@ CREATE INDEX ix_new_plate_acquisition_folder ON new_plate_acquisition(folder);
 
 DROP TABLE IF EXISTS  channel_map CASCADE;
 CREATE TABLE channel_map (
-  map_id       int,
-  channel      int,
-  dye          text,
-  name         text
+  map_id            int,
+  channel           int,
+  dye               text,
+  name              text,
+  cell_compartment  text,
+  channel_name      text   -- microscope channel name, matches config.json channel names
 );
 CREATE INDEX  ix_channel_map_id ON channel_map(map_id);
 CREATE INDEX  ix_channel_map_name ON channel_map(name);
+CREATE INDEX  ix_channel_map_channel_name ON channel_map(channel_name);
 
 INSERT INTO "channel_map" ("map_id", "channel", "dye", "name") VALUES
 (1,	1,	'HOECHST',		'channel_map_1'),
@@ -179,6 +182,40 @@ INSERT INTO "channel_map" ("map_id", "channel", "dye", "name", "cell_compartment
 (14,	1,	'ACTIN',	'channel_map_14_AMGN',	NULL),
 (14,	2,	'GOLGI',	'channel_map_14_AMGN',	NULL),
 (14,	4,	'NUCLEUS',	'channel_map_14_AMGN',	NULL);
+
+-- squid 2-cycle Cell Painting + CHIKV markers (no 730 nm in cycle 2)
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name", "cell_compartment", "channel_name") VALUES
+(46,	1,	'Hoechst',	'CP-plus-chikv-v1',	'Nucleus',	'Fluorescence_405_nm_cyc01'),
+(46,	2,	'Syto13',	'CP-plus-chikv-v1',	'Nucleoli / cytoplasmic RNA',	'Fluorescence_488_nm_cyc01'),
+(46,	3,	'G3BP1',	'CP-plus-chikv-v1',	'Stress granules',	'Fluorescence_561_nm_cyc01'),
+(46,	4,	'MitoTracker',	'CP-plus-chikv-v1',	'Mitochondria',	'Fluorescence_638_nm_cyc01'),
+(46,	5,	'dsRNA',	'CP-plus-chikv-v1',	'Cytoplasm (viral replication sites)',	'Fluorescence_730_nm_cyc01'),
+(46,	6,	'Concanavalin A',	'CP-plus-chikv-v1',	'Endoplasmic reticulum',	'Fluorescence_488_nm_cyc02'),
+(46,	7,	'Pha/WGA',	'CP-plus-chikv-v1',	'Actin cytoskeleton, Golgi, plasma membrane',	'Fluorescence_561_nm_cyc02'),
+(46,	8,	'MitoTracker',	'CP-plus-chikv-v1',	'Mitochondria',	'Fluorescence_638_nm_cyc02');
+
+-- squid 2-cycle Cell Painting + CHIKV markers (both cycles full)
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name", "cell_compartment", "channel_name") VALUES
+(47,	1,	'Hoechst',	'CP-plus-chikv-v2',	'Nucleus',	'Fluorescence_405_nm_cyc01'),
+(47,	2,	'Syto13',	'CP-plus-chikv-v2',	'Nucleoli / cytoplasmic RNA',	'Fluorescence_488_nm_cyc01'),
+(47,	3,	'Pha/WGA',	'CP-plus-chikv-v2',	'Actin cytoskeleton, Golgi, plasma membrane',	'Fluorescence_561_nm_cyc01'),
+(47,	4,	'MitoTracker',	'CP-plus-chikv-v2',	'Mitochondria',	'Fluorescence_638_nm_cyc01'),
+(47,	5,	'Concanavalin A',	'CP-plus-chikv-v2',	'Endoplasmic reticulum',	'Fluorescence_730_nm_cyc01'),
+(47,	6,	'dsRNA',	'CP-plus-chikv-v2',	'Cytoplasm (viral replication sites)',	'Fluorescence_488_nm_cyc02'),
+(47,	7,	'G3BP1',	'CP-plus-chikv-v2',	'Stress granules',	'Fluorescence_561_nm_cyc02'),
+(47,	8,	'MitoTracker',	'CP-plus-chikv-v2',	'Mitochondria',	'Fluorescence_638_nm_cyc02'),
+(47,	9,	'Concanavalin A',	'CP-plus-chikv-v2',	'Endoplasmic reticulum',	'Fluorescence_730_nm_cyc02');
+
+-- squid 2-cycle Cell Painting + CHIKV markers (no 730 nm in cycle 1)
+INSERT INTO "channel_map" ("map_id", "channel", "dye", "name", "cell_compartment", "channel_name") VALUES
+(48,	1,	'Hoechst',	'CP-plus-chikv-v3',	'Nucleus',	'Fluorescence_405_nm_cyc01'),
+(48,	2,	'Syto13',	'CP-plus-chikv-v3',	'Nucleoli / cytoplasmic RNA',	'Fluorescence_488_nm_cyc01'),
+(48,	3,	'Pha/WGA',	'CP-plus-chikv-v3',	'Actin cytoskeleton, Golgi, plasma membrane',	'Fluorescence_561_nm_cyc01'),
+(48,	4,	'MitoTracker',	'CP-plus-chikv-v3',	'Mitochondria',	'Fluorescence_638_nm_cyc01'),
+(48,	5,	'Concanavalin A',	'CP-plus-chikv-v3',	'Endoplasmic reticulum',	'Fluorescence_488_nm_cyc02'),
+(48,	6,	'G3BP1',	'CP-plus-chikv-v3',	'Stress granules',	'Fluorescence_561_nm_cyc02'),
+(48,	7,	'MitoTracker',	'CP-plus-chikv-v3',	'Mitochondria',	'Fluorescence_638_nm_cyc02'),
+(48,	8,	'dsRNA',	'CP-plus-chikv-v3',	'Cytoplasm (viral replication sites)',	'Fluorescence_730_nm_cyc02');
 
 
 DROP TABLE IF EXISTS  channel_map_mapping CASCADE;
