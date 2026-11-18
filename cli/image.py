@@ -31,6 +31,14 @@ class Image:
     def get_plate(self):
         return self.get('plate')
 
+    def get_plate_acq_name(self):
+        # Many parsers set plate_acq_name to the image path as a placeholder;
+        # only use it when it is a real name, otherwise fall back to plate.
+        plate_acq_name = self.get('plate_acq_name')
+        if not plate_acq_name or plate_acq_name == self.get_path():
+            return self.get_plate()
+        return plate_acq_name
+
     def get_timepoint(self):
         return self.get('timepoint')
 

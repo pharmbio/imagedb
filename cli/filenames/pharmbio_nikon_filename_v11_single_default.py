@@ -19,10 +19,8 @@ __pattern_path_and_file = re.compile(
     r'(?:([0-9]{4})([0-9]{2})([0-9]{2})_[0-9]{6}_[0-9]{3}/)?'  # Optional date folder: YYYYMMDD_HHMMSS_mmm (3,4,5)
     r'(?:([0-9]+x)[^/]*/)?'  # Optional magnification subdir (6), e.g. 20x/, 4x/, 20x_processed/
     r'Well-([A-Z])([0-9]+)'  # well (7,8)
-    # Two alternatives:
-    #  1) Full pattern with z and channel, e.g. Well-E19-z7-CONC.ome.tiff
-    #  2) Short pattern without z/channel but with extra text after well, e.g. Well-N23_WellN23.ome.tiff
-    r'(?:-z([0-9]+)-(.*)\.ome(.*(\..*))|_.*\.ome()()(.*(\..*)))'
+    r'(?:-z([0-9]+))?'       # optional z (9), e.g. Well-E19-z7-CONC.ome.tiff or Well-P07-SYTO.ome.tiff
+    r'-(.*)\.ome(.*(\..*))'  # channel (10), extension (11,12)
     ,
     re.IGNORECASE
 )
@@ -51,13 +49,9 @@ def parse_path_and_file(path):
       z = 0
   site = 0
 
-  # Channel name is optional; if missing, fall back to a default single channel
   channel_name = match.group(10)
-  if channel_name:
-      channels = ['MITO', 'PHAandWGA', 'HOECHST', 'SYTO', 'CONC']
-      channel_pos = channels.index(channel_name) + 1
-  else:
-      channel_pos = 1
+  channels = ['MITO', 'PHAandWGA', 'HOECHST', 'SYTO', 'CONC']
+  channel_pos = channels.index(channel_name) + 1
 
   # Optional magnification captured from the path (group 6), e.g. "20x"
   magnification = match.group(6) if match.group(6) else 'x'
@@ -111,13 +105,9 @@ def parse_path_and_file(path):
       'channel': channel_pos,
       'is_thumbnail': False,
       'guid': None,
-      # Extension may come from different capture groups depending on which
-      # filename variant matched (with or without z/channel).
-      'extension': match.group(11) if match.group(11) else match.group(15),
+      'extension': match.group(11),
       'timepoint': 1,
-      # Use different channel maps depending on whether we have
-      # an explicit channel or not.
-      'channel_map_id': 25 if channel_name else 44,
+      'channel_map_id': 25,
       'microscope': "nikon",
       'parser': os.path.basename(__file__)
   }
@@ -155,7 +145,7 @@ if __name__ == '__main__':
     print("retval = " + str(retval))
 
     retval = parse_path_and_file(
-        "/share/mikro2/nikon/organoids/pilot3_withoutWGA_01BSA_run2/20260115_165013_732/4x/Well-N23_WellN23.ome.tiff")
+        "/share/mikro2/nikon/benchmark3D/PB100174/20261110_141021_985/4x/Well-P07-SYTO.ome.tiff")
     print("retval = " + str(retval))
 
     retval = parse_path_and_file(
@@ -164,6 +154,14 @@ if __name__ == '__main__':
 
     retval = parse_path_and_file(
         "/share/mikro2/nikon/spheroids-revsion/colo8-sectant-P2-stained-six-v2/Well-P18-z15-HOECHST.ome.tiff")
+    print("retval = " + str(retval))
+
+    retval = parse_path_and_file(
+        "/share/mikro2/nikon/benchmark3D/PB100175/20261112_125724_376/4x/Well-C02-SYTO.ome.tiff")
+    print("retval = " + str(retval))
+
+    retval = parse_path_and_file(
+        "/share/mikro2/nikon/benchmark3D/PB100175/20261112_125724_376/20x/Well-C02-z2-MITO.ome.tiff")
     print("retval = " + str(retval))
 
 

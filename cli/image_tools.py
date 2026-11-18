@@ -4,6 +4,10 @@ from ast import Not
 import logging
 import os
 from PIL import Image
+
+# silence opencv warnings (e.g. unknown TIFF tags in Nikon ome.tiff), only log errors
+# must be set before cv2 is imported, can be overridden from environment
+os.environ.setdefault("OPENCV_LOG_LEVEL", "ERROR")
 import cv2 as cv2
 import subprocess
 import time
@@ -48,8 +52,7 @@ def makeThumb_pillow(path, thumbdir):
 
   # create dir if needed
   directory = os.path.dirname(thumbfile_with_ext)
-  if not os.path.exists(directory):
-    os.makedirs(directory)
+  os.makedirs(directory, exist_ok=True)
 
   # save thumb
   im.save(thumbfile_with_ext)
@@ -69,16 +72,21 @@ def makeThumb_opencv(path, thumbpath, overwrite):
 
       if "nikon" in path:
         img = cv2.imread(path, cv2.IMREAD_ANYDEPTH)
-        img = cv2.normalize(img, img, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U) # use img as destination since it preserves memory
       else:
         img = cv2.imread(path)
+
+      # imread returns None instead of raising when it can't decode the file
+      if img is None:
+        raise ValueError(f"cv2.imread could not read image ({os.path.getsize(path)} bytes): {path}")
+
+      if "nikon" in path:
+        img = cv2.normalize(img, img, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U) # use img as destination since it preserves memory
 
       imRes = cv2.resize(img, maxsize, interpolation = cv2.INTER_AREA)
 
       # create dir if needed
       directory = os.path.dirname(thumbpath_with_ext)
-      if not os.path.exists(directory):
-        os.makedirs(directory)
+      os.makedirs(directory, exist_ok=True)
 
       # save thumb
       cv2.imwrite(thumbpath_with_ext, imRes)

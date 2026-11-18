@@ -287,7 +287,7 @@ class Database:
                     RETURNING id
                 """, (
                     img.get_plate_barcode(),
-                    img.get_plate(),
+                    img.get_plate_acq_name(),
                     img.get_project(),
                     img.get_imaged(),
                     img.get_microscope(),

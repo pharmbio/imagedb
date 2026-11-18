@@ -81,6 +81,10 @@ def addImageToImagedb(img: Image):
             try:
                 image_tools.makeThumb(img.get_path(), thumb_path, False)
                 break
+            except FileNotFoundError:
+                # image deleted after it was queued, no point in retrying
+                logging.warning("image deleted before thumb could be made, skipping: " + str(img.get_path()))
+                break
             except Exception as e:
                 logging.error("Exception making thumb image: %s", e)
                 logging.error("image: " + str(img.get_path()))
@@ -91,6 +95,11 @@ def addImageToImagedb(img: Image):
                 time.sleep(10)
 
 def process_image(img_path: str):
+    # image can have been deleted after the dir was scanned (e.g. trash images removed by user)
+    if not os.path.exists(img_path):
+        logging.warning(f"image deleted after dir scan, skipping: {img_path}")
+        return
+
     # parse meta
     img_meta = filenames.filename_parser.parse_path_and_file(img_path)
      # img meta should never be None

@@ -29,6 +29,12 @@ class ImageMergeHandler(tornado.web.StaticFileHandler): #pylint: disable=abstrac
         logging.debug("ch2:" + ch2)
         logging.debug("ch3:" + ch3)
 
+        # Image paths are absolute (/share/...), giving urls like ch1//share/...
+        # Reverse proxies (e.g. Traefik >= 2.11.2 sanitizePath) may collapse
+        # the double slash, so restore the leading slash if it was stripped
+        ch1, ch2, ch3 = [ch if ch == 'undefined' or ch.startswith('/') else '/' + ch
+                         for ch in (ch1, ch2, ch3)]
+
         overwrite_cache = False
         if "nikon" in ch1:
             normalization = True
